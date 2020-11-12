@@ -2,23 +2,28 @@
  Gn2Gn Client
 ==============
 
-.. image:: https://travis-ci.org/seanfisk/python-project-template.png
-   :target: https://travis-ci.org/seanfisk/python-project-template
+.. image:: https://img.shields.io/badge/python-3.x-yellowgreen
+   :target: https://www.python.org/
+.. image:: https://img.shields.io/badge/code%20style-black-black
+   :target: https://github.com/psf/black
+.. image:: https://img.shields.io/badge/licence-AGPL--3.0-blue
+   :target: https://opensource.org/licenses/AGPL-3.0
 
-This project provides an import tool between GeoNature instances (client side).
+This project provides an import tool between GeoNature_ instances (client side).
 
 
 Project Setup
 =============
 
-This will be the ``README`` for your project. For now, follow these instructions to get this project template set up correctly. Then, come back and replace the contents of this ``README`` with contents specific to your project.
+Gn2Gn Client can be installed by running ``pip``. It requires Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
 
-    pip install gn2gn-client
+.. code-block:: bash
+
+    python -m pip install gn2gn-client
 
 
-
-Instructions
-------------
+Development mode
+----------------
 
 #. Clone the template project, replacing ``my-project`` with the name of the project you are creating::
 
@@ -101,6 +106,7 @@ Instructions
 .. _virtualenv: http://www.virtualenv.org/en/latest/
 .. _Virtual Environment section: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 
+
 Using Paver
 -----------
 
@@ -132,38 +138,6 @@ Running it via ``tox`` from the project root directory calls ``paver test_all`` 
 and does an additional test run to ensure documentation generation works flawlessly.
 You can customize the list of supported and thus tested Python versions in the ``tox.ini`` file.
 
-Pip ``requirements[-dev].txt`` files vs. Setuptools ``install_requires`` Keyword
-------------------------------------------------------------------
-
-The difference in use case between these two mechanisms can be very confusing. The `pip requirements files`_ is the conventionally-named ``requirements.txt`` that sits in the root directory of many repositories, including this one. The `Setuptools install_requires keyword`_ is the list of dependencies declared in ``setup.py`` that is automatically installed by ``pip`` or ``easy_install`` when a package is installed. They have similar but distinct purposes:
-
-``install_requires`` keyword
-    Install runtime dependencies for the package. This list is meant to *exclude* versions of dependent packages that do not work with this Python package. This is intended to be run automatically by ``pip`` or ``easy_install``.
-
-pip requirements file
-    Install runtime and/or development dependencies for the package. Replicate an environment by specifying exact versions of packages that are confirmed to work together. The goal is to `ensure repeatability`_ and provide developers with an identical development environment. This is intended to be run manually by the developer using ``pip install -r requirements-dev.txt``.
-
-For more information, see the answer provided by Ian Bicking (author of pip) to `this StackOverflow question`_.
-
-.. _Pip requirements files: http://www.pip-installer.org/en/latest/requirements.html
-.. _Setuptools install_requires keyword: http://pythonhosted.org/setuptools/setuptools.html?highlight=install_requires#declaring-dependencies
-.. _ensure repeatability: http://www.pip-installer.org/en/latest/cookbook.html#ensuring-repeatability
-.. _this StackOverflow question: http://stackoverflow.com/questions/6947988/when-to-use-pip-requirements-file-versus-install-requires-in-setup-py
-
-Supported Python Versions
-=========================
-
-Python Project Template supports the following versions out of the box:
-
-* CPython 2.6, 2.7, 3.3
-* PyPy 1.9
-
-CPython 3.0-3.2 may also work but are at this point unsupported. PyPy 2.0.2 is known to work but is not run on Travis-CI.
-
-Jython_ and IronPython_ may also work, but have not been tested. If there is interest in support for these alternative implementations, please open a feature request!
-
-.. _Jython: http://jython.org/
-.. _IronPython: http://ironpython.net/
 
 Licenses
 ========
@@ -217,3 +191,5 @@ Authors
 
 * Sean Fisk
 * Benjamin Schwarze
+
+.. _GeoNature: https://geonature.fr/
