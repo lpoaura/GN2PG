@@ -1,5 +1,5 @@
-Run `sphinx-apidoc -o . ../../gn2gn_client' in this directory.
+Run `sphinx-apidoc -o . ../../gn2gn' in this directory.
 
-This will generate `modules.rst' and `gn2gn_client.rst'.
+This will generate `modules.rst' and `gn2gn.rst'.
 
 Then include `modules.rst' in your `index.rst' file.
