@@ -1,28 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import os
-import sys
 import imp
+import os
 import subprocess
-
-## Python 2.6 subprocess.check_output compatibility. Thanks Greg Hewgill!
-if "check_output" not in dir(subprocess):
-
-    def check_output(cmd_args, *args, **kwargs):
-        proc = subprocess.Popen(
-            cmd_args, *args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs
-        )
-        out, err = proc.communicate()
-        if proc.returncode != 0:
-            raise subprocess.CalledProcessError(args)
-        return out
-
-    subprocess.check_output = check_output
-
-from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
+import sys
 from distutils import spawn
+
+from setuptools import find_packages, setup
+from setuptools.command.test import test as TestCommand
 
 try:
     import colorama
@@ -38,7 +24,7 @@ except ImportError:
 sys.path.insert(0, os.path.abspath("."))
 
 ## Constants
-CODE_DIRECTORY = "gn2gn_client"
+CODE_DIRECTORY = "gn2gn"
 DOCS_DIRECTORY = "docs"
 TESTS_DIRECTORY = "tests"
 PYTEST_FLAGS = ["--doctest-modules"]
@@ -227,7 +213,6 @@ python_version_specific_requires = []
 if sys.version_info < (2, 7) or (3, 0) <= sys.version_info < (3, 3):
     python_version_specific_requires.append("argparse")
 
-
 # See here for more options:
 # <http://pythonhosted.org/setuptools/setuptools.html>
 setup_dict = dict(
@@ -259,8 +244,10 @@ setup_dict = dict(
     packages=find_packages(exclude=(TESTS_DIRECTORY,)),
     install_requires=[
         "requests>=2.21.0",
-        "toml>=0.10.0"
-        # your module dependencies
+        "toml>=0.10.0",
+        "coloredlogs>=7.3",
+        "schema>=0.6.7",
+        "sqlalchemy>=1.2.18",
     ]
     + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
@@ -270,9 +257,9 @@ setup_dict = dict(
         "flake8>=3.6.0",
     ],
     cmdclass={"test": TestAllCommand},
-    zip_safe=False,  # don't use eggs
+    zip_safe=False,
     entry_points={
-        "console_scripts": ["gn2gn_client_cli = gn2gn_client.main:run"],
+        "console_scripts": ["gn2gn_cli = gn2gn.transfer_gn:run"],
         # if you have a gui, use this
         # 'gui_scripts': [
         #     'gn2gn_client_gui = gn2gn_client.gui:entry_point'
