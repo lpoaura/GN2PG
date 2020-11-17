@@ -2,23 +2,24 @@
 --requirement requirements.txt
 
 # Testing
-pytest==2.5.1
-py==1.4.19
-mock==1.0.1
+pytest==3.10.1
+py==1.7.0
+mock==1.3.0
 
 # Linting
-flake8==2.1.0
-mccabe==0.2.1
-pep8==1.4.6
-pyflakes==0.7.3
+flake8==3.6.0
+mccabe==0.6.1
+pep8==1.7.1
+pyflakes==2.0.0
 
 # Documentation
-Sphinx==1.2
-docutils==0.11
-Jinja2==2.7.1
-MarkupSafe==0.18
-Pygments==1.6
+Sphinx==3.3.1
+sphinx-rtd-theme==0.5.0
+docutils==0.16
+Jinja2==2.11.2
+MarkupSafe==1.1.1
+Pygments==2.7.2
 
 # Miscellaneous
 Paver==1.2.1
-colorama==0.2.7
+colorama==0.3.7
