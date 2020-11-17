@@ -30,4 +30,4 @@ from pprint import pprint
 
 data = toml.loads(str)
 
-pprint(data.db)
+pprint(data["db"])
