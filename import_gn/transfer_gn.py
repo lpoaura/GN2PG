@@ -43,6 +43,7 @@ def arguments(args):
     # Get options
     parser = argparse.ArgumentParser(description="Gn2Gn Client app")
     parser.add_argument(
+        "-V",
         "--version",
         help="Print version number",
         action="version",
@@ -50,10 +51,10 @@ def arguments(args):
     )
     out_group = parser.add_mutually_exclusive_group()
     out_group.add_argument(
-        "--verbose", help="Increase output verbosity", action="store_true"
+        "-vvv", "--verbose", help="Increase output verbosity", action="store_true"
     )
     out_group.add_argument(
-        "--quiet", help="Reduce output verbosity", action="store_true"
+        "-q", "--quiet", help="Reduce output verbosity", action="store_true"
     )
     parser.add_argument(
         "--init", help="Initialize the TOML configuration file", action="store_true"
@@ -77,20 +78,13 @@ def main(args):
     logger = logging.getLogger("transfer_gn")
     author_strings = []
     for name, email in zip(metadata.authors, metadata.emails):
-        author_strings.append("Author: {0} <{1}>".format(name, email))
+        author_strings.append(f"{BColors.BOLD}Author{BColors.ENDC}: {name} <{email}>")
+    nl = "\n"
+    epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.project}{BColors.ENDC}{BColors.ENDC} {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
 
-    epilog = """
-{project} {version}
-
-{authors}
-URL: <{url}>
-""".format(
-        project=metadata.project,
-        version=__version__,
-        authors="\n".join(author_strings),
-        url=metadata.url,
-    )
-
+{nl.join(author_strings)}
+{BColors.BOLD}URL{BColors.ENDC}: <{metadata.url}>
+"""
     print(epilog)
 
     # Create $HOME/tmp directory if it does not exist
