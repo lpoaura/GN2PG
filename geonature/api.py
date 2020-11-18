@@ -1,72 +1,5 @@
 """Provide python interface to GeoNature API.
 
-Thin Python binding to Biolovision API, returning dict instead of JSON.
-Currently, only a subset of API controlers are implemented, and only a subset
-of functions and parameters for implemented controlers.
-See details in each class.
-
-Each Biolovision controler is mapped to a python class.
-Class name is derived from controler name by removing '_' and using CamelCase.
-Methods names are similar to the corresponding API call, prefixed by 'api'.
-For example, method 'api_list' in class 'LocalAdminUnits' will
-call 'local_admin_units'.
-
-Most notable difference is that API chunks are grouped under 'data', i.e.
-calling species_list('1') will return all birds in one array under 'data' key.
-This means that requests returning lots of chunks (all bird sightings !)
-must be avoided, as memory could be insufficient.
-max_chunks __init__ parameter controls the maximum number of chunks
-allowed and raises an exception if it exceeds.
-
-Biolovision API to Classes mapping:
-
-+-------------------------------+---------------------+
-| Controler                     | Class               |
-+===============================+=====================+
-| Taxo groups                   | TaxoGroupsAPI       |
-+-------------------------------+---------------------+
-| Families                      | FamiliesAPI         |
-+-------------------------------+---------------------+
-| Species                       | SpeciesAPI          |
-+-------------------------------+---------------------+
-| Territorial Units             | TerritorialUnitsAPI |
-+-------------------------------+---------------------+
-| Local admin units             | LocalAdminUnitsAPI  |
-+-------------------------------+---------------------+
-| Places                        | PlacesAPI           |
-+-------------------------------+---------------------+
-| Observers                     | ObserversAPI        |
-+-------------------------------+---------------------+
-| Entities                      | EntitiesAPI         |
-+-------------------------------+---------------------+
-| Protocols                     | NA                  |
-+-------------------------------+---------------------+
-| Export organizations          | NA                  |
-+-------------------------------+---------------------+
-| Observations                  | ObservationsAPI     |
-+-------------------------------+---------------------+
-| Fields                        | FieldsAPI           |
-+-------------------------------+---------------------+
-| Media                         | NA                  |
-+-------------------------------+---------------------+
-| Import files                  | NA                  |
-+-------------------------------+---------------------+
-| Import files/Observations     | NA                  |
-+-------------------------------+---------------------+
-| Validations                   | ValidationsAPI      |
-+-------------------------------+---------------------+
-| Mortality informations        | NA                  |
-+-------------------------------+---------------------+
-| Bearded Vulture Birds         | NA                  |
-+-------------------------------+---------------------+
-| Bearded Vulture informations  | NA                  |
-+-------------------------------+---------------------+
-| Grids                         | NA                  |
-+-------------------------------+---------------------+
-| Grid-Commune                  | NA                  |
-+-------------------------------+---------------------+
-| Atlas documents               | NA                  |
-+-------------------------------+---------------------+
 
 Methods, see each class
 
@@ -146,7 +79,7 @@ class GeoNatureAPI:
         self._http_status = 0
         self._ctrl = controler
 
-        self._api_url = config.export_module_api_url + "api/"  # URL of API
+        self._api_url = config.url + "api/"  # URL of API
         # init session
         with requests.Session() as s:
             auth_payload = json.dumps(

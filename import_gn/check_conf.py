@@ -48,6 +48,7 @@ _ConfSchema = Schema(
                 "user_password": str,
                 "url": str,
                 "export_id": int,
+                Optional("id_application"): int,
                 Optional("enable"): bool,
             }
         ],
@@ -75,6 +76,9 @@ class Gn2GnSourceConf:
             self._user_name = config["source"][source]["user_name"]  # type: str
             self._user_password = config["source"][source]["user_password"]  # type: str
             self._url = config["source"][source]["url"]  # type: str
+            self._id_application = coalesce_in_dict(
+                config["source"][source], "id_application", 3
+            )  # type: int
             self._export_id = config["source"][source]["export_id"]  # type: int
             self._enable = (
                 True
@@ -88,10 +92,13 @@ class Gn2GnSourceConf:
             self._db_password = config["db"]["db_password"]  # type: str
             self._db_name = config["db"]["db_name"]  # type: str
             self._db_schema_import = config["db"]["db_schema_import"]  # type: str
-            self._db_querystring = (
-                None
-                if "db_querystring" not in config["source"][source]
-                else config["db"]["db_querystring"]
+            # self._db_querystring = (
+            #     None
+            #     if "db_querystring" not in config["db"]
+            #     else config["db"]["db_querystring"]
+            # )  # type: dict*
+            self._db_querystring = coalesce_in_dict(
+                config["db"], "db_querystring", None
             )  # type: dict*
             if "tuning" in config:
                 tuning = config["tuning"]
@@ -156,6 +163,15 @@ class Gn2GnSourceConf:
             str: GeoNature URL (https://...)
         """
         return self._url
+
+    @property
+    def id_application(self) -> int:
+        """Return GeoNature id_application, used to login (CRUVED)
+
+        Returns:
+            str: GeoNature id_application, default is 3
+        """
+        return self._id_application
 
     @property
     def export_id(self) -> int:
