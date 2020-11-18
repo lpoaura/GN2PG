@@ -1,7 +1,8 @@
-Python modules (for devs)
-=========================
+import_gn
+=========
 
 .. toctree::
    :maxdepth: 4
 
-   gn2gn
+   import_gn
+   geonature
