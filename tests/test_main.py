@@ -8,8 +8,8 @@ from pytest import raises
 
 parametrize = pytest.mark.parametrize
 
-from gn2gn_client import metadata
-from gn2gn_client.main import main
+from import_gn import metadata
+from import_gn.transfer_gn import main
 
 
 class TestMain(object):
