@@ -22,7 +22,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../.."))
 
 # Import project metadata
-from gn2gn_client import metadata
+from import_gn import metadata
 
 # -- General configuration ----------------------------------------------------
 

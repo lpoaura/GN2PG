@@ -1,5 +1,5 @@
-gn2gn
-=====
+Python modules (for devs)
+=========================
 
 .. toctree::
    :maxdepth: 4
