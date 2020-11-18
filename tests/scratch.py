@@ -1,22 +1,39 @@
-import requests
 import json
 from pprint import pprint
+
+import requests
 
 root_url = "https://demo.geonature.fr/geonature"
 login_url = "/api/auth/login"
 
-payload = {"login": "admin", "password": "admin", "id_application": 3}
-json_payload = json.dumps(payload)
+payload = json.dumps({"login": "admin", "password": "admin", "id_application": 3})
 headers = {"Content-Type": "application/json"}
 
+s = requests.Session()
 with requests.Session() as s:
-    r = s.post(
-        "https://demo.geonature.fr/geonature/api/auth/login",
-        data=json_payload,
-        headers=headers,
-    )
+    r = s.post(root_url + login_url, data=payload, headers=headers)
     print(r.url, r.status_code, r.reason)
-    pprint(json.loads(r.content))
-    print("headers", r.headers)
-    print("cookies", requests.utils.dict_from_cookiejar(s.cookies))
-    print("html", r.text)
+    print(f"User is {json.loads(r.content)}")
+
+
+m = s.get(root_url + "/api/gn_commons/modules")
+modules = json.loads(m.content)
+
+
+for item in modules:
+    if item["module_code"] == "EXPORTS":
+        pprint(f">> Export Module Path is {item['module_path']}")
+        export_path = item["module_path"]
+        break
+id_export = 2
+
+try:
+    source = s.get(root_url + f"/api/{export_path}/api/{id_export}")
+    print(source.url, source.status_code, source.reason)
+    source_dict = json.loads(source.content)
+    # pprint(source_dict)
+except Exception as e:
+    raise
+
+for i in source_dict.keys():
+    print(f"{i}")
