@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import imp
+import importlib.util
 import os
 import subprocess
 import sys
@@ -24,26 +24,17 @@ except ImportError:
 sys.path.insert(0, os.path.abspath("."))
 
 ## Constants
-CODE_DIRECTORY = "gn2gn"
+CODE_DIRECTORY = "import_gn"
 DOCS_DIRECTORY = "docs"
 TESTS_DIRECTORY = "tests"
 PYTEST_FLAGS = ["--doctest-modules"]
 
-# Import metadata. Normally this would just be:
-#
-#     from gn2gn_client import metadata
-#
-# However, when we do this, we also import `gn2gn_client/__init__.py'. If this
-# imports names from some other modules and these modules have third-party
-# dependencies that need installing (which happens after this file is run), the
-# script will crash. What we do instead is to load the metadata module by path
-# instead, effectively side-stepping the dependency problem. Please make sure
-# metadata has no dependencies, otherwise they will need to be added to
-# the setup_requires keyword.
-metadata = imp.load_source("metadata", os.path.join(CODE_DIRECTORY, "metadata.py"))
+spec = importlib.util.spec_from_file_location(
+    "metadata", os.path.join(CODE_DIRECTORY, "metadata.py")
+)
 
-
-## Miscellaneous helper functions
+metadata = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(metadata)
 
 
 def get_project_files():
