@@ -1,33 +1,22 @@
-str = """title = "Gn2Gn Client Config sample"
-
-[db]
-db_host = "localhost"
-db_port = 5432
-db_user = "<dbUser>"
-db_password = "<dbPassword>"
-db_name = "<dbName>"
-db_schema_import = "schema"
-    [db.db_querystring]
-    sslmode = "prefer"
-
-[[source]]
-name = "Source1"
-user_name = "<monuser>"
-user_password = "<monPwd>"
-export_module_api_url = "<http://geonature/API/EXPORT>"
-export_id = 1
-
-[[source]]
-name = "Source2"
-user_name = "<monuser>"
-user_password = "<monPwd>"
-export_module_api_url = "<http://geonature/API/EXPORT>"
-export_id = 1
-"""
-
-import toml
+import requests
+import json
 from pprint import pprint
 
-data = toml.loads(str)
+root_url = "https://demo.geonature.fr/geonature"
+login_url = "/api/auth/login"
 
-pprint(data["db"])
+payload = {"login": "admin", "password": "admin", "id_application": 3}
+json_payload = json.dumps(payload)
+headers = {"Content-Type": "application/json"}
+
+with requests.Session() as s:
+    r = s.post(
+        "https://demo.geonature.fr/geonature/api/auth/login",
+        data=json_payload,
+        headers=headers,
+    )
+    print(r.url, r.status_code, r.reason)
+    pprint(json.loads(r.content))
+    print("headers", r.headers)
+    print("cookies", requests.utils.dict_from_cookiejar(s.cookies))
+    print("html", r.text)
