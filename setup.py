@@ -243,11 +243,12 @@ setup_dict = dict(
     ],
     packages=find_packages(exclude=(TESTS_DIRECTORY,)),
     install_requires=[
-        "requests>=2.21.0",
-        "toml>=0.10.0",
-        "coloredlogs>=7.3",
-        "schema>=0.6.7",
-        "sqlalchemy>=1.2.18",
+        "requests==2.25.0",
+        "toml==0.10.2",
+        "coloredlogs==14.0",
+        "schema==0.7.3",
+        "SQLAlchemy==1.3.20",
+        "psycopg2-binary==2.8.6",
     ]
     + python_version_specific_requires,
     # Allow tests to be run with `python setup.py test'.
@@ -259,7 +260,7 @@ setup_dict = dict(
     cmdclass={"test": TestAllCommand},
     zip_safe=False,
     entry_points={
-        "console_scripts": ["gn2gn_cli = gn2gn.transfer_gn:run"],
+        "console_scripts": ["gn2gn_cli = import_gn.transfer_gn:run"],
         # if you have a gui, use this
         # 'gui_scripts': [
         #     'gn2gn_client_gui = gn2gn_client.gui:entry_point'
