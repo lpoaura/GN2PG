@@ -9,11 +9,10 @@ from typing import Any, Dict
 from schema import Optional, Schema
 from toml import TomlDecodeError, load
 
-from . import metadata
+from . import _, __version__
 from .utils import simplify, coalesce_in_dict
 
 logger = logging.getLogger("transfer_gn.check_conf")
-__version__ = metadata.version
 
 
 class Gn2GnConfException(Exception):
@@ -115,7 +114,7 @@ class Gn2GnSourceConf:
                 self._lru_maxsize = coalesce_in_dict(tuning, "lru_maxsize", 32)
 
         except Exception:  # pragma: no cover
-            logger.exception(f"Error creating {source} configuration")
+            logger.exception(_(f"Error creating {source} configuration"))
             raise
         return None
 
@@ -330,11 +329,11 @@ class Gn2GnConf:
 
         p = Path.home() / file
         if not p.is_file():
-            logger.critical(f"File {file} does not exist")
+            logger.critical(_(f"File {file} does not exist"))
             raise MissingConfigurationFile
 
         try:
-            logger.info(f"Loading TOML configuration {file}")
+            logger.info(_(f"Loading TOML configuration {file}"))
             self._config = load(p)
             _ConfSchema.validate(self._config)
         except Exception as e:

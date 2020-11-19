@@ -16,7 +16,7 @@ from . import metadata
 from .check_conf import Gn2GnConf
 from .store_postgresql import PostgresqlUtils
 from .utils import BColors
-from . import __version__
+from . import _, __version__
 
 # logging.config.dictConfig(my_logging_dict)
 logger = logging.getLogger(__name__)
@@ -45,23 +45,23 @@ def arguments(args):
     parser.add_argument(
         "-V",
         "--version",
-        help="Print version number",
+        help=_("Print version number"),
         action="version",
         version="%(prog)s {version}".format(version=__version__),
     )
     out_group = parser.add_mutually_exclusive_group()
     out_group.add_argument(
-        "-vvv", "--verbose", help="Increase output verbosity", action="store_true"
+        "-vvv", "--verbose", help=_("Increase output verbosity"), action="store_true"
     )
     out_group.add_argument(
-        "-q", "--quiet", help="Reduce output verbosity", action="store_true"
+        "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
     )
     parser.add_argument(
-        "--init", help="Initialize the TOML configuration file", action="store_true"
+        "--init", help=_("Initialize the TOML configuration file"), action="store_true"
     )
     parser.add_argument(
         "--json-tables-create",
-        help="Create or recreate json tables",
+        help=_("Create or recreate json tables"),
         action="store_true",
     )
     parser.add_argument("file", help="Configuration file name")
@@ -191,6 +191,108 @@ def init(file: str):
     shutil.copyfile(toml_src, toml_dst)
     logger.info(f"Please edit {toml_dst} before running the script")
     sys.exit(0)
+
+
+def full_download_1(ctrl, cfg_crtl_list, cfg):
+    """Downloads from a single controler."""
+    logger = logging.getLogger("transfer_gn")
+    logger.debug(_("Enter full_download_1: %s"), ctrl.__name__)
+    with StorePostgresql(cfg) as store_pg, StoreFile(cfg) as store_f:
+        store_all = StoreAll(cfg, db_backend=store_pg, file_backend=store_f)
+        downloader = ctrl(cfg, store_all)
+        if cfg_crtl_list[downloader.name].enabled:
+            logger.info(
+                _("%s => Starting download using controler %s"),
+                cfg.site,
+                downloader.name,
+            )
+            if downloader.name == "observations":
+                logger.info(
+                    _("%s => Excluded taxo_groups: %s"), cfg.site, cfg.taxo_exclude
+                )
+                downloader.store(
+                    id_taxo_group=None,
+                    method="search",
+                    by_specie=False,
+                    taxo_groups_ex=cfg.taxo_exclude,
+                    short_version=(1 if cfg.json_format == "short" else 0),
+                )
+            else:
+                downloader.store()
+            logger.info(
+                _("%s => Ending download using controler %s"), cfg.site, downloader.name
+            )
+
+
+def full_download(cfg_ctrl):
+    """Performs a full download of all sites and controlers,
+    based on configuration file."""
+    logger = logging.getLogger("transfer_vn")
+    cfg_crtl_list = cfg_ctrl.ctrl_list
+    cfg_site_list = cfg_ctrl.site_list
+    cfg = list(cfg_site_list.values())[0]
+
+    logger.info(_("Defining full download jobs"))
+    db_url = {
+        "drivername": "postgresql+psycopg2",
+        "username": cfg.db_user,
+        "password": cfg.db_pw,
+        "host": cfg.db_host,
+        "port": cfg.db_port,
+        "database": "postgres",
+    }
+    jobs_o = Jobs(url=URL(**db_url), nb_executors=cfg.tuning_sched_executors)
+    with jobs_o as jobs:
+        # Cleanup any existing job
+        jobs.start(paused=True)
+        jobs.remove_all_jobs()
+        jobs.resume()
+        # Download field only once
+        jobs.add_job_once(job_fn=full_download_1, args=[Fields, cfg_crtl_list, cfg])
+        # Looping on sites for other controlers
+        for site, cfg in cfg_site_list.items():
+            if cfg.enabled:
+                logger.info(_("Scheduling work for site %s"), cfg.site)
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[Entities, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[Families, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[LocalAdminUnits, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[Observations, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[Observers, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[Places, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[Species, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[TaxoGroup, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[TerritorialUnits, cfg_crtl_list, cfg]
+                )
+                jobs.add_job_once(
+                    job_fn=full_download_1, args=[Validations, cfg_crtl_list, cfg]
+                )
+            else:
+                logger.info(_("Skipping site %s"), site)
+
+        # Wait for jobs to finish
+        time.sleep(1)
+        while jobs.count_jobs() > 0:
+            time.sleep(1)
+        jobs.shutdown()
+
+    return None
 
 
 def run():

@@ -5,6 +5,7 @@ import logging
 import logging.config
 from pathlib import Path
 from pkg_resources import get_distribution, DistributionNotFound
+import gettext
 
 import coloredlogs
 
@@ -73,3 +74,10 @@ coloredlogs.install(
     milliseconds=True,
     fmt="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
 )
+
+
+# Install gettext for any file in the application
+localedir = Path(__file__).resolve().parent / "locale"
+gettext.bindtextdomain("import_gn", str(localedir))
+gettext.textdomain("import_gn")
+_ = gettext.gettext

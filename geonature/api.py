@@ -23,9 +23,7 @@ from functools import lru_cache
 
 from typing import Dict
 import requests
-from requests_oauthlib import OAuth1
-
-from . import _, __version__
+from . import __version__
 
 logger = logging.getLogger("transfer_gn.geonature_api")
 
@@ -57,6 +55,23 @@ class IncorrectParameter(GeoNatureApiException):
     """Incorrect or missing parameter."""
 
 
+class Session:
+    """[summary]
+
+    Raises:
+        NotImplementedException: [description]
+        HTTPError: [description]
+        HTTPError: [description]
+        HTTPError: [description]
+        MaxChunksError: [description]
+        an: [description]
+        IncorrectParameter: [description]
+
+    Returns:
+        [type]: [description]
+    """
+
+
 class GeoNatureAPI:
     """Top class, not for direct use. Provides internal and template methods."""
 
@@ -78,32 +93,42 @@ class GeoNatureAPI:
         self._transfer_errors = 0
         self._http_status = 0
         self._ctrl = controler
+        url = config.url if config.url[-1:] == "/" else config.url + "/"
+        self._api_url = url + "api/"  # API Url
 
-        self._api_url = config.url + "api/"  # URL of API
         # init session
-        with requests.Session() as s:
-            auth_payload = json.dumps(
-                {
-                    "login": self._config.user_name,
-                    "password": self._config.user_password,
-                    "id_application": self._config.id_application,
-                }
-            )
-            headers = {"Content-Type": "application/json"}
-            r = s.post(
-                self._api_url + "/auth/login",
-                data=auth_payload,
-                headers=headers,
-            )
-            if r.status_code == 200:
+        self._session = requests.Session()
+        self._session.headers = {"Content-Type": "application/json"}
+        auth_payload = json.dumps(
+            {
+                "login": config.user_name,
+                "password": config.user_password,
+                "id_application": config.id_application,
+            }
+        )
+        login = self._session.post(
+            self._api_url + "/auth/login",
+            data=auth_payload,
+        )
+        try:
+            if login.status_code == 200:
                 logger.info(
                     f"Successfully logged in into GeoNature named {self._config.name}"
                 )
             else:
                 logger.critical(f"Log in GeoNature named {self._config.name} failed")
-            self._session = s
+        except:
+            logger.critical("Session failed")
+            raise HTTPError(login.status_code)
 
-        modules = self._session.get(self._api_url + "/modules")
+        #  Find exports api path
+        m = self._session.get(self._api_url + "/modules")
+        modules = json.loads(m.content)
+        for item in modules:
+            if item["module_code"] == "EXPORTS":
+                self._export_api_path = item["module_path"]
+                logger.debug(f"Export api path is {self._export_api_path}")
+                break
 
     @property
     def version(self) -> str:
@@ -128,7 +153,7 @@ class GeoNatureAPI:
     def _url_get(
         self,
         scope: str,
-        data: dict,
+        params: dict = {},
         method: str = "GET",
         body: any = None,
         optional_headers: dict = None,
@@ -138,8 +163,7 @@ class GeoNatureAPI:
         Increments _transfer_errors in case of error.
 
         Args:
-            scope (str): scope is the api to be queried, for example 'taxo_groups/'.
-            data (dict): [description]
+            scope (str): scope is the export id to be queried.
             method (str, optional): HTTP method to use: GET/POST/DELETE/PUT. Default to GET. Defaults to "GET".
             body (any, optional): Optional body for POST or PUT. Defaults to None.
             optional_headers (dict, optional): Optional headers for request. Defaults to None.
@@ -152,168 +176,102 @@ class GeoNatureAPI:
             dict: dict decoded from json if status OK, else None.
         """
         # Loop on chunks
-        nb_chunks = 0
+        nb_page = 0
         data_rec = None
         # Remove DEBUG logging level to avoid too many details
         level = logging.getLogger().level
         logging.getLogger().setLevel(logging.INFO)
 
         # Prepare call to API
-        data = data
-        logger.debug(_("Data: %s"), data)
-        headers = {"Content-Type": "application/json;charset=UTF-8"}
-        if optional_headers is not None:
-            headers.update(optional_headers)
         protected_url = self._api_url + scope
         if method == "GET":
-            resp = self._session.get(url=protected_url, data=data, headers=headers)
+            resp = self._session.get(url=protected_url)
         elif method == "POST":
-            resp = requests.post(url=protected_url, data=data, headers=headers)
+            resp = requests.post(url=protected_url)
         elif method == "PUT":
-            resp = requests.put(url=protected_url, data=data, headers=headers)
+            resp = requests.put(url=protected_url)
         elif method == "DELETE":
-            resp = requests.delete(url=protected_url, data=data, headers=headers)
+            resp = requests.delete(url=protected_url)
         else:
             raise NotImplementedException
 
         logger.debug(resp.headers)
         logging.getLogger().setLevel(level)
         logger.debug(
-            _("%s status code = %s, for URL %s"),
-            method,
-            resp.status_code,
-            protected_url,
+            f"{method} status code = {resp.status_code}, for URL {protected_url}"
         )
         self._http_status = resp.status_code
         if self._http_status >= 300:
-                # Request returned an error.
-                # Logging and checking if not too many errors to continue
-                logger.error(
-                    _("%s status code = %s, for URL %s"),
-                    method,
-                    resp.status_code,
-                    protected_url,
+            # Request returned an error.
+            # Logging and checking if not too many errors to continue
+            logger.error(
+                f"{method} status code = {resp.status_code}, for URL {protected_url}"
+            )
+            if (self._http_status >= 400) and (
+                self._http_status <= 499
+            ):  # pragma: no cover
+                # Unreceverable error
+                logger.critical(
+                    f"Unreceverable error {self._http_status}, raising exception"
                 )
-                if (self._http_status >= 400) and (
-                    self._http_status <= 499
-                ):  # pragma: no cover
-                    # Unreceverable error
-                    logger.critical(
-                        _("Unreceverable error %s, raising exception"),
-                        self._http_status,
-                    )
-                    raise HTTPError(resp.status_code)
-                self._transfer_errors += 1  # pragma: no cover
-                if self._http_status == 503:  # pragma: no cover
-                    # Service unavailable: long wait
-                    time.sleep(self._config.tuning_unavailable_delay)
-                else:
-                    # A transient error: short wait
-                    time.sleep(self._config.tuning_retry_delay)
-                if (
-                    self._transfer_errors > self._limits["max_retry"]
-                ):  # pragma: no cover
-                    # Too many retries. Raising exception
-                    logger.critical(
-                        _("Too many error %s, raising exception"), self._transfer_errors
-                    )
-                    raise HTTPError(resp.status_code)
+                raise HTTPError(resp.status_code)
+            self._transfer_errors += 1  # pragma: no cover
+            if self._http_status == 503:  # pragma: no cover
+                # Service unavailable: long wait
+                time.sleep(self._config.tuning_unavailable_delay)
             else:
-                # No error from request: processing response if needed
-                if method in ["PUT", "DELETE"]:
-                    # No response expected
-                    resp_chunk = json.loads("{}")
-                else:
-                    try:
-                        resp_chunk = resp.json()
-                    except json.decoder.JSONDecodeError:  # pragma: no cover
-                        # Error during JSON decoding =>
-                        # Logging error and no further processing of empty chunk
-                        resp_chunk = json.loads("{}")
-                        logger.error(_("Incorrect response content: %s"), resp.text)
-                        logger.exception(_("Exception raised during JSON decoding"))
-                        raise HTTPError("resp.json exception")
+                # A transient error: short wait
+                time.sleep(self._config.tuning_retry_delay)
+            if self._transfer_errors > self._limits["max_retry"]:  # pragma: no cover
+                # Too many retries. Raising exception
+                logger.critical(
+                    f"Too many error {self._transfer_errors}, raising exception"
+                )
+                raise HTTPError(resp.status_code)
+        else:
+            # No error from request: processing response if needed
+            if method in ["PUT", "DELETE"]:
+                # No response expected
+                paged_resp = json.loads("{}")
+            else:
+                try:
+                    paged_resp = resp.json()
+                except json.decoder.JSONDecodeError:  # pragma: no cover
+                    # Error during JSON decoding =>
+                    # Logging error and no further processing of empty chunk
+                    paged_resp = json.loads("{}")
+                    logger.error(f"Incorrect response content: {resp.text}")
+                    logger.exception("Exception raised during JSON decoding")
+                    raise HTTPError("resp.json exception")
 
-                # Initialize or append to response dict, depending on content
-                if "items" in resp_chunk:
+            # Initialize or append to response dict, depending on content
+            data = False
+            offset_max = int(paged_resp["total_filtered"] / paged_resp["limit"]) - 1
+            offset = 0
+            if "items" in paged_resp:
+                if len(paged_resp["items"]) > 0:
+                    data = True
                     logger.debug(
-                        _("Received %d data in chunk %d"),
-                        len(resp_chunk["items"]),
-                        nb_chunks,
+                        f"Received {len(paged_resp['items'])} data in {offset_max} pages"
                     )
-                    if nb_chunks == 0:
-                        data_rec = resp_chunk
+                    if offset_max == 0:
+                        data_rec = paged_resp["items"]
                     else:
-                        if "sightings" in data_rec["data"]:
-                            data_rec["data"]["sightings"] += resp_chunk["data"][
-                                "sightings"
-                            ]
-                        else:
-                            # logger.error(_("No 'sightings' in previous data"))
-                            # logger.error(data_rec)
-                            # logger.error(resp_chunk)
-                            data_rec["data"]["sightings"] = resp_chunk["data"][
-                                "sightings"
-                            ]
-                    if "forms" in resp_chunk["data"]:
-                        observations = True
-                        logger.debug(
-                            _("Received %d forms in chunk %d"),
-                            len(resp_chunk["data"]["forms"]),
-                            nb_chunks,
-                        )
-                        if nb_chunks == 0:
-                            data_rec = resp_chunk
-                        else:
-                            if "forms" in data_rec["data"]:
-                                data_rec["data"]["forms"] += resp_chunk["data"]["forms"]
-                            else:  # pragma: no cover
-                                # logger.error(
-                                #     _("Trying to add 'forms' to another data stream")
-                                # )
-                                # logger.error(data_rec)
-                                # logger.error(resp_chunk)
-                                data_rec["data"]["forms"] = resp_chunk["data"]["forms"]
+                        data_rec += paged_resp["items"]
 
-                    if not observations:
-                        logger.debug(
-                            _("Received %d data items in chunk %d"),
-                            len(resp_chunk),
-                            nb_chunks,
-                        )
-                        if nb_chunks == 0:
-                            data_rec = resp_chunk
-                        else:
-                            data_rec["data"] += resp_chunk["data"]
+            else:
+                logger.debug(f"Received non-data response: {paged_resp}")
+                if offset_max == 0:
+                    data_rec = paged_resp
                 else:
-                    logger.debug(_("Received non-data response: %s"), resp_chunk)
-                    if nb_chunks == 0:
-                        data_rec = resp_chunk
-                    else:
-                        data_rec += resp_chunk
+                    data_rec += paged_resp
 
-                # Is there more data to come?
-                if (
-                    ("transfer-encoding" in resp.headers)
-                    and (resp.headers["transfer-encoding"] == "chunked")
-                    and ("pagination_key" in resp.headers)
-                ):
-                    logger.debug(
-                        _("Chunked transfer => requesting for more, with key: %s"),
-                        resp.headers["pagination_key"],
-                    )
-                    # Update request parameters to get next chunk
-                    params["pagination_key"] = resp.headers["pagination_key"]
-                    nb_chunks += 1
-                else:
-                    logger.debug(_("Non-chunked transfer => finished requests"))
-                    if "pagination_key" in params:
-                        del params["pagination_key"]
-                    break
+            # Is there more data to come?
+            if offset_max > 0:
+                logger.debug(f"getting page {offset}")
+                offset += 1
 
-        logger.debug(_("Received %d chunks"), nb_chunks)
-        if nb_chunks >= self._limits["max_chunks"]:
-            raise MaxChunksError
+        logger.debug(f"Received {offset_max} pages")
 
         return data_rec
 
