@@ -10,10 +10,12 @@ payload = json.dumps({"login": "admin", "password": "admin", "id_application": 3
 headers = {"Content-Type": "application/json"}
 
 s = requests.Session()
-with requests.Session() as s:
-    r = s.post(root_url + login_url, data=payload, headers=headers)
-    print(r.url, r.status_code, r.reason)
-    print(f"User is {json.loads(r.content)}")
+s.headers = headers
+
+
+r = s.post(root_url + login_url, data=payload)
+print(r.url, r.status_code, r.reason)
+print(f"User is {json.loads(r.content)}")
 
 
 m = s.get(root_url + "/api/gn_commons/modules")
@@ -37,3 +39,13 @@ except Exception as e:
 
 for i in source_dict.keys():
     print(f"{i}")
+
+
+def qs_params(dico: dict = {}):
+    return dico
+
+
+from urllib import parse
+
+qs_params
+payload = parse.urlencode(params)
