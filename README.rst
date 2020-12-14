@@ -19,6 +19,13 @@ Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
     Actually not usable, in active development.
 
 
+
+.. image:: ./Gn2Gn.png
+    :align: center
+    :height: 100px
+    :alt: Logo DREAL AuRA
+
+
 Project Setup
 =============
 
@@ -34,6 +41,35 @@ Issues
 
 Please report any bugs or requests that you have using the `GitHub issue tracker <https://github.com/lpoaura/gn2gn_client/issues>`_!
 
+HowTo
+=====
+
+Help
+####
+
+.. code-block:: bash
+
+    gn2gn_cli --help
+
+Init config file
+################
+
+.. code-block:: bash
+
+    gn2gn_cli --init
+
+
+This command init a TOML config file in user home dir, named as you want
+
+InitDB  Schema and tables
+#########################
+
+.. code-block:: bash
+
+    gn2gn_cli --json-tables-create myconfigfile
+
+Coming soon...
+
 Licence
 =======
 
@@ -48,13 +84,15 @@ Team
 .. image:: https://raw.githubusercontent.com/lpoaura/biodivsport-widget/master/images/LPO_AuRA_l250px.png
     :align: center
     :height: 100px
-    :alt: alternate text
+    :alt: Logo LPOAuRA
 
 .. _GeoNature: https://geonature.fr/
 
-* Avec le soutien financier la (`DREAL Auvergne-Rhône-Alpes <http://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/>`_).
+------------
 
-.. image:: https://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/IMG/png/blocmarque_pref_region_auvergne_rhone_alpes_rvb_web.png
+With the financial support of the `DREAL Auvergne-Rhône-Alpes <http://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/>`_.
+
+.. image:: https://data.lpo-aura.org/web/images/blocmarque_pref_region_auvergne_rhone_alpes_rvb_web.png
     :align: center
     :height: 100px
-    :alt: alternate text
+    :alt: Logo DREAL AuRA
