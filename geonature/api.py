@@ -15,6 +15,7 @@ Exceptions:
 - IncorrectParameter         - Incorrect or missing parameter
 
 """
+import sys
 import json
 import logging
 import time
@@ -23,7 +24,7 @@ from functools import lru_cache
 
 from typing import Dict
 import requests
-from . import __version__
+from . import _, __version__
 
 logger = logging.getLogger("transfer_gn.geonature_api")
 
@@ -75,21 +76,13 @@ class Session:
 class GeoNatureAPI:
     """Top class, not for direct use. Provides internal and template methods."""
 
-    def __init__(
-        self, config, controler, max_retry=None, max_requests=None, max_chunks=None
-    ):
+    def __init__(self, config, controler, max_retry=None, max_requests=None):
         self._config = config
         if max_retry is None:
-            max_retry = config.tuning_max_retry
+            max_retry = config.max_retry
         if max_requests is None:
-            max_requests = config.tuning_max_requests
-        if max_chunks is None:
-            max_chunks = config.tuning_max_chunks
-        self._limits = {
-            "max_retry": max_retry,
-            "max_requests": max_requests,
-            "max_chunks": max_chunks,
-        }
+            max_requests = config.max_requests
+        self._limits = {"max_retry": max_retry, "max_requests": max_requests}
         self._transfer_errors = 0
         self._http_status = 0
         self._ctrl = controler
@@ -107,7 +100,7 @@ class GeoNatureAPI:
             }
         )
         login = self._session.post(
-            self._api_url + "/auth/login",
+            self._api_url + "auth/login",
             data=auth_payload,
         )
         try:
@@ -116,19 +109,34 @@ class GeoNatureAPI:
                     f"Successfully logged in into GeoNature named {self._config.name}"
                 )
             else:
-                logger.critical(f"Log in GeoNature named {self._config.name} failed")
+                logger.critical(
+                    f"Log in GeoNature named {self._config.name} failed with status code {login.status_code}, cause: {json.loads(login.content)['msg']}"
+                )
+
         except:
             logger.critical("Session failed")
             raise HTTPError(login.status_code)
 
         #  Find exports api path
-        m = self._session.get(self._api_url + "/modules")
-        modules = json.loads(m.content)
-        for item in modules:
-            if item["module_code"] == "EXPORTS":
-                self._export_api_path = item["module_path"]
-                logger.debug(f"Export api path is {self._export_api_path}")
-                break
+        try:
+            m = self._session.get(self._api_url + "gn_commons/modules")
+            logger.info(
+                _(f"Modules API status code is {m.status_code} for url {m.url}")
+            )
+            if m.status_code == 200:
+                modules = json.loads(m.content)
+                for item in modules:
+                    if item["module_code"] == "EXPORTS":
+                        self._export_api_path = item["module_path"]
+                        logger.debug(f"Export api path is {self._export_api_path}")
+                        break
+            else:
+                logger.critical(
+                    f"Get GeoNature modules failedwith status code {m.status_code}, cause: {json.loads(m.content)['msg']}"
+                )
+        except Exception as e:
+            logger.critical(f"Find export module failed, {e}")
+            raise HTTPError(login.status_code)
 
     @property
     def version(self) -> str:
@@ -170,33 +178,31 @@ class GeoNatureAPI:
 
         Raises:
             HTTPError: HTTP protocol error, returned as argument.
-            MaxChunksError: Loop on chunks exceeded max_chunks limit.
 
         Returns:
             dict: dict decoded from json if status OK, else None.
         """
         # Loop on chunks
-        nb_page = 0
         data_rec = None
         # Remove DEBUG logging level to avoid too many details
-        level = logging.getLogger().level
-        logging.getLogger().setLevel(logging.INFO)
-
+        # level = logging.getLogger().level
+        # logging.getLogger().setLevel(logging.INFO)
+        payload = parse.urlencode(params, quote_via=parse.quote)
+        logger.debug(_("Params: %s"), payload)
         # Prepare call to API
         protected_url = self._api_url + scope
         if method == "GET":
-            resp = self._session.get(url=protected_url)
+            resp = self._session.get(url=protected_url, params=payload)
         elif method == "POST":
-            resp = requests.post(url=protected_url)
+            resp = requests.post(url=protected_url, params=payload)
         elif method == "PUT":
-            resp = requests.put(url=protected_url)
+            resp = requests.put(url=protected_url, params=payload)
         elif method == "DELETE":
-            resp = requests.delete(url=protected_url)
+            resp = requests.delete(url=protected_url, params=payload)
         else:
             raise NotImplementedException
 
-        logger.debug(resp.headers)
-        logging.getLogger().setLevel(level)
+        # logging.getLogger().setLevel(level)
         logger.debug(
             f"{method} status code = {resp.status_code}, for URL {protected_url}"
         )
@@ -232,46 +238,47 @@ class GeoNatureAPI:
             # No error from request: processing response if needed
             if method in ["PUT", "DELETE"]:
                 # No response expected
-                paged_resp = json.loads("{}")
+                presp = json.loads("{}")
             else:
                 try:
-                    paged_resp = resp.json()
+                    presp = resp.json()
                 except json.decoder.JSONDecodeError:  # pragma: no cover
                     # Error during JSON decoding =>
                     # Logging error and no further processing of empty chunk
-                    paged_resp = json.loads("{}")
+                    presp = json.loads("{}")
                     logger.error(f"Incorrect response content: {resp.text}")
                     logger.exception("Exception raised during JSON decoding")
                     raise HTTPError("resp.json exception")
 
             # Initialize or append to response dict, depending on content
             data = False
-            offset_max = int(paged_resp["total_filtered"] / paged_resp["limit"]) - 1
+            max_offset = int(presp["total_filtered"] / presp["limit"]) - 1
             offset = 0
-            if "items" in paged_resp:
-                if len(paged_resp["items"]) > 0:
+            logger.debug(f"{','.join([k for k in presp.keys()])}")
+            if "items" in presp:
+                if len(presp["items"]) > 0:
                     data = True
                     logger.debug(
-                        f"Received {len(paged_resp['items'])} data in {offset_max} pages"
+                        f"Received {len(presp['items'])} data in {max_offset} pages"
                     )
-                    if offset_max == 0:
-                        data_rec = paged_resp["items"]
+                    if max_offset == 0:
+                        data_rec = presp["items"]
                     else:
-                        data_rec += paged_resp["items"]
+                        data_rec += presp["items"]
 
             else:
-                logger.debug(f"Received non-data response: {paged_resp}")
-                if offset_max == 0:
-                    data_rec = paged_resp
+                logger.debug(f"Received non-data response: {presp}")
+                if max_offset == 0:
+                    data_rec = presp
                 else:
-                    data_rec += paged_resp
+                    data_rec += presp
 
             # Is there more data to come?
-            if offset_max > 0:
+            if max_offset > 0:
                 logger.debug(f"getting page {offset}")
                 offset += 1
 
-        logger.debug(f"Received {offset_max} pages")
+        logger.debug(f"Received {max_offset} pages")
 
         return data_rec
 
@@ -294,23 +301,19 @@ class GeoNatureAPI:
             dict decoded from json if status OK, else None
         """
         # Mandatory parameters.
-        params = {
-            "user_email": self._config.user_email,
-            "user_pw": self._config.user_pw,
-        }
+        params = {}
         if opt_params is not None:
             params.update(opt_params)
         logger.debug(
-            _("List from:%s, with options:%s, optional_headers:%s"),
-            self._ctrl,
-            self._clean_params(params),
-            optional_headers,
+            _(
+                f"List from:{self._ctrl}, params: {params}, optional_headers:{optional_headers}"
+            )
         )
         # GET from API
         entities = self._url_get(params, self._ctrl, optional_headers=optional_headers)[
             "data"
         ]
-        logger.debug(_("Number of entities = %i"), len(entities))
+        logger.debug(_(f"Number of entities = {len(entities)}"))
         return {"data": entities}
 
     # -----------------------------------------
@@ -336,16 +339,13 @@ class GeoNatureAPI:
             dict decoded from json if status OK, else None
         """
         # Mandatory parameters.
-        params = {
-            "user_email": self._config.user_email,
-            "user_pw": self._config.user_pw,
-        }
+        params = {}
         for key, value in kwargs.items():
             params[key] = value
         logger.debug(
             _("In api_get for controler:%s, with parameters:%s"),
             id_entity,
-            self._clean_params(params),
+            params,
         )
         # GET from API
         return self._url_get(params, self._ctrl + "/" + str(id_entity))
@@ -369,7 +369,6 @@ class GeoNatureAPI:
             dict decoded from json if status OK, else None
         """
         h_params = None if opt_params is None else HashableDict(opt_params)
-        h_headers = None if optional_headers is None else HashableDict(optional_headers)
         return self._api_list(opt_params=h_params, optional_headers=h_headers)
 
     # -------------------------
@@ -390,7 +389,7 @@ class GeoNatureAPI:
         return self._url_get(params, "error/")
 
 
-class ObservationsAPI(GeoNatureAPI):
+class SyntheseAPI(GeoNatureAPI):
     """Implement api calls to observations controler.
 
     Methods:
@@ -405,10 +404,10 @@ class ObservationsAPI(GeoNatureAPI):
 
     """
 
-    def __init__(self, config, max_retry=None, max_requests=None, max_chunks=None):
-        super().__init__(config, "observations", max_retry, max_requests, max_chunks)
+    def __init__(self, config, max_retry=None, max_requests=None):
+        super().__init__(config, "observations", max_retry, max_requests)
 
-    def api_list(self, id_taxo_group, **kwargs):
+    def api_list(self, **kwargs):
         """Query for list of observations by taxo_group from the controler.
 
         Calls  /observations API.
@@ -427,13 +426,12 @@ class ObservationsAPI(GeoNatureAPI):
             dict decoded from json if status OK, else None
         """
         opt_params = dict()
-        opt_params["id_taxo_group"] = str(id_taxo_group)
         for key, value in kwargs.items():
             opt_params[key] = value
         logger.debug(_("In api_list, with parameters %s"), opt_params)
         return super().api_list(opt_params)
 
-    def api_diff(self, id_taxo_group, delta_time, modification_type="all"):
+    def api_diff(self, delta_time: str, modification_type: str = "all"):
         """Query for a list of updates or deletions since a given date.
 
         Calls /observations/diff to get list of created/updated or deleted
@@ -460,13 +458,12 @@ class ObservationsAPI(GeoNatureAPI):
             "user_pw": self._config.user_pw,
         }
         # Specific parameters.
-        params["id_taxo_group"] = str(id_taxo_group)
         params["modification_type"] = modification_type
         params["date"] = delta_time
         # GET from API
         return super()._url_get(params, "observations/diff/")
 
-    def api_search(self, q_params, **kwargs):
+    def api_search(self, cfg, q_params, **kwargs):
         """Search for observations, based on parameter conditions.
 
         Calls /observations/search to get observations
@@ -486,10 +483,7 @@ class ObservationsAPI(GeoNatureAPI):
             dict decoded from json if status OK, else None
         """
         # Mandatory parameters.
-        params = {
-            "user_email": self._config.user_email,
-            "user_pw": self._config.user_pw,
-        }
+        params = {}
         for key, value in kwargs.items():
             params[key] = value
         # Specific parameters.
@@ -500,8 +494,14 @@ class ObservationsAPI(GeoNatureAPI):
         logger.debug(
             _("Search from %s, with option %s and body %s"),
             self._ctrl,
-            self._clean_params(params),
+            params,
             body,
         )
         # GET from API
-        return super()._url_get(params, "observations/search/", "POST", body)
+        return super()._url_get(
+            "exports/api/" + str(self._config.export_id), params, "GET", body
+        )
+
+
+class DatasetsAPI(GeoNatureAPI):
+    """Jdd API"""

@@ -30,11 +30,10 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
 from sqlalchemy.sql import and_
 
-from .metadata import version
+from . import _, __version__
 
 # logger = logging.getLogger("transfer_gn.store_postgresql")
 logger = logging.getLogger("transfer_gn.store_postgresql")
-__version__ = version
 
 
 class StorePostgresqlException(Exception):
@@ -206,10 +205,10 @@ class PostgresqlUtils:
         )
         return None
 
-    def _create_meta_json(self):
+    def _create_datasets_json(self):
         """Create entities_json table if it does not exist."""
         self._create_table(
-            "meta_json",
+            "datasets_json",
             Column("uuid", UUID, nullable=False),
             Column("source", String, nullable=False),
             Column("item", JSONB, nullable=False),
@@ -217,10 +216,10 @@ class PostgresqlUtils:
         )
         return None
 
-    def _create_data_json(self):
+    def _create_synthese_json(self):
         """Create observations_json table if it does not exist."""
         self._create_table(
-            "data_json",
+            "synthese_json",
             Column("uuid", UUID, nullable=False, index=True),
             Column("source", String, nullable=False),
             Column("item", JSONB, nullable=False),
@@ -282,8 +281,8 @@ class PostgresqlUtils:
         # Check if tables exist or else create them
         self._create_download_log()
         self._create_increment_log()
-        self._create_meta_json()
-        self._create_data_json()
+        self._create_datasets_json()
+        self._create_synthese_json()
 
         conn.close()
         self._db.dispose()
@@ -331,7 +330,7 @@ class StorePostgresql:
         self._db_url = {
             "drivername": "postgresql+psycopg2",
             "username": self._config.db_user,
-            "password": self._config.db_pw,
+            "password": self._config.db_password,
             "host": self._config.db_host,
             "port": self._config.db_port,
             "database": self._config.db_name,
@@ -344,7 +343,7 @@ class StorePostgresql:
         logger.info(_("Connecting to database %s"), self._config.db_name)
 
         # Connect and set path to include VN import schema
-        self._db = create_engine(URL(**db_url), echo=False)
+        self._db = create_engine(URL(**self._db_url), echo=False)
         self._conn = self._db.connect()
 
         # Get dbtable definition
@@ -357,10 +356,10 @@ class StorePostgresql:
         }
 
         self._table_defs["data"]["metadata"] = self._metadata.tables[
-            dbschema + ".data_json"
+            dbschema + ".synthese_json"
         ]
         self._table_defs["meta"]["metadata"] = self._metadata.tables[
-            dbschema + ".metadata_json"
+            dbschema + ".datasets_json"
         ]
 
         return None
@@ -555,7 +554,7 @@ class StorePostgresql:
 
         return None
 
-    def increment_get(self, site, taxo_group):
+    def increment_get(self, source):
         """Get last increment timestamp from database.
 
         Parameters
@@ -573,9 +572,7 @@ class StorePostgresql:
         metadata = self._metadata.tables[
             self._config.db_schema_import + "." + "increment_log"
         ]
-        stmt = select([metadata.c.last_ts]).where(
-            and_(metadata.c.taxo_group == taxo_group, metadata.c.site == site)
-        )
+        stmt = select([metadata.c.last_ts]).where(metadata.c.source == source)
         result = self._conn.execute(stmt)
         row = result.fetchone()
 
