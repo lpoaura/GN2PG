@@ -51,3 +51,10 @@ Team
     :alt: alternate text
 
 .. _GeoNature: https://geonature.fr/
+
+* Avec le soutien financier la (`DREAL Auvergne-Rhône-Alpes <http://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/>`_).
+
+.. image:: https://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/IMG/png/blocmarque_pref_region_auvergne_rhone_alpes_rvb_web.png
+    :align: center
+    :height: 100px
+    :alt: alternate text
