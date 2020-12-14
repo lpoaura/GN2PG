@@ -22,7 +22,6 @@ Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 
 .. image:: ./Gn2Gn.png
     :align: center
-    :height: 100px
     :alt: Logo DREAL AuRA
 
 
@@ -61,12 +60,59 @@ Init config file
 
 This command init a TOML config file in user home dir, named as you want
 
+Config file is structured as this. ``source`` block can be duplicate as many as needed (on block for each source).
+
+.. code-block:: TOML
+
+    # Gn2Gn configuration file
+
+    # Local db configuration
+    [db]
+    db_host = "localhost"
+    db_port = 5432
+    db_user = "<dbUser>"
+    db_password = "<dbPassword>"
+    db_name = "<dbName>"
+    db_schema_import = "schema"
+        # Additional connection options (optional)
+        [db.db_querystring]
+        sslmode = "prefer"
+
+
+    # Source configuration, 
+    # Ducplicate this block for each source (1 source = 1 export)
+    [[source]]
+    # Source name, will be use to tag stored data in import table
+    name = "Source1"
+    # GeoNature source login
+    user_name = "<monuser>"
+    # GeoNature source password
+    user_password = "<monPwd>"
+    # GeoNature source URL
+    url = "<http://geonature1/>"
+    # GeoNature source Export id
+    export_id = 1
+
+    [[source]]
+    # Source configuration
+    name = "Source2"
+    user_name = "<monuser>"
+    user_password = "<monPwd>"
+    url = "<http://geonature2/>"
+    export_id = 1
+
+
+
 InitDB  Schema and tables
 #########################
 
 .. code-block:: bash
 
     gn2gn_cli --json-tables-create myconfigfile
+
+
+Import datas from geonature 
+###########################
 
 Coming soon...
 
