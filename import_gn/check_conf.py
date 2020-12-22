@@ -92,28 +92,23 @@ class Gn2GnSourceConf:
             self._db_password = config["db"]["db_password"]  # type: str
             self._db_name = config["db"]["db_name"]  # type: str
             self._db_schema_import = config["db"]["db_schema_import"]  # type: str
-            # self._db_querystring = (
-            #     None
-            #     if "db_querystring" not in config["db"]
-            #     else config["db"]["db_querystring"]
-            # )  # type: dict*
             self._db_querystring = coalesce_in_dict(
                 config["db"], "db_querystring", None
-            )  # type: dict*
+            )  # type: dict
             if "tuning" in config:
                 tuning = config["tuning"]
-                self._file_enabled = coalesce_in_dict(tuning, "file_enabled", True)
-                self._db_enabled = coalesce_in_dict(tuning, "db_enabled", True)
+                self._file_enabled = coalesce_in_dict(tuning, "file_enabled", True) # type: bool
+                self._db_enabled = coalesce_in_dict(tuning, "db_enabled", True)  # type: bool
                 self._max_list_length = coalesce_in_dict(
                     tuning, "max_list_length", 1000
-                )
-                self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)
-                self._max_requests = coalesce_in_dict(tuning, "max_requests", 0)
-                self._retry_delay = coalesce_in_dict(tuning, "retry_delay", 5)
+                )  # type: int
+                self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)  # type: int
+                self._max_requests = coalesce_in_dict(tuning, "max_requests", 0) # type: int
+                self._retry_delay = coalesce_in_dict(tuning, "retry_delay", 5) # type: int
                 self._unavailable_delay = coalesce_in_dict(
                     tuning, "unavailable_delay", 600
-                )
-                self._lru_maxsize = coalesce_in_dict(tuning, "lru_maxsize", 32)
+                ) # type: int
+                self._lru_maxsize = coalesce_in_dict(tuning, "lru_maxsize", 32) # type: int
 
         except Exception:  # pragma: no cover
             logger.exception(_(f"Error creating {source} configuration"))
