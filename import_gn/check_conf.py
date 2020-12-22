@@ -52,8 +52,9 @@ _ConfSchema = Schema(
             }
         ],
         Optional("tuning"): {
+            Optional("file_enabled"): bool,
+            Optional("db_enabled"): bool,
             Optional("max_list_length"): int,
-            Optional("max_chunks"): int,
             Optional("max_retry"): int,
             Optional("max_requests"): int,
             Optional("retry_delay"): int,
@@ -101,10 +102,11 @@ class Gn2GnSourceConf:
             )  # type: dict*
             if "tuning" in config:
                 tuning = config["tuning"]
+                self._file_enabled = coalesce_in_dict(tuning, "file_enabled", True)
+                self._db_enabled = coalesce_in_dict(tuning, "db_enabled", True)
                 self._max_list_length = coalesce_in_dict(
                     tuning, "max_list_length", 1000
                 )
-                self._max_chunks = coalesce_in_dict(tuning, "max_chunks", 10)
                 self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)
                 self._max_requests = coalesce_in_dict(tuning, "max_requests", 0)
                 self._retry_delay = coalesce_in_dict(tuning, "retry_delay", 5)
@@ -254,6 +256,24 @@ class Gn2GnSourceConf:
         return self._db_schema_import
 
     @property
+    def db_enabled(self) -> bool:
+        """Page size limit in an API list request.
+
+        Returns:
+            int: Page size
+        """
+        return self._db_enabled
+
+    @property
+    def file_enabled(self) -> bool:
+        """Page size limit in an API list request.
+
+        Returns:
+            int: Page size
+        """
+        return self._file_enabled
+
+    @property
     def max_list_length(self) -> int:
         """Page size limit in an API list request.
 
@@ -261,15 +281,6 @@ class Gn2GnSourceConf:
             int: Page size
         """
         return self._max_list_length
-
-    @property
-    def max_chunks(self) -> int:
-        """Return database import schema
-
-        Returns:
-            int: Database import schema
-        """
-        return self._max_chunks
 
     @property
     def max_retry(self) -> int:
@@ -361,7 +372,7 @@ class Gn2GnConf:
     @property
     def version(self) -> str:
         """Return version."""
-        return metadata.version
+        return __version__
 
     @property
     def source_list(self) -> _ConfType:
