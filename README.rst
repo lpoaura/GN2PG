@@ -116,6 +116,27 @@ Import datas from geonature
 
 Coming soon...
 
+Contributing
+############
+
+All devs must be done in forks. 
+
+Pull requests must be pulled to `dev` branch. For example with this command:
+
+.. code-block:: bash
+
+    gh repo fork --clone lpoaura/gn2gn_client
+
+
+Install project and development requirements (require `poetry <https://python-poetry.org/>`_):
+
+.. code-block:: bash
+
+    poetry install
+
+Make your devs and pull requests.
+
+
 Licence
 =======
 
