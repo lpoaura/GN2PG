@@ -36,11 +36,11 @@ url = "<http://geonature2/>"
 export_id = 1
 
 [tuning]
+# Store json data in files on server
+file_enable = true
 # Max items in an API list request. 
 # Longer lists are split by API in max_list_length chunks.
 max_list_length = 100
-# Max chunks in a request before aborting.
-max_chunks = 10
 # Max retries of API calls before aborting.
 max_retry = 5
 # Maximum number of API requests, for debugging only.
