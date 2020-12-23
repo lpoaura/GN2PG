@@ -8,27 +8,25 @@ import shutil
 import sys
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
-
+from pprint import pprint
 import pkg_resources
 from toml import TomlDecodeError
 
 from . import metadata
+from .store_file import StoreFile
+from .store_all import StoreAll
 from .check_conf import Gn2GnConf
-from .store_postgresql import PostgresqlUtils
+from .download_gn import Synthese, Datasets
+from .store_postgresql import PostgresqlUtils, StorePostgresql
 from .utils import BColors
 from . import _, __version__
 
-# logging.config.dictConfig(my_logging_dict)
 logger = logging.getLogger(__name__)
-# __version__ = metadata.version
 
-
-# coloredlogs.install(
-#     level="DEBUG",
-#     logger=logger,
-#     milliseconds=True,
-#     fmt="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
-# )
+CTRL_DEFS = {
+    "synthese": Synthese,
+    "dataset": Datasets,
+}
 
 
 def arguments(args):
@@ -62,6 +60,23 @@ def arguments(args):
     parser.add_argument(
         "--json-tables-create",
         help=_("Create or recreate json tables"),
+        action="store_true",
+    )
+    download_group = parser.add_mutually_exclusive_group()
+    download_group.add_argument(
+        "--full", help=_("Perform a full download"), action="store_true"
+    )
+    download_group.add_argument(
+        "--update", help=_("Perform an incremental download"), action="store_true"
+    )
+    download_group.add_argument(
+        "--schedule",
+        help=_("Create or modify incremental download schedule"),
+        action="store_true",
+    )
+    parser.add_argument(
+        "--status",
+        help=_("Print downloading status (schedule, errors...)"),
         action="store_true",
     )
     parser.add_argument("file", help="Configuration file name")
@@ -162,6 +177,10 @@ def main(args):
         logger.info("Create, if not exists, json tables")
         manage_pg.create_json_tables()
 
+    if args.full:
+        logger.info("Perform full action")
+        full_download(cfg_ctrl)
+
     return None
 
 
@@ -193,104 +212,38 @@ def init(file: str):
     sys.exit(0)
 
 
-def full_download_1(ctrl, cfg_crtl_list, cfg):
+def full_download_1(ctrl, cfg):
     """Downloads from a single controler."""
     logger = logging.getLogger("transfer_gn")
-    logger.debug(_("Enter full_download_1: %s"), ctrl.__name__)
-    with StorePostgresql(cfg) as store_pg, StoreFile(cfg) as store_f:
-        store_all = StoreAll(cfg, db_backend=store_pg, file_backend=store_f)
+    logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
+    with StorePostgresql(cfg) as store_pg, StoreFile(cfg) as store_file:
+        store_all = StoreAll(cfg, db_backend=store_pg, file_backend=store_file)
         downloader = ctrl(cfg, store_all)
-        if cfg_crtl_list[downloader.name].enabled:
+        if downloader.name == "synthese":
+            downloader.store(method="search")
+        else:
+            downloader.store()
             logger.info(
-                _("%s => Starting download using controler %s"),
-                cfg.site,
-                downloader.name,
-            )
-            if downloader.name == "observations":
-                logger.info(
-                    _("%s => Excluded taxo_groups: %s"), cfg.site, cfg.taxo_exclude
-                )
-                downloader.store(
-                    id_taxo_group=None,
-                    method="search",
-                    by_specie=False,
-                    taxo_groups_ex=cfg.taxo_exclude,
-                    short_version=(1 if cfg.json_format == "short" else 0),
-                )
-            else:
-                downloader.store()
-            logger.info(
-                _("%s => Ending download using controler %s"), cfg.site, downloader.name
+                _(f"{cfg.source} => Ending download using controler {downloader.name}")
             )
 
 
 def full_download(cfg_ctrl):
     """Performs a full download of all sites and controlers,
     based on configuration file."""
-    logger = logging.getLogger("transfer_vn")
-    cfg_crtl_list = cfg_ctrl.ctrl_list
-    cfg_site_list = cfg_ctrl.site_list
-    cfg = list(cfg_site_list.values())[0]
+    logger = logging.getLogger("transfer_gn")
+    logger.info(cfg_ctrl)
+    cfg_source_list = cfg_ctrl.source_list
+    cfg = list(cfg_source_list.values())[0]
 
     logger.info(_("Defining full download jobs"))
-    db_url = {
-        "drivername": "postgresql+psycopg2",
-        "username": cfg.db_user,
-        "password": cfg.db_pw,
-        "host": cfg.db_host,
-        "port": cfg.db_port,
-        "database": "postgres",
-    }
-    jobs_o = Jobs(url=URL(**db_url), nb_executors=cfg.tuning_sched_executors)
-    with jobs_o as jobs:
-        # Cleanup any existing job
-        jobs.start(paused=True)
-        jobs.remove_all_jobs()
-        jobs.resume()
-        # Download field only once
-        jobs.add_job_once(job_fn=full_download_1, args=[Fields, cfg_crtl_list, cfg])
-        # Looping on sites for other controlers
-        for site, cfg in cfg_site_list.items():
-            if cfg.enabled:
-                logger.info(_("Scheduling work for site %s"), cfg.site)
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[Entities, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[Families, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[LocalAdminUnits, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[Observations, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[Observers, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[Places, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[Species, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[TaxoGroup, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[TerritorialUnits, cfg_crtl_list, cfg]
-                )
-                jobs.add_job_once(
-                    job_fn=full_download_1, args=[Validations, cfg_crtl_list, cfg]
-                )
-            else:
-                logger.info(_("Skipping site %s"), site)
-
-        # Wait for jobs to finish
-        time.sleep(1)
-        while jobs.count_jobs() > 0:
-            time.sleep(1)
-        jobs.shutdown()
+    for source, cfg in cfg_source_list.items():
+        if cfg.enable:
+            logger.info(_(f"Scheduling work for site {source}"))
+            # full_download_1(Datasets, cfg)
+            full_download_1(Synthese, cfg)
+        else:
+            logger.info(_(f"Skipping source {source}"))
 
     return None
 
