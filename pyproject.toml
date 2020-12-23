@@ -8,6 +8,7 @@ version = "0.0.1"
 description = "Outil d'import de données entre instances GeoNature (côté client)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 license = "AGPL-3.0-or-later"
+readme = "README.rst"
 classifiers= [
         "Development Status :: 1 - Planning",
         "Environment :: Console",
