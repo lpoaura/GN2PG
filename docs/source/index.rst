@@ -7,6 +7,7 @@ Contents:
    :maxdepth: 2
    :caption: Contents:
 
+   process
    modules
    changelog
 
