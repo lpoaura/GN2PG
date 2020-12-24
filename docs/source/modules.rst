@@ -5,4 +5,3 @@ import_gn
    :maxdepth: 4
 
    import_gn
-   geonature
