@@ -57,14 +57,14 @@ Help
 Init config file
 ################
 
+This command init a TOML config file in user home dir, named as you want. DO NOT SPECIFY PATH!
+
 .. code-block:: bash
 
-    gn2gn_cli --init
+    gn2gn_cli --init <myconfigfile>
 
 
-This command init a TOML config file in user home dir, named as you want
-
-Config file is structured as this. ``source`` block can be duplicate as many as needed (on block for each source).
+Config file is structured as this. ``[[source]]`` block can be duplicate as many as needed (one block for each source).
 
 .. code-block:: TOML
 
