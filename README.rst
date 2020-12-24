@@ -110,18 +110,35 @@ Config file is structured as this. ``source`` block can be duplicate as many as 
 InitDB  Schema and tables
 #########################
 
+To create json tables where datas will be downloaded, run : 
+
 .. code-block:: bash
 
-    gn2gn_cli --json-tables-create myconfigfile
+    gn2gn_cli --json-tables-create <myconfigfile>
 
 
-Import datas from geonature 
-###########################
+Full download
+#############
 
-Coming soon...
+To full download json datas into synthese_json table, run : 
+
+.. code-block:: bash
+
+    gn2gn_cli --full <myconfigfile>
+
+Incremental download
+####################
+
+[WIP] Not yet implemented!
+
+Import datas into GeoNature datas
+#################################
+
+
+[WIP] Not yet implemented!
 
 Contributing
-############
+============
 
 All devs must be done in forks. 
 
