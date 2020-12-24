@@ -2,13 +2,15 @@
 name = "gn2gn_client"
 packages = [
     { include = "import_gn" },
-    { include = "geonature" },
 ]
 version = "0.0.1"
 description = "Outil d'import de données entre instances GeoNature (côté client)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
+maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]
 license = "AGPL-3.0-or-later"
 readme = "README.rst"
+homepage = "https://github.com/lpoaura/gn2gn_client/"
+keywords = ["GeoNature", "Export", "SINP", "opendata", "biodiversity"]
 classifiers= [
         "Development Status :: 1 - Planning",
         "Environment :: Console",
@@ -26,6 +28,7 @@ classifiers= [
 
 [tool.poetry.scripts]
 gn2gn_cli = "import_gn.transfer_gn:run"
+
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -45,6 +48,7 @@ pydata-sphinx-theme = "^0.4.1"
 coverage = "^5.3.1"
 pylint = "^2.6.0"
 mypy = "^0.790"
+tox = "^3.20.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
