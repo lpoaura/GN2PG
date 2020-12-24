@@ -52,8 +52,6 @@ _ConfSchema = Schema(
             }
         ],
         Optional("tuning"): {
-            Optional("file_enabled"): bool,
-            Optional("db_enabled"): bool,
             Optional("max_list_length"): int,
             Optional("max_retry"): int,
             Optional("max_requests"): int,
@@ -83,7 +81,7 @@ class Gn2GnSourceConf:
             self._enable = (
                 True
                 if "enabled" not in config["source"][source]
-                else config["file"]["enabled"]
+                else config["source"][source]["enabled"]
             )  # type: bool
             # Database config
             self._db_host = config["db"]["db_host"]  # type: str
@@ -97,18 +95,22 @@ class Gn2GnSourceConf:
             )  # type: dict
             if "tuning" in config:
                 tuning = config["tuning"]
-                self._file_enabled = coalesce_in_dict(tuning, "file_enabled", True) # type: bool
-                self._db_enabled = coalesce_in_dict(tuning, "db_enabled", True)  # type: bool
                 self._max_list_length = coalesce_in_dict(
                     tuning, "max_list_length", 1000
                 )  # type: int
                 self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)  # type: int
-                self._max_requests = coalesce_in_dict(tuning, "max_requests", 0) # type: int
-                self._retry_delay = coalesce_in_dict(tuning, "retry_delay", 5) # type: int
+                self._max_requests = coalesce_in_dict(
+                    tuning, "max_requests", 0
+                )  # type: int
+                self._retry_delay = coalesce_in_dict(
+                    tuning, "retry_delay", 5
+                )  # type: int
                 self._unavailable_delay = coalesce_in_dict(
                     tuning, "unavailable_delay", 600
-                ) # type: int
-                self._lru_maxsize = coalesce_in_dict(tuning, "lru_maxsize", 32) # type: int
+                )  # type: int
+                self._lru_maxsize = coalesce_in_dict(
+                    tuning, "lru_maxsize", 32
+                )  # type: int
 
         except Exception:  # pragma: no cover
             logger.exception(_(f"Error creating {source} configuration"))
@@ -126,12 +128,21 @@ class Gn2GnSourceConf:
 
     @property
     def name(self) -> str:
-        """Return source name, used to tag data source in db
+        """Return source name
 
         Returns:
             str: Source name
         """
         return self._name
+
+    @property
+    def std_name(self) -> str:
+        """Return a standardized source name, used to tag data source in db
+
+        Returns:
+            str: standardized Source name
+        """
+        return simplify(self._name)
 
     @property
     def user_name(self) -> str:
@@ -249,24 +260,6 @@ class Gn2GnSourceConf:
             str: Database import schema
         """
         return self._db_schema_import
-
-    @property
-    def db_enabled(self) -> bool:
-        """Page size limit in an API list request.
-
-        Returns:
-            int: Page size
-        """
-        return self._db_enabled
-
-    @property
-    def file_enabled(self) -> bool:
-        """Page size limit in an API list request.
-
-        Returns:
-            int: Page size
-        """
-        return self._file_enabled
 
     @property
     def max_list_length(self) -> int:
