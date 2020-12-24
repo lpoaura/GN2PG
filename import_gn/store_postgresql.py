@@ -13,13 +13,13 @@ Properties
 
 """
 import logging
-
 from sqlalchemy import (
     Column,
     DateTime,
     Integer,
     MetaData,
     PrimaryKeyConstraint,
+    UniqueConstraint,
     String,
     Table,
     create_engine,
@@ -29,6 +29,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
 from sqlalchemy.sql import and_
+from datetime import datetime
 
 from . import _, __version__
 
@@ -186,7 +187,6 @@ class PostgresqlUtils:
         """Create download_log table if it does not exist."""
         self._create_table(
             "download_log",
-            Column("uuid", Integer, primary_key=True),
             Column("source", String, nullable=False, index=True),
             Column("controler", String, nullable=False),
             Column("download_ts", DateTime, server_default=func.now(), nullable=False),
@@ -220,29 +220,18 @@ class PostgresqlUtils:
         """Create observations_json table if it does not exist."""
         self._create_table(
             "synthese_json",
-            Column("uuid", UUID, nullable=False, index=True),
             Column("source", String, nullable=False),
+            Column("id_synthese", Integer, nullable=False, index=True),
+            Column("uuid", UUID, index=True),
             Column("item", JSONB, nullable=False),
-            Column("update_ts", Integer, nullable=False),
-            PrimaryKeyConstraint("uuid", "source", name="data_json_pk"),
+            Column("update_ts", DateTime, server_default=func.now(), nullable=False),
+            PrimaryKeyConstraint("id_synthese", "source", name="pk_source_synthese"),
+            UniqueConstraint("source", "uuid", name="unique_source_uuid"),
         )
         return None
 
     def create_json_tables(self):
         """Create all internal and jsonb tables."""
-        # Store to database, if enabled
-        # Initialize interface to Postgresql DB
-        # db_url = {
-        #     "drivername": "postgresql+psycopg2",
-        #     "username": self._config.db_user,
-        #     "password": self._config.db_pw,
-        #     "host": self._config.db_host,
-        #     "port": self._config.db_port,
-        #     "database": self._config.db_name,
-        # }
-        # if self._config.db_querystring:
-        #     db_url["query"]: self._config.db_querystring
-        # Connect to database
         logger.info(
             f"Connecting to {self._config.db_name} database, to finalize creation"
         )
@@ -299,25 +288,23 @@ class PostgresqlUtils:
         """
         result = None
         # Store to database, if enabled
-        if self._config.db_enabled:
-            logger.info(_("Counting datas in database for all sources"))
-            # Connect and set path to include VN import schema
-            logger.info(_("Connecting to database %s"), self._config.db_name)
-            self._db = create_engine(URL(**self._db_url), echo=False)
-            conn = self._db.connect()
-            dbschema = self._config.db_schema_import
-            self._metadata = MetaData(schema=dbschema)
-            # self._metadata.reflect(self._db)
-
-            text = """
+        logger.info(_("Counting datas in database for all sources"))
+        # Connect and set path to include VN import schema
+        logger.info(_("Connecting to database %s"), self._config.db_name)
+        self._db = create_engine(URL(**self._db_url), echo=False)
+        conn = self._db.connect()
+        dbschema = self._config.db_schema_import
+        self._metadata = MetaData(schema=dbschema)
+        # self._metadata.reflect(self._db)
+        text = """
             SELECT source, COUNT(uuid)
                 FROM {}.data_json
                 GROUP BY source;
             """.format(
-                dbschema
-            )
+            dbschema
+        )
 
-            result = conn.execute(text).fetchall()
+        result = conn.execute(text).fetchall()
 
         return result
 
@@ -336,11 +323,11 @@ class StorePostgresql:
             "database": self._config.db_name,
         }
         if self._config.db_querystring:
-            self._db_url["query"]: self._config.db_querystring
+            self._db_url["query"] = self._config.db_querystring
 
         dbschema = self._config.db_schema_import
         self._metadata = MetaData(schema=dbschema)
-        logger.info(_("Connecting to database %s"), self._config.db_name)
+        logger.info(f"Connecting to database {self._config.db_name}")
 
         # Connect and set path to include VN import schema
         self._db = create_engine(URL(**self._db_url), echo=False)
@@ -351,11 +338,11 @@ class StorePostgresql:
 
         # Map Import tables in a single dict for easy reference
         self._table_defs = {
-            "data": {"type": "data", "metadata": None},
+            "synthese": {"type": "synthese", "metadata": None},
             "meta": {"type": "metadata", "metadata": None},
         }
 
-        self._table_defs["data"]["metadata"] = self._metadata.tables[
+        self._table_defs["synthese"]["metadata"] = self._metadata.tables[
             dbschema + ".synthese_json"
         ]
         self._table_defs["meta"]["metadata"] = self._metadata.tables[
@@ -381,7 +368,7 @@ class StorePostgresql:
     # ----------------
     # Internal methods
     # ----------------
-    def _store_simple(self, controler, items_dict):
+    def store(self, controler, items_dict, uuid_key_name="id_perm_sinp"):
         """Write items_dict to database.
 
         Converts each element to JSON and store to database in a tables
@@ -401,25 +388,30 @@ class StorePostgresql:
         """
 
         # Loop on data array to store each element to database
+        logger.debug(f"config {self._config.std_name}")
         logger.info(
             "Storing %d items from %s of source %s",
-            len(items_dict["data"]),
+            len(items_dict),
             controler,
-            self._config.site,
+            self._config.source,
         )
         metadata = self._table_defs[controler]["metadata"]
-        for elem in items_dict["items"]:
+        i = 1
+        for elem in items_dict:
             # Convert to json
-            logger.debug(_("Storing element %s"), elem)
             insert_stmt = insert(metadata).values(
-                uuid=elem["ID_perm_SINP"], source=self._config.source, item=elem
+                id_synthese=elem["id_synthese"],
+                uuid=elem[uuid_key_name],
+                source=self._config.std_name,
+                item=elem,
+                update_ts=datetime.now(),
             )
             do_update_stmt = insert_stmt.on_conflict_do_update(
                 constraint=metadata.primary_key, set_=dict(item=elem)
             )
             self._conn.execute(do_update_stmt)
 
-        return len(items_dict["items"])
+        return len(items_dict)
 
     def _store_observation(self, controler, items_dict):
         """Iterate through observations or forms and store.
@@ -452,7 +444,7 @@ class StorePostgresql:
             # Write observation to database
             store_1_observation(
                 DataItem(
-                    self._config.source,
+                    self._config.std_name,
                     self._table_defs[controler]["metadata"],
                     self._conn,
                     elem,
@@ -467,7 +459,7 @@ class StorePostgresql:
     # External methods
     # ---------------
 
-    def delete_data(self, obs_list):
+    def _delete_data(self, obs_list):
         """Delete observations stored in database.
 
         Parameters
@@ -483,7 +475,7 @@ class StorePostgresql:
         del_count = 0
         # Store to database, if enabled
         logger.info(f"Deleting {len(obs_list)} datas from database")
-        for data in data_list:
+        for data in obs_list:
             nd = self._conn.execute(
                 self._table_defs["data"]["metadata"]
                 .delete()
@@ -499,7 +491,7 @@ class StorePostgresql:
 
         return del_count
 
-    def log(self, site, controler, error_count=0, http_status=0, comment=""):
+    def log(self, source, controler, error_count=0, http_status=0, comment=""):
         """Write download log entries to database.
 
         Parameters
@@ -520,7 +512,7 @@ class StorePostgresql:
             self._config.db_schema_import + "." + "download_log"
         ]
         stmt = metadata.insert().values(
-            source=site,
+            source=self._config.std_name,
             controler=controler,
             error_count=error_count,
             http_status=http_status,

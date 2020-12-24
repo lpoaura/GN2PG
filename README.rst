@@ -140,7 +140,7 @@ Install project and development requirements (require `poetry <https://python-po
 
 Make your devs and pull requests.
 
-Run `gn2gn_cli`command iu dev mode
+Run `gn2gn_cli` command iu dev mode
 
 .. code-block:: bash
 

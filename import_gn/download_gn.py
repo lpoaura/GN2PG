@@ -13,12 +13,12 @@ Properties
 import logging
 from datetime import datetime, timedelta
 
-from geonature.api import SyntheseAPI, DatasetsAPI
-from import_gn.regulator import PID
+from .api import SyntheseAPI, DatasetsAPI
+from .regulator import PID
 
 from . import _, __version__
 
-logger = logging.getLogger("transfer_vn.download_vn")
+logger = logging.getLogger("transfer_gn.download_gn")
 
 
 class DownloadGnException(Exception):
@@ -72,9 +72,9 @@ class DownloadGn:
     # Generic methods
     # ---------------
     def store(self, opt_params_iter=None):
-        """Download from VN by API and store json to file.
+        """Download from GN by API and store json to DB.
 
-        Calls  biolovision_api, convert to json and call backend to store.
+        Calls  GeoNature API, convert to json and call backend to store.
 
         Parameters
         ----------
@@ -91,7 +91,7 @@ class DownloadGn:
             i += 1
             log_msg = _(f"Iteration {i}, opt_params = {opt_params}")
             logger.debug(log_msg)
-            items_dict = self._api_instance.api_list(opt_params=opt_params)
+            items_dict = self._api_instance.get(opt_params)
             # Call backend to store generic log
             self._backend.log(
                 self._config.source,
@@ -101,7 +101,7 @@ class DownloadGn:
                 log_msg,
             )
             # Call backend to store results
-            self._backend.store(self._api_instance.controler, str(i), items_dict)
+            self._backend.store(self._api_instance.controler, items_dict)
 
         return None
 
@@ -118,47 +118,41 @@ class Synthese(DownloadGn):
         super().__init__(config, SyntheseAPI(config), backend, max_retry, max_requests)
         return None
 
-    def _store_search(self):
-        """Download from GeoNature by API search and store json to file."""
-        # GET from API
-        logger.debug(
-            _(
-                f"Getting data from controler {self._api_instance.controler}, using API search"
-            ),
-        )
-        logger.debug(_(f"source : {self._config.name }"))
+    # def _store_single_item(self):
+    #     """Download from GeoNature by API search and store json to file."""
+    #     # GET from API
+    #     logger.debug(
+    #         _(
+    #             f"Getting data from controler {self._api_instance.controler}, using API search"
+    #         ),
+    #     )
+    #     logger.debug(_(f"source : {self._config.name }"))
 
-        # When to start download interval
-        seq = 1
+    #     # When to start download interval
+    #     seq = 1
 
-        q_param = {}
-        items_dict = self._api_instance.api_search(self._config, q_param)
-        # Call backend to store results
-        nb_obs = self._backend.store(
-            self._api_instance.controler,
-            items_dict,
-        )
-        date4log = start_date.strftime("%d/%m/%Y")
-        log_msg = _(
-            f"{self._config.source} => Iter: {seq}, {nb_obs} obs, date: {date4log}, interval: {str(delta_days)}"
-        )
-        # Call backend to store log
-        self._backend.log(
-            self._config.source,
-            self._api_instance.controler,
-            self._api_instance.transfer_errors,
-            self._api_instance.http_status,
-            log_msg,
-        )
-        logger.info(log_msg)
-        seq += 1
-        return None
-
-    def store(self, method="search"):
-        """Download from VN by API and store json to database."""
-        # Get the list of taxo groups to process
-        logger.info(_(f"0 => Downloading data"))
-        return None
+    #     q_param = {}
+    #     items_dict = self._api_instance.api_search(self._config, q_param)
+    #     # Call backend to store results
+    #     nb_obs = self._backend.store(
+    #         self._api_instance.controler,
+    #         items_dict,
+    #     )
+    #     date4log = start_date.strftime("%d/%m/%Y")
+    #     log_msg = _(
+    #         f"{self._config.source} => Iter: {seq}, {nb_obs} obs, date: {date4log}, interval: {str(delta_days)}"
+    #     )
+    #     # Call backend to store log
+    #     self._backend.log(
+    #         self._config.source,
+    #         self._api_instance.controler,
+    #         self._api_instance.transfer_errors,
+    #         self._api_instance.http_status,
+    #         log_msg,
+    #     )
+    #     logger.info(log_msg)
+    #     seq += 1
+    #     return None
 
 
 class Datasets(DownloadGn):

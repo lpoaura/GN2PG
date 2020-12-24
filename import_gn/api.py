@@ -21,6 +21,8 @@ import logging
 import time
 from urllib import parse
 from functools import lru_cache
+from math import floor
+from urllib.parse import urlencode
 
 from typing import Dict
 import requests
@@ -29,7 +31,15 @@ from . import _, __version__
 logger = logging.getLogger("transfer_gn.geonature_api")
 
 
-class GeoNatureAPI:
+class APIException(Exception):
+    """An exception occurred while handling your request."""
+
+
+class HTTPError(APIException):
+    """An HTTP error occurred."""
+
+
+class BaseAPI:
     """Top class, not for direct use. Provides internal and template methods."""
 
     def __init__(self, config, controler, max_retry=None, max_requests=None):
@@ -42,6 +52,7 @@ class GeoNatureAPI:
         self._transfer_errors = 0
         self._http_status = 0
         self._ctrl = controler
+        logger.debug(f"controler is {self._ctrl}")
         url = config.url if config.url[-1:] == "/" else config.url + "/"
         self._api_url = url + "api/"  # API Url
 
@@ -88,7 +99,7 @@ class GeoNatureAPI:
                         break
             else:
                 logger.critical(
-                    f"Get GeoNature modules failedwith status code {m.status_code}, cause: {json.loads(m.content)['msg']}"
+                    f"Get GeoNature modules failed with status code {m.status_code}, cause: {json.loads(m.content)['msg']}"
                 )
         except Exception as e:
             logger.critical(f"Find export module failed, {e}")
@@ -113,3 +124,79 @@ class GeoNatureAPI:
     def controler(self) -> str:
         """Return the controler name."""
         return self._ctrl
+
+    def _url(self, params: dict = None) -> str:
+        """Generate API URL with QueryStrings if params
+
+        Args:
+            params (dict, optional): dict of querystring parameters. Defaults to None.
+
+        Returns:
+            str: export API URL
+        """
+        export_url = (
+            self._api_url
+            + self._export_api_path
+            + "/api/"
+            + str(self._config.export_id)
+        )
+        if params:
+            export_url = export_url + "?" + urlencode(params)
+        return export_url
+
+    def get(self, params, **kwargs):
+        """Query for a single entity of the given controler.
+
+        Calls  /ctrl/id API.
+
+        Parameters
+        ----------
+        id_entity : str
+            entity to retrieve.
+        **kwargs :
+            optional URL parameters, empty by default.
+            See Biolovision API documentation.
+
+        Returns
+        -------
+        json : dict or None
+            dict decoded from json if status OK, else None
+        """
+        params = {}
+        for key, value in kwargs.items():
+            params[key] = value
+        # GET from API
+        session = self._session
+        api_url = self._url(params)
+        data = []
+        r = session.get(
+            url=api_url,
+        )
+        if r.status_code == 200:
+            resp = r.json()
+            total_filtered = resp["total_filtered"]
+            total_pages = floor(total_filtered / resp["limit"])
+            logger.debug(
+                _(
+                    f"API {self._url(params)} contains {total_filtered} data in {total_pages+1} page(s)"
+                )
+            )
+            for p in range(total_pages + 1):
+                params["offset"] = p
+                logger.debug(f"querying url {self._url(params)}")
+                pr = session.get(url=self._url(params))
+                presp = pr.json()
+                items = presp["items"]
+                data += items
+                logger.debug(f"Download page {p}")
+        return data
+
+
+class SyntheseAPI(BaseAPI):
+    def __init__(self, config, max_retry=None, max_requests=None):
+        super().__init__(config, "synthese", max_retry, max_requests)
+
+
+class DatasetsAPI(BaseAPI):
+    def __init__(self, config, max_retry=None, max_requests=None):
+        super().__init__(config, "datasets", max_retry, max_requests)

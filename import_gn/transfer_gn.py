@@ -13,13 +13,15 @@ import pkg_resources
 from toml import TomlDecodeError
 
 from . import metadata
-from .store_file import StoreFile
-from .store_all import StoreAll
+
+# from .store_file import StoreFile
+# from .store_all import StoreAll
 from .check_conf import Gn2GnConf
 from .download_gn import Synthese, Datasets
 from .store_postgresql import PostgresqlUtils, StorePostgresql
 from .utils import BColors
 from . import _, __version__
+from .api import SyntheseAPI
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +168,6 @@ def main(args):
     #     return None
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
-    cfg_source_list
     logger.info(
         f"config file have {len(cfg_source_list)} source(s) wich are : {', '.join([src for src in cfg_source_list.keys()])}"
     )
@@ -215,17 +216,17 @@ def init(file: str):
 def full_download_1(ctrl, cfg):
     """Downloads from a single controler."""
     logger = logging.getLogger("transfer_gn")
-    logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
-    with StorePostgresql(cfg) as store_pg, StoreFile(cfg) as store_file:
-        store_all = StoreAll(cfg, db_backend=store_pg, file_backend=store_file)
-        downloader = ctrl(cfg, store_all)
-        if downloader.name == "synthese":
-            downloader.store(method="search")
-        else:
-            downloader.store()
-            logger.info(
-                _(f"{cfg.source} => Ending download using controler {downloader.name}")
-            )
+    # logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
+    logger.debug(cfg)
+    with StorePostgresql(cfg) as store_pg:
+        downloader = ctrl(cfg, store_pg)
+        logger.debug(
+            _(f"{cfg.source} => Starting download using controler {downloader.name}")
+        )
+        downloader.store()
+        logger.info(
+            _(f"{cfg.source} => Ending download using controler {downloader.name}")
+        )
 
 
 def full_download(cfg_ctrl):
@@ -239,11 +240,11 @@ def full_download(cfg_ctrl):
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
-            logger.info(_(f"Scheduling work for site {source}"))
+            logger.info(_(f"Starting full download for source {source}"))
             # full_download_1(Datasets, cfg)
             full_download_1(Synthese, cfg)
         else:
-            logger.info(_(f"Skipping source {source}"))
+            logger.info(_(f"Source {source} is disabled"))
 
     return None
 
