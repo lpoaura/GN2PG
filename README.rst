@@ -2,8 +2,12 @@
  Gn2Gn Client
 **************
 
-.. image:: https://img.shields.io/badge/python-3.x-yellowgreen
+.. image:: https://img.shields.io/badge/python-3.6+-yellowgreen
    :target: https://www.python.org/
+.. image:: https://img.shields.io/badge/PostgreSQL-10+-blue
+   :target: https://www.postgresql.org/
+.. image:: https://img.shields.io/badge/packaging%20tool-poetry-important
+   :target: https://python-poetry.org/
 .. image:: https://img.shields.io/badge/code%20style-black-black
    :target: https://github.com/psf/black
 .. image:: https://img.shields.io/badge/licence-AGPL--3.0-blue
@@ -135,6 +139,12 @@ Install project and development requirements (require `poetry <https://python-po
     poetry install
 
 Make your devs and pull requests.
+
+Run `gn2gn_cli`command iu dev mode
+
+.. code-block:: bash
+
+    poetry run gn2gn_cli <options>
 
 
 Licence
