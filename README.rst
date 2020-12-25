@@ -36,7 +36,7 @@ Gn2Gn Client can be installed by running ``pip``. It requires Python 3.7.4+ to r
 
 .. code-block:: bash
 
-    python3 -m pip install https://github.com/lpoaura/gn2gn_client/archive/dev.zip
+    pip install gn2gn-client
 
 
 Issues
