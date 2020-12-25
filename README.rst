@@ -157,11 +157,18 @@ Install project and development requirements (require `poetry <https://python-po
 
 Make your devs and pull requests.
 
-Run `gn2gn_cli` command iu dev mode
+Run `gn2gn_cli` command in dev mode
 
 .. code-block:: bash
 
     poetry run gn2gn_cli <options>
+
+Renew requirements file for non poetry developers
+#################################################
+
+.. code-block:: bash
+
+    poetry export -f requirements.txt > requirements.txt
 
 
 Licence
