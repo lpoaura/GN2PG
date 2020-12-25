@@ -83,7 +83,9 @@ class DownloadGn:
 
         """
         # GET from API
-        logger.debug(_(f"Getting items from controler {self._api_instance.controler}"))
+        logger.debug(
+            _(f"Getting items from controler {self._api_instance.controler}")
+        )
         i = 0
         if opt_params_iter is None:
             opt_params_iter = iter([None])
@@ -115,7 +117,9 @@ class Synthese(DownloadGn):
     """
 
     def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(config, SyntheseAPI(config), backend, max_retry, max_requests)
+        super().__init__(
+            config, SyntheseAPI(config), backend, max_retry, max_requests
+        )
         return None
 
     # def _store_single_item(self):
@@ -164,5 +168,7 @@ class Datasets(DownloadGn):
     """
 
     def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(config, DatasetsAPI(config), backend, max_retry, max_requests)
+        super().__init__(
+            config, DatasetsAPI(config), backend, max_retry, max_requests
+        )
         return None

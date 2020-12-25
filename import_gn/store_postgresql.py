@@ -44,7 +44,9 @@ class StorePostgresqlException(Exception):
 class DataItem:
     """Properties of an observation, for writing to DB."""
 
-    def __init__(self, source: str, metadata: str, conn: str, elem: dict) -> None:
+    def __init__(
+        self, source: str, metadata: str, conn: str, elem: dict
+    ) -> None:
         """Item elements
 
         Args:
@@ -175,7 +177,9 @@ class PostgresqlUtils:
 
         """
         # Store to database, if enabled
-        if (self._config.db_schema_import + "." + name) not in self._metadata.tables:
+        if (
+            self._config.db_schema_import + "." + name
+        ) not in self._metadata.tables:
             logger.info("Table %s not found => Creating it", name)
             table = Table(name, self._metadata, *cols)
             table.create(self._db)
@@ -189,7 +193,12 @@ class PostgresqlUtils:
             "download_log",
             Column("source", String, nullable=False, index=True),
             Column("controler", String, nullable=False),
-            Column("download_ts", DateTime, server_default=func.now(), nullable=False),
+            Column(
+                "download_ts",
+                DateTime,
+                server_default=func.now(),
+                nullable=False,
+            ),
             Column("error_count", Integer, index=True),
             Column("http_status", Integer, index=True),
             Column("comment", String),
@@ -201,7 +210,9 @@ class PostgresqlUtils:
         self._create_table(
             "increment_log",
             Column("source", String, primary_key=True, nullable=False),
-            Column("last_ts", DateTime, server_default=func.now(), nullable=False),
+            Column(
+                "last_ts", DateTime, server_default=func.now(), nullable=False
+            ),
         )
         return None
 
@@ -224,8 +235,12 @@ class PostgresqlUtils:
             Column("id_synthese", Integer, nullable=False, index=True),
             Column("uuid", UUID, index=True),
             Column("item", JSONB, nullable=False),
-            Column("update_ts", DateTime, server_default=func.now(), nullable=False),
-            PrimaryKeyConstraint("id_synthese", "source", name="pk_source_synthese"),
+            Column(
+                "update_ts", DateTime, server_default=func.now(), nullable=False
+            ),
+            PrimaryKeyConstraint(
+                "id_synthese", "source", name="pk_source_synthese"
+            ),
             UniqueConstraint("source", "uuid", name="unique_source_uuid"),
         )
         return None
@@ -259,7 +274,9 @@ class PostgresqlUtils:
                 f"Schema {self._config.db_schema_import} owned by {self._config.db_user} successfully created"
             )
         except Exception as e:
-            logger.critical(f"Failed to create {self._config.db_schema_import} schema")
+            logger.critical(
+                f"Failed to create {self._config.db_schema_import} schema"
+            )
             logger.critical("{e}")
 
         # Set path to include VN import schema
@@ -390,10 +407,10 @@ class StorePostgresql:
         # Loop on data array to store each element to database
         logger.debug(f"config {self._config.std_name}")
         logger.info(
-            "Storing %d items from %s of source %s",
+            "Starting to store %d items from %s of source %s",
             len(items_dict),
             controler,
-            self._config.source,
+            self._config.std_name,
         )
         metadata = self._table_defs[controler]["metadata"]
         i = 1
@@ -410,7 +427,9 @@ class StorePostgresql:
                 constraint=metadata.primary_key, set_=dict(item=elem)
             )
             self._conn.execute(do_update_stmt)
-
+        logger.info(
+            f"{i} items have been stored from {controler} of source {self._config.std_name}"
+        )
         return len(items_dict)
 
     def _store_observation(self, controler, items_dict):
@@ -481,7 +500,8 @@ class StorePostgresql:
                 .delete()
                 .where(
                     and_(
-                        self._table_defs["observations"]["metadata"].c.uuid == data,
+                        self._table_defs["observations"]["metadata"].c.uuid
+                        == data,
                         self._table_defs["observations"]["metadata"].c.source
                         == self._config.source,
                     )

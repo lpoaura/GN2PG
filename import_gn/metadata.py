@@ -9,7 +9,9 @@ package = "gn2gn_client"
 project = "GeoNature 2 GeoNature Client application"
 project_no_spaces = project.replace(" ", "")
 version = "0.0.1"
-description = "Outil d'import de données entre instances GeoNature (côté client)"
+description = (
+    "Outil d'import de données entre instances GeoNature (côté client)"
+)
 authors = [
     "@lpofredc",
 ]

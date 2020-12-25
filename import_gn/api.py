@@ -95,7 +95,9 @@ class BaseAPI:
                 for item in modules:
                     if item["module_code"] == "EXPORTS":
                         self._export_api_path = item["module_path"]
-                        logger.debug(f"Export api path is {self._export_api_path}")
+                        logger.debug(
+                            f"Export api path is {self._export_api_path}"
+                        )
                         break
             else:
                 logger.critical(

@@ -51,13 +51,18 @@ def arguments(args):
     )
     out_group = parser.add_mutually_exclusive_group()
     out_group.add_argument(
-        "-vvv", "--verbose", help=_("Increase output verbosity"), action="store_true"
+        "-vvv",
+        "--verbose",
+        help=_("Increase output verbosity"),
+        action="store_true",
     )
     out_group.add_argument(
         "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
     )
     parser.add_argument(
-        "--init", help=_("Initialize the TOML configuration file"), action="store_true"
+        "--init",
+        help=_("Initialize the TOML configuration file"),
+        action="store_true",
     )
     parser.add_argument(
         "--json-tables-create",
@@ -69,7 +74,9 @@ def arguments(args):
         "--full", help=_("Perform a full download"), action="store_true"
     )
     download_group.add_argument(
-        "--update", help=_("Perform an incremental download"), action="store_true"
+        "--update",
+        help=_("Perform an incremental download"),
+        action="store_true",
     )
     download_group.add_argument(
         "--schedule",
@@ -95,7 +102,9 @@ def main(args):
     logger = logging.getLogger("transfer_gn")
     author_strings = []
     for name, email in zip(metadata.authors, metadata.emails):
-        author_strings.append(f"{BColors.BOLD}Author{BColors.ENDC}: {name} <{email}>")
+        author_strings.append(
+            f"{BColors.BOLD}Author{BColors.ENDC}: {name} <{email}>"
+        )
     nl = "\n"
     epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.project}{BColors.ENDC}{BColors.ENDC} {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
 
@@ -195,7 +204,9 @@ def init(file: str):
 
     """
     logger = logging.getLogger("transfer_gn")
-    toml_src = pkg_resources.resource_filename(__name__, "data/gn2gnconfig.toml")
+    toml_src = pkg_resources.resource_filename(
+        __name__, "data/gn2gnconfig.toml"
+    )
     toml_dst = str(Path.home() / file)
     if Path(toml_dst).is_file():
         logger.warning(f"{toml_dst} file already exists")
@@ -221,11 +232,15 @@ def full_download_1(ctrl, cfg):
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
         logger.debug(
-            _(f"{cfg.source} => Starting download using controler {downloader.name}")
+            _(
+                f"{cfg.source} => Starting download using controler {downloader.name}"
+            )
         )
         downloader.store()
         logger.info(
-            _(f"{cfg.source} => Ending download using controler {downloader.name}")
+            _(
+                f"{cfg.source} => Ending download using controler {downloader.name}"
+            )
         )
 
 

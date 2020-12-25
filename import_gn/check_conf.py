@@ -72,7 +72,9 @@ class Gn2GnSourceConf:
             # Source configs
             self._name = config["source"][source]["name"]  # type: str
             self._user_name = config["source"][source]["user_name"]  # type: str
-            self._user_password = config["source"][source]["user_password"]  # type: str
+            self._user_password = config["source"][source][
+                "user_password"
+            ]  # type: str
             self._url = config["source"][source]["url"]  # type: str
             self._id_application = coalesce_in_dict(
                 config["source"][source], "id_application", 3
@@ -89,7 +91,9 @@ class Gn2GnSourceConf:
             self._db_user = config["db"]["db_user"]  # type: str
             self._db_password = config["db"]["db_password"]  # type: str
             self._db_name = config["db"]["db_name"]  # type: str
-            self._db_schema_import = config["db"]["db_schema_import"]  # type: str
+            self._db_schema_import = config["db"][
+                "db_schema_import"
+            ]  # type: str
             self._db_querystring = coalesce_in_dict(
                 config["db"], "db_querystring", None
             )  # type: dict
@@ -98,7 +102,9 @@ class Gn2GnSourceConf:
                 self._max_list_length = coalesce_in_dict(
                     tuning, "max_list_length", 1000
                 )  # type: int
-                self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)  # type: int
+                self._max_retry = coalesce_in_dict(
+                    tuning, "max_retry", 5
+                )  # type: int
                 self._max_requests = coalesce_in_dict(
                     tuning, "max_requests", 0
                 )  # type: int
@@ -336,7 +342,9 @@ class Gn2GnConf:
             self._config = load(p)
             _ConfSchema.validate(self._config)
         except Exception as e:
-            logger.critical(f"Incorrect content in YAML configuration {file} : {e}")
+            logger.critical(
+                f"Incorrect content in YAML configuration {file} : {e}"
+            )
             raise
 
         self._source_list = {}  # type: _ConfType
