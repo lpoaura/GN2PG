@@ -256,15 +256,21 @@ class PostgresqlUtils:
             logger.critical(f"PostgreSQL extensions create failed : {e}")
         # Create import schema
         try:
-            query = f"CREATE SCHEMA IF NOT EXISTS {self._config.db_schema_import} AUTHORIZATION {self._config.db_user}"
+            query = f"""
+            CREATE SCHEMA IF NOT EXISTS {self._config.db_schema_import}
+            AUTHORIZATION {self._config.db_user};
+            """
             logger.debug(f"Execute: {query}")
             conn.execute(query)
             logger.info(
-                f"Schema {self._config.db_schema_import} owned by {self._config.db_user} successfully created"
+                (
+                    f"Schema {self._config.db_schema_import} "
+                    f"owned by {self._config.db_user} successfully created"
+                )
             )
         except Exception as e:
             logger.critical(f"Failed to create {self._config.db_schema_import} schema")
-            logger.critical("{e}")
+            logger.critical(f"{e}")
 
         # Set path to include VN import schema
         dbschema = self._config.db_schema_import

@@ -12,11 +12,10 @@ from pkg_resources import DistributionNotFound, get_distribution
 from . import metadata
 
 try:
-    # Change here if project is renamed and does not equal the package name
     dist_name = "gn2gn_client"
     __version__ = get_distribution(dist_name).version
 except DistributionNotFound:  # pragma: no cover
-    __version__ = "unknown"
+    __version__ = metadata.version
 finally:
     del get_distribution, DistributionNotFound
 

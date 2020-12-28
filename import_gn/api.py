@@ -17,12 +17,7 @@ Exceptions:
 """
 import json
 import logging
-import sys
-import time
-from functools import lru_cache
 from math import floor
-from typing import Dict
-from urllib import parse
 from urllib.parse import urlencode
 
 import requests
@@ -76,11 +71,14 @@ class BaseAPI:
                 logger.info(f"Successfully logged in into GeoNature named {self._config.name}")
             else:
                 logger.critical(
-                    f"Log in GeoNature named {self._config.name} failed with status code {login.status_code}, cause: {json.loads(login.content)['msg']}"
+                    (
+                        f"Log in GeoNature named {self._config.name} failed with status code"
+                        f"{login.status_code}, cause: {json.loads(login.content)['msg']}"
+                    )
                 )
 
-        except:
-            logger.critical("Session failed")
+        except Exception as e:
+            logger.critical(f"Session failed ({e})")
             raise HTTPError(login.status_code)
 
         #  Find exports api path
@@ -96,7 +94,10 @@ class BaseAPI:
                         break
             else:
                 logger.critical(
-                    f"Get GeoNature modules failed with status code {m.status_code}, cause: {json.loads(m.content)['msg']}"
+                    (
+                        f"Get GeoNature modules failed with status code {m.status_code}, "
+                        f"cause: {json.loads(m.content)['msg']}"
+                    )
                 )
         except Exception as e:
             logger.critical(f"Find export module failed, {e}")
@@ -170,7 +171,8 @@ class BaseAPI:
             total_pages = floor(total_filtered / resp["limit"])
             logger.debug(
                 _(
-                    f"API {self._url(params)} contains {total_filtered} data in {total_pages+1} page(s)"
+                    f"API {self._url(params)} contains {total_filtered}"
+                    f" data in {total_pages+1} page(s)"
                 )
             )
             for p in range(total_pages + 1):

@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 """TOML validation tools"""
 import logging
-import sys
 from pathlib import Path
 from typing import Any, Dict
 
 from schema import Optional, Schema
-from toml import TomlDecodeError, load
+from toml import load
 
 from . import _, __version__
 from .utils import coalesce_in_dict, simplify
@@ -341,7 +340,10 @@ class Gn2GnConf:
 
             if source_name in [s for s in self._source_list.keys()]:
                 logger.critical(
-                    f"Source #{i + 1} named \"{source['name']}\" (->{source_name}) already used by another source"
+                    (
+                        f"Source #{i + 1} named \"{source['name']}\" (->{source_name}) "
+                        f"already used by another source"
+                    )
                 )
             self._source_list[source_name] = Gn2GnSourceConf(i, self._config)
             logger.debug(

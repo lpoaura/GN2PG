@@ -11,11 +11,9 @@ Properties
 
 """
 import logging
-from datetime import datetime, timedelta
 
 from . import _, __version__
 from .api import DatasetsAPI, SyntheseAPI
-from .regulator import PID
 
 logger = logging.getLogger("transfer_gn.download_gn")
 
@@ -114,42 +112,6 @@ class Synthese(DownloadGn):
     def __init__(self, config, backend, max_retry=None, max_requests=None):
         super().__init__(config, SyntheseAPI(config), backend, max_retry, max_requests)
         return None
-
-    # def _store_single_item(self):
-    #     """Download from GeoNature by API search and store json to file."""
-    #     # GET from API
-    #     logger.debug(
-    #         _(
-    #             f"Getting data from controler {self._api_instance.controler}, using API search"
-    #         ),
-    #     )
-    #     logger.debug(_(f"source : {self._config.name }"))
-
-    #     # When to start download interval
-    #     seq = 1
-
-    #     q_param = {}
-    #     items_dict = self._api_instance.api_search(self._config, q_param)
-    #     # Call backend to store results
-    #     nb_obs = self._backend.store(
-    #         self._api_instance.controler,
-    #         items_dict,
-    #     )
-    #     date4log = start_date.strftime("%d/%m/%Y")
-    #     log_msg = _(
-    #         f"{self._config.source} => Iter: {seq}, {nb_obs} obs, date: {date4log}, interval: {str(delta_days)}"
-    #     )
-    #     # Call backend to store log
-    #     self._backend.log(
-    #         self._config.source,
-    #         self._api_instance.controler,
-    #         self._api_instance.transfer_errors,
-    #         self._api_instance.http_status,
-    #         log_msg,
-    #     )
-    #     logger.info(log_msg)
-    #     seq += 1
-    #     return None
 
 
 class Datasets(DownloadGn):
