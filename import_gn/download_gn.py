@@ -102,7 +102,8 @@ class DownloadGn:
                 total_len = resp["total_filtered"]
                 progress = progress + len_items
                 logger.info(
-                    f"Storing {len_items} datas ({progress}/{total_len} {(progress/total_len)*100}%)"
+                    f"Storing {len_items} datas ({progress}/{total_len} "
+                    f"{round((progress/total_len)*100,2)}%)"
                     f" from {self._config.name} {self._api_instance.controler}"
                 )
                 self._backend.store(self._api_instance.controler, resp["items"])

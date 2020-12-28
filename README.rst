@@ -57,7 +57,7 @@ Help
 Init config file
 ################
 
-This command init a TOML config file in user home dir, named as you want. DO NOT SPECIFY PATH!
+This command init a TOML config file within ``~/.gn2gn`` hidden directory (in user ``HOME`` directory), named as you want. PLEASE DO NOT SPECIFY PATH!
 
 .. code-block:: bash
 
@@ -107,6 +107,11 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 
 
 
+.. tip::
+
+   You can add variable in source block ``enable = false`` to disable a source
+
+ 
 InitDB  Schema and tables
 #########################
 
@@ -130,6 +135,13 @@ Incremental download
 ####################
 
 [WIP] Not yet implemented!
+
+
+Logs
+####
+
+Log files are stored in ``$HOME/.gn2gn/log`` directory.
+
 
 Import datas into GeoNature datas
 #################################

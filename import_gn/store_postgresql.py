@@ -396,16 +396,10 @@ class StorePostgresql:
         """
 
         # Loop on data array to store each element to database
-        logger.debug(f"config {self._config.std_name}")
-        logger.info(
-            "Starting to store %d items from %s of source %s",
-            len(items_dict),
-            controler,
-            self._config.std_name,
-        )
         metadata = self._table_defs[controler]["metadata"]
         i = 1
         for elem in items_dict:
+            i = i + 1
             # Convert to json
             insert_stmt = insert(metadata).values(
                 id_synthese=elem["id_synthese"],
@@ -415,55 +409,14 @@ class StorePostgresql:
                 update_ts=datetime.now(),
             )
             do_update_stmt = insert_stmt.on_conflict_do_update(
-                constraint=metadata.primary_key, set_=dict(item=elem)
+                constraint=metadata.primary_key,
+                set_=dict(item=elem, update_ts=datetime.now()),
             )
             self._conn.execute(do_update_stmt)
         logger.info(
-            f"{i} items have been stored from {controler} of source {self._config.std_name}"
+            f"{i} items have been stored in db from {controler} of source {self._config.std_name}"
         )
         return len(items_dict)
-
-    def _store_observation(self, controler, items_dict):
-        """Iterate through observations or forms and store.
-
-        Checks if sightings or forms and iterate on each sighting
-        - find insert or update date
-        - simplity data to remove redundant items: dates... (TBD)
-        - add x, y transform to local coordinates
-        - store json in Postgresql
-
-        Parameters
-        ----------
-        controler : str
-            Name of API controler.
-        items_dict : dict
-            Data returned from API call.
-
-        Returns
-        -------
-        int
-            Count of items stored (not exact for observations, due to forms).
-        """
-        # Insert simple sightings, each row contains id, update timestamp and
-        # full json body
-        count_data = 0
-        items = items_dict["items"]
-        logger.debug(_("Storing %d single data"), len(items))
-        for i in range(0, len(items)):
-            elem = items[i]
-            # Write observation to database
-            store_1_observation(
-                DataItem(
-                    self._config.std_name,
-                    self._table_defs[controler]["metadata"],
-                    self._conn,
-                    elem,
-                )
-            )
-            count_data += 1
-
-        logger.debug(f"Stored {count_data} data to database")
-        return count_data
 
     # ---------------
     # External methods
