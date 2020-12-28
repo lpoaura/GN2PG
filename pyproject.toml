@@ -3,7 +3,7 @@ name = "gn2gn_client"
 packages = [
     { include = "import_gn" },
 ]
-version = "0.0.1"
+version = "0.0.2"
 description = "Outil d'import de données entre instances GeoNature (côté client)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]
