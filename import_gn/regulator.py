@@ -8,9 +8,9 @@ Derived from https://github.com/m-lundberg/simple-pid
 """
 
 import logging
+from typing import Tuple, Union
 
 from . import _, __version__
-from typing import Union, Tuple
 
 logger = logging.getLogger("transfer_vn.regulator")
 
@@ -83,9 +83,7 @@ class PID(object):
         # compute error terms
         error = self.setpoint - input_
         self._error_sum += self.ki * error
-        d_input = input_ - (
-            self._last_input if self._last_input is not None else input_
-        )
+        d_input = input_ - (self._last_input if self._last_input is not None else input_)
 
         # compute the proportional term
         self._proportional = self.kp * error

@@ -13,15 +13,17 @@ Properties
 
 """
 import logging
+from datetime import datetime
+
 from sqlalchemy import (
     Column,
     DateTime,
     Integer,
     MetaData,
     PrimaryKeyConstraint,
-    UniqueConstraint,
     String,
     Table,
+    UniqueConstraint,
     create_engine,
     func,
     select,
@@ -29,7 +31,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
 from sqlalchemy.sql import and_
-from datetime import datetime
 
 from . import _, __version__
 
@@ -44,9 +45,7 @@ class StorePostgresqlException(Exception):
 class DataItem:
     """Properties of an observation, for writing to DB."""
 
-    def __init__(
-        self, source: str, metadata: str, conn: str, elem: dict
-    ) -> None:
+    def __init__(self, source: str, metadata: str, conn: str, elem: dict) -> None:
         """Item elements
 
         Args:
@@ -177,9 +176,7 @@ class PostgresqlUtils:
 
         """
         # Store to database, if enabled
-        if (
-            self._config.db_schema_import + "." + name
-        ) not in self._metadata.tables:
+        if (self._config.db_schema_import + "." + name) not in self._metadata.tables:
             logger.info("Table %s not found => Creating it", name)
             table = Table(name, self._metadata, *cols)
             table.create(self._db)
@@ -210,9 +207,7 @@ class PostgresqlUtils:
         self._create_table(
             "increment_log",
             Column("source", String, primary_key=True, nullable=False),
-            Column(
-                "last_ts", DateTime, server_default=func.now(), nullable=False
-            ),
+            Column("last_ts", DateTime, server_default=func.now(), nullable=False),
         )
         return None
 
@@ -235,21 +230,15 @@ class PostgresqlUtils:
             Column("id_synthese", Integer, nullable=False, index=True),
             Column("uuid", UUID, index=True),
             Column("item", JSONB, nullable=False),
-            Column(
-                "update_ts", DateTime, server_default=func.now(), nullable=False
-            ),
-            PrimaryKeyConstraint(
-                "id_synthese", "source", name="pk_source_synthese"
-            ),
+            Column("update_ts", DateTime, server_default=func.now(), nullable=False),
+            PrimaryKeyConstraint("id_synthese", "source", name="pk_source_synthese"),
             UniqueConstraint("source", "uuid", name="unique_source_uuid"),
         )
         return None
 
     def create_json_tables(self):
         """Create all internal and jsonb tables."""
-        logger.info(
-            f"Connecting to {self._config.db_name} database, to finalize creation"
-        )
+        logger.info(f"Connecting to {self._config.db_name} database, to finalize creation")
         self._db = create_engine(URL(**self._db_url), echo=False)
         conn = self._db.connect()
         # Create extensions
@@ -274,9 +263,7 @@ class PostgresqlUtils:
                 f"Schema {self._config.db_schema_import} owned by {self._config.db_user} successfully created"
             )
         except Exception as e:
-            logger.critical(
-                f"Failed to create {self._config.db_schema_import} schema"
-            )
+            logger.critical(f"Failed to create {self._config.db_schema_import} schema")
             logger.critical("{e}")
 
         # Set path to include VN import schema
@@ -362,9 +349,7 @@ class StorePostgresql:
         self._table_defs["synthese"]["metadata"] = self._metadata.tables[
             dbschema + ".synthese_json"
         ]
-        self._table_defs["meta"]["metadata"] = self._metadata.tables[
-            dbschema + ".datasets_json"
-        ]
+        self._table_defs["meta"]["metadata"] = self._metadata.tables[dbschema + ".datasets_json"]
 
         return None
 
@@ -500,8 +485,7 @@ class StorePostgresql:
                 .delete()
                 .where(
                     and_(
-                        self._table_defs["observations"]["metadata"].c.uuid
-                        == data,
+                        self._table_defs["observations"]["metadata"].c.uuid == data,
                         self._table_defs["observations"]["metadata"].c.source
                         == self._config.source,
                     )
@@ -528,9 +512,7 @@ class StorePostgresql:
             Optional comment, in free text.
         """
         # Store to database, if enabled
-        metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "download_log"
-        ]
+        metadata = self._metadata.tables[self._config.db_schema_import + "." + "download_log"]
         stmt = metadata.insert().values(
             source=self._config.std_name,
             controler=controler,
@@ -554,9 +536,7 @@ class StorePostgresql:
             Timestamp of last update of this taxo_group.
         """
         # Store to database, if enabled
-        metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "increment_log"
-        ]
+        metadata = self._metadata.tables[self._config.db_schema_import + "." + "increment_log"]
 
         insert_stmt = insert(metadata).values(source=source, last_ts=last_ts)
         do_update_stmt = insert_stmt.on_conflict_do_update(
@@ -581,9 +561,7 @@ class StorePostgresql:
         """
         row = None
         # Store to database, if enabled
-        metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "increment_log"
-        ]
+        metadata = self._metadata.tables[self._config.db_schema_import + "." + "increment_log"]
         stmt = select([metadata.c.last_ts]).where(metadata.c.source == source)
         result = self._conn.execute(stmt)
         row = result.fetchone()

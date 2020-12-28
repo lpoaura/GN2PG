@@ -9,14 +9,10 @@ package = "gn2gn_client"
 project = "GeoNature 2 GeoNature Client application"
 project_no_spaces = project.replace(" ", "")
 version = "0.0.1"
-description = (
-    "Outil d'import de données entre instances GeoNature (côté client)"
-)
-authors = [
-    "@lpofredc",
-]
+description = "Outil d'import de données entre instances GeoNature (côté client)"
+authors = ["@lpofredc", "@koklk"]
 authors_string = ", ".join(authors)
-emails = ["frederic.cloitre@lpo.fr"]
+emails = ["frederic.cloitre@lpo.fr", "rango@klklker.fr"]
 license = "AGPL-3.0"
 copyright = "2020 " + authors_string
 url = "https://github.com/lpoaura/gn2gn_client"

@@ -9,19 +9,19 @@ import sys
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 from pprint import pprint
+
 import pkg_resources
 from toml import TomlDecodeError
 
-from . import metadata
+from . import _, __version__, metadata
+from .api import SyntheseAPI
 
 # from .store_file import StoreFile
 # from .store_all import StoreAll
 from .check_conf import Gn2GnConf
-from .download_gn import Synthese, Datasets
+from .download_gn import Datasets, Synthese
 from .store_postgresql import PostgresqlUtils, StorePostgresql
 from .utils import BColors
-from . import _, __version__
-from .api import SyntheseAPI
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +56,7 @@ def arguments(args):
         help=_("Increase output verbosity"),
         action="store_true",
     )
-    out_group.add_argument(
-        "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
-    )
+    out_group.add_argument("-q", "--quiet", help=_("Reduce output verbosity"), action="store_true")
     parser.add_argument(
         "--init",
         help=_("Initialize the TOML configuration file"),
@@ -70,9 +68,7 @@ def arguments(args):
         action="store_true",
     )
     download_group = parser.add_mutually_exclusive_group()
-    download_group.add_argument(
-        "--full", help=_("Perform a full download"), action="store_true"
-    )
+    download_group.add_argument("--full", help=_("Perform a full download"), action="store_true")
     download_group.add_argument(
         "--update",
         help=_("Perform an incremental download"),
@@ -100,15 +96,11 @@ def main(args):
       args ([str]): command line parameter list
     """
     logger = logging.getLogger("transfer_gn")
-    author_strings = []
-    for name, email in zip(metadata.authors, metadata.emails):
-        author_strings.append(
-            f"{BColors.BOLD}Author{BColors.ENDC}: {name} <{email}>"
-        )
-    nl = "\n"
-    epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.project}{BColors.ENDC}{BColors.ENDC} {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
+    # author_strings = [
+    #     f"{name} <{email}>" for name, email in zip(metadata.authors, metadata.emails)
+    # ]
 
-{nl.join(author_strings)}
+    epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.project}{BColors.ENDC}{BColors.ENDC} {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
 {BColors.BOLD}URL{BColors.ENDC}: <{metadata.url}>
 """
     print(epilog)
@@ -157,9 +149,7 @@ def main(args):
 
     # Get configuration from file
     if not (Path.home() / args.file).is_file():
-        logger.critical(
-            "Configuration file %s does not exist", str(Path.home() / args.file)
-        )
+        logger.critical("Configuration file %s does not exist", str(Path.home() / args.file))
         return None
     logger.info("Getting configuration data from %s", args.file)
     try:
@@ -204,9 +194,7 @@ def init(file: str):
 
     """
     logger = logging.getLogger("transfer_gn")
-    toml_src = pkg_resources.resource_filename(
-        __name__, "data/gn2gnconfig.toml"
-    )
+    toml_src = pkg_resources.resource_filename(__name__, "data/gn2gnconfig.toml")
     toml_dst = str(Path.home() / file)
     if Path(toml_dst).is_file():
         logger.warning(f"{toml_dst} file already exists")
@@ -231,17 +219,9 @@ def full_download_1(ctrl, cfg):
     logger.debug(cfg)
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
-        logger.debug(
-            _(
-                f"{cfg.source} => Starting download using controler {downloader.name}"
-            )
-        )
+        logger.debug(_(f"{cfg.source} => Starting download using controler {downloader.name}"))
         downloader.store()
-        logger.info(
-            _(
-                f"{cfg.source} => Ending download using controler {downloader.name}"
-            )
-        )
+        logger.info(_(f"{cfg.source} => Ending download using controler {downloader.name}"))
 
 
 def full_download(cfg_ctrl):

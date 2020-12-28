@@ -49,6 +49,7 @@ coverage = "^5.3.1"
 pylint = "^2.6.0"
 mypy = "^0.790"
 tox = "^3.20.1"
+isort = "^5.6.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
