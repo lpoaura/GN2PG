@@ -134,7 +134,9 @@ To full download json datas into synthese_json table, run :
 Incremental download
 ####################
 
-[WIP] Not yet implemented!
+.. warning::
+
+    [WIP] Not yet implemented!
 
 
 Logs
@@ -142,12 +144,14 @@ Logs
 
 Log files are stored in ``$HOME/.gn2gn/log`` directory.
 
-
 Import datas into GeoNature datas
 #################################
 
+.. warning::
 
-[WIP] Not yet implemented!
+    [WIP] Not yet implemented!
+
+
 
 Contributing
 ============
