@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """TOML validation tools"""
+
 import logging
-from pathlib import Path
 from typing import Any, Dict
 
 from schema import Optional, Schema
 from toml import load
 
 from . import _, __version__
+from .env import ENVDIR
 from .utils import coalesce_in_dict, simplify
 
 logger = logging.getLogger("transfer_gn.check_conf")
@@ -90,7 +91,7 @@ class Gn2GnSourceConf:
             self._db_name = config["db"]["db_name"]  # type: str
             self._db_schema_import = config["db"]["db_schema_import"]  # type: str
             self._db_querystring = coalesce_in_dict(
-                config["db"], "db_querystring", None
+                config["db"], "db_querystring", {}
             )  # type: dict
             if "tuning" in config:
                 tuning = config["tuning"]
@@ -216,6 +217,8 @@ class Gn2GnSourceConf:
         Returns:
             dict: Database connection querystrings
         """
+        if "application_name" not in self._db_querystring:
+            self._db_querystring["application_name"] = "gn2gn_cli"
         return self._db_querystring
 
     @property
@@ -319,7 +322,7 @@ class Gn2GnConf:
             file (str): [description]
         """
 
-        p = Path.home() / file
+        p = ENVDIR / file
         if not p.is_file():
             logger.critical(_(f"File {file} does not exist"))
             raise MissingConfigurationFile
