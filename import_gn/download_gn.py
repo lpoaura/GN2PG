@@ -84,20 +84,28 @@ class DownloadGn:
             opt_params_iter = iter([None])
         for opt_params in opt_params_iter:
             i += 1
-            log_msg = _(f"Iteration {i}, opt_params = {opt_params}")
-            logger.debug(log_msg)
-            items_dict = self._api_instance.get(opt_params)
-            # Call backend to store generic log
+            logger.debug(f"opt_params = {opt_params}")
+            pages = self._api_instance.get_page_list(opt_params)
+            i = 1
             self._backend.log(
                 self._config.source,
                 self._api_instance.controler,
                 self._api_instance.transfer_errors,
                 self._api_instance.http_status,
-                log_msg,
+                f"opt_params = {opt_params}",
             )
-            # Call backend to store results
-            self._backend.store(self._api_instance.controler, items_dict)
-
+            progress = 0
+            for p in pages:
+                resp = self._api_instance.get_page(p)
+                items = resp["items"]
+                len_items = len(items)
+                total_len = resp["total_filtered"]
+                progress = progress + len_items
+                logger.info(
+                    f"Storing {len_items} datas ({progress}/{total_len} {(progress/total_len)*100}%)"
+                    f" from {self._config.name} {self._api_instance.controler}"
+                )
+                self._backend.store(self._api_instance.controler, resp["items"])
         return None
 
 

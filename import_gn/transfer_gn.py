@@ -212,7 +212,7 @@ def init(file: str):
     sys.exit(0)
 
 
-def full_download_1(ctrl, cfg):
+def full_download_1source(ctrl, cfg):
     """Downloads from a single controler."""
     logger = logging.getLogger("transfer_gn")
     # logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
@@ -231,13 +231,12 @@ def full_download(cfg_ctrl):
     logger.info(cfg_ctrl)
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
-
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
             logger.info(_(f"Starting full download for source {source}"))
             # full_download_1(Datasets, cfg)
-            full_download_1(Synthese, cfg)
+            full_download_1source(Synthese, cfg)
         else:
             logger.info(_(f"Source {source} is disabled"))
 

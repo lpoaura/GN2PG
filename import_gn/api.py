@@ -137,7 +137,38 @@ class BaseAPI:
             export_url = export_url + "?" + urlencode(params)
         return export_url
 
-    def get(self, params, **kwargs):
+    def get_page_list(self, params, **kwargs):
+        """[summary]
+
+        Args:
+            params ([type]): [description]
+        """
+        params = {}
+        for key, value in kwargs.items():
+            params[key] = value
+        # GET from API
+        session = self._session
+        api_url = self._url(params)
+        r = session.get(
+            url=api_url,
+        )
+        if r.status_code == 200:
+            resp = r.json()
+            total_filtered = resp["total_filtered"]
+            total_pages = floor(total_filtered / resp["limit"])
+            logger.debug(
+                _(
+                    f"API {self._url(params)} contains {total_filtered}"
+                    f" data in {total_pages+1} page(s)"
+                )
+            )
+            page_list = []
+            for p in range(total_pages + 1):
+                params["offset"] = p
+                page_list.append(self._url(params))
+            return page_list
+
+    def get_page(self, page_url, **kwargs):
         """Query for a single entity of the given controler.
 
         Calls  /ctrl/id API.
@@ -155,35 +186,15 @@ class BaseAPI:
         json : dict or None
             dict decoded from json if status OK, else None
         """
-        params = {}
-        for key, value in kwargs.items():
-            params[key] = value
-        # GET from API
-        session = self._session
-        api_url = self._url(params)
-        data = []
-        r = session.get(
-            url=api_url,
-        )
-        if r.status_code == 200:
-            resp = r.json()
-            total_filtered = resp["total_filtered"]
-            total_pages = floor(total_filtered / resp["limit"])
-            logger.debug(
-                _(
-                    f"API {self._url(params)} contains {total_filtered}"
-                    f" data in {total_pages+1} page(s)"
-                )
-            )
-            for p in range(total_pages + 1):
-                params["offset"] = p
-                logger.debug(f"querying url {self._url(params)}")
-                pr = session.get(url=self._url(params))
-                presp = pr.json()
-                items = presp["items"]
-                data += items
-                logger.debug(f"Download page {p}")
-        return data
+        try:
+            logger.info(f"Download page {page_url}")
+            session = self._session
+            pr = session.get(url=page_url)
+            presp = pr.json()
+            return presp
+        except APIException as e:
+            logger.critical(f"Download data from {page_url} failed")
+            logger.critical(f"{str(e)}")
 
 
 class SyntheseAPI(BaseAPI):
