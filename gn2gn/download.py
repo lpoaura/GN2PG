@@ -66,47 +66,35 @@ class DownloadGn:
     # ---------------
     # Generic methods
     # ---------------
-    def store(self, opt_params_iter=None):
-        """Download from GN by API and store json to DB.
+    def store(self) -> None:
+        """Store data into Database
 
-        Calls  GeoNature API, convert to json and call backend to store.
-
-        Parameters
-        ----------
-        opt_params_iter : iterable or None
-            Provides opt_params values.
-
+        Returns:
+            None
         """
-        # GET from API
+
         logger.debug(_(f"Getting items from controler {self._api_instance.controler}"))
-        i = 0
-        if opt_params_iter is None:
-            opt_params_iter = iter([None])
-        for opt_params in opt_params_iter:
-            i += 1
-            logger.debug(f"opt_params = {opt_params}")
-            pages = self._api_instance._page_list(limit=self._config.max_page_length)
-            i = 1
-            self._backend.log(
-                self._config.source,
-                self._api_instance.controler,
-                self._api_instance.transfer_errors,
-                self._api_instance.http_status,
-                f"opt_params = {opt_params}",
+        pages = self._api_instance._page_list(limit=self._config.max_page_length)
+        self._backend.log(
+            self._config.source,
+            self._api_instance.controler,
+            self._api_instance.transfer_errors,
+            self._api_instance.http_status,
+            f"opt_params = {opt_params}",
+        )
+        progress = 0
+        for p in pages:
+            resp = self._api_instance.get_page(p)
+            items = resp["items"]
+            len_items = len(items)
+            total_len = resp["total_filtered"]
+            progress = progress + len_items
+            logger.info(
+                f"Storing {len_items} datas ({progress}/{total_len} "
+                f"{round((progress/total_len)*100,2)}%)"
+                f" from {self._config.name} {self._api_instance.controler}"
             )
-            progress = 0
-            for p in pages:
-                resp = self._api_instance.get_page(p)
-                items = resp["items"]
-                len_items = len(items)
-                total_len = resp["total_filtered"]
-                progress = progress + len_items
-                logger.info(
-                    f"Storing {len_items} datas ({progress}/{total_len} "
-                    f"{round((progress/total_len)*100,2)}%)"
-                    f" from {self._config.name} {self._api_instance.controler}"
-                )
-                self._backend.store_data(self._api_instance.controler, resp["items"])
+            self._backend.store_data(self._api_instance.controler, resp["items"])
         return None
 
 

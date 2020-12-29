@@ -291,13 +291,12 @@ class PostgresqlUtils:
         return None
 
     def count_json_data(self):
-        """Count observations stored in json table, by site and taxonomy.
+        """Count observations stored in json table, by source and type.
 
-        Returns
-        -------
-        dict
-            Count of observations by site and taxonomy.
+        Returns:
+            dict: Count of observations by site and taxonomy.
         """
+
         result = None
         # Store to database, if enabled
         logger.info(_("Counting datas in database for all sources"))
@@ -377,26 +376,23 @@ class StorePostgresql:
     # Internal methods
     # ----------------
     def store_data(
-        self, controler, items_dict, id_key_name="id_synthese", uuid_key_name="id_perm_sinp"
-    ):
+        self,
+        controler: str,
+        items_dict: dict,
+        id_key_name: str = "id_synthese",
+        uuid_key_name: str = "id_perm_sinp",
+    ) -> int:
         """Write items_dict to database.
 
-        Converts each element to JSON and store to database in a tables
-        named from controler.
+        Args:
+            controler (str): Name of API controler.
+            items_dict (dict): Data returned from API call.
+            id_key_name (str, optional): id key name from source. Defaults to "id_synthese".
+            uuid_key_name (str, optional): uuid key name from source. Defaults to "id_perm_sinp".
 
-        Parameters
-        ----------
-        controler : str
-            Name of API controler.
-        items_dict : dict
-            Data returned from API call.
-
-        Returns
-        -------
-        int
-            Count of items stored (not exact for observations, due to forms).
+        Returns:
+            int: items dict length
         """
-
         # Loop on data array to store each element to database
         metadata = self._table_defs[controler]["metadata"]
         i = 0
@@ -458,22 +454,27 @@ class StorePostgresql:
 
         return del_count
 
-    def log(self, source, controler, error_count=0, http_status=0, comment=""):
+    def log(
+        self,
+        source: str,
+        controler: str,
+        error_count: int = 0,
+        http_status: int = 0,
+        comment: str = "",
+    ):
         """Write download log entries to database.
 
-        Parameters
-        ----------
-        source : str
-            GeoNature source name.
-        controler : str
-            Name of API controler.
-        error_count : integer
-            Number of errors during download.
-        http_status : integer
-            HTTP status of latest download.
-        comment : str
-            Optional comment, in free text.
+        Args:
+            source (str): GeoNature source name.
+            controler (str): Name of API controler.
+            error_count (int, optional): Number of errors during download. Defaults to 0.
+            http_status (int, optional):  HTTP status of latest download. Defaults to 0.
+            comment (str, optional): Optional comment, in free text.. Defaults to "".
+
+        Returns:
+            None
         """
+
         # Store to database, if enabled
         metadata = self._metadata.tables[self._config.db_schema_import + "." + "download_log"]
         stmt = metadata.insert().values(
@@ -487,16 +488,15 @@ class StorePostgresql:
 
         return None
 
-    def increment_log(self, source, last_ts):
+    def increment_log(self, source: str, last_ts: datetime) -> None:
         """Write last increment timestamp to database.
 
-        Parameters
-        ----------
-        source : str
-            GeoNature source name.
+        Args:
+            source (str): GeoNature source name.
+            last_ts (datetime): Timestamp of last update.
 
-        last_ts : timestamp
-            Timestamp of last update of this taxo_group.
+        Returns:
+            None
         """
         # Store to database, if enabled
         metadata = self._metadata.tables[self._config.db_schema_import + "." + "increment_log"]
@@ -508,28 +508,3 @@ class StorePostgresql:
         self._conn.execute(do_update_stmt)
 
         return None
-
-    def increment_get(self, source):
-        """Get last increment timestamp from database.
-
-        Parameters
-        ----------
-        source : str
-            GeoNature source name.
-
-        Returns
-        -------
-        timestamp
-            Timestamp of last update of this taxo_group.
-        """
-        row = None
-        # Store to database, if enabled
-        metadata = self._metadata.tables[self._config.db_schema_import + "." + "increment_log"]
-        stmt = select([metadata.c.last_ts]).where(metadata.c.source == source)
-        result = self._conn.execute(stmt)
-        row = result.fetchone()
-
-        if row is None:
-            return None
-        else:
-            return row[0]

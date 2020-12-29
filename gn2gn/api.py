@@ -169,16 +169,16 @@ class BaseAPI:
                 page_list.append(self._url(params))
             return page_list
 
-    def get_page(self, page_url):
-        """[summary]
+    def get_page(self, page_url: str) -> dict:
+        """Get data from one API page
 
         Args:
-            page_url ([type]): [description]
-            **kwargs (str):
+            page_url (str): page URL
 
         Returns:
-            [type]: [description]
+            dict: Datas as dict
         """
+
         try:
             logger.info(f"Download page {page_url}")
             session = self._session

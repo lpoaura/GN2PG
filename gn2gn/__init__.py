@@ -10,7 +10,6 @@ import coloredlogs
 from pkg_resources import DistributionNotFound, get_distribution
 
 from . import metadata
-from .env import LOGDIR
 
 try:
     dist_name = "gn2gn_client"

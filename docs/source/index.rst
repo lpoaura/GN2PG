@@ -44,3 +44,6 @@ Contents
    * :ref:`genindex`
    * :ref:`modindex`
    * :ref:`search`
+
+
+.. _GeoNature: https://geonature.fr/
