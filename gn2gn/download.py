@@ -13,7 +13,7 @@ Properties
 import logging
 
 from . import _, __version__
-from .api import DatasetsAPI, SyntheseAPI
+from .api import DataAPI, DatasetsAPI
 
 logger = logging.getLogger("transfer_gn.download_gn")
 
@@ -30,9 +30,7 @@ class DownloadGn:
     """Top class, not for direct use.
     Provides internal and template methods."""
 
-    def __init__(
-        self, config, api_instance, backend, max_retry=None, max_requests=None
-    ):
+    def __init__(self, config, api_instance, backend, max_retry=None, max_requests=None):
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
@@ -87,7 +85,7 @@ class DownloadGn:
         for opt_params in opt_params_iter:
             i += 1
             logger.debug(f"opt_params = {opt_params}")
-            pages = self._api_instance._page_list(opt_params)
+            pages = self._api_instance._page_list(limit=self._config.max_page_length)
             i = 1
             self._backend.log(
                 self._config.source,
@@ -108,11 +106,11 @@ class DownloadGn:
                     f"{round((progress/total_len)*100,2)}%)"
                     f" from {self._config.name} {self._api_instance.controler}"
                 )
-                self._backend.store(self._api_instance.controler, resp["items"])
+                self._backend.store_data(self._api_instance.controler, resp["items"])
         return None
 
 
-class Synthese(DownloadGn):
+class Data(DownloadGn):
     """Implement store from observations controler.
 
     Methods
@@ -121,7 +119,7 @@ class Synthese(DownloadGn):
     """
 
     def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(config, SyntheseAPI(config), backend, max_retry, max_requests)
+        super().__init__(config, DataAPI(config), backend, max_retry, max_requests)
         return None
 
 

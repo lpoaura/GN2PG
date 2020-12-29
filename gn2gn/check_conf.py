@@ -49,10 +49,11 @@ _ConfSchema = Schema(
                 "export_id": int,
                 Optional("id_application"): int,
                 Optional("enable"): bool,
+                Optional("data_type"): str,
             }
         ],
         Optional("tuning"): {
-            Optional("max_list_length"): int,
+            Optional("max_page_length"): int,
             Optional("max_retry"): int,
             Optional("max_requests"): int,
             Optional("retry_delay"): int,
@@ -77,6 +78,9 @@ class Gn2GnSourceConf:
             self._id_application = coalesce_in_dict(
                 config["source"][source], "id_application", 3
             )  # type: int
+            self._data_type = coalesce_in_dict(
+                config["source"][source], "data_type", "synthese"
+            )  # type: str
             self._export_id = config["source"][source]["export_id"]  # type: int
             self._enable = (
                 True
@@ -95,8 +99,8 @@ class Gn2GnSourceConf:
             )  # type: dict
             if "tuning" in config:
                 tuning = config["tuning"]
-                self._max_list_length = coalesce_in_dict(
-                    tuning, "max_list_length", 1000
+                self._max_page_length = coalesce_in_dict(
+                    tuning, "max_page_length", 1000
                 )  # type: int
                 self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)  # type: int
                 self._max_requests = coalesce_in_dict(tuning, "max_requests", 0)  # type: int
@@ -184,6 +188,16 @@ class Gn2GnSourceConf:
         return self._export_id
 
     @property
+    def data_type(self) -> int:
+        """Return data type (eg. "synthese" or any other type you want), used trigger with conditions, if "synthese",
+        then insert data into "gn_synthese.synthese" table
+
+        Returns:
+            str: Data type
+        """
+        return self._data_type.lower()
+
+    @property
     def enable(self) -> bool:
         """Return flag to enable or not source
 
@@ -258,13 +272,13 @@ class Gn2GnSourceConf:
         return self._db_schema_import
 
     @property
-    def max_list_length(self) -> int:
+    def max_page_length(self) -> int:
         """Page size limit in an API list request.
 
         Returns:
             int: Page size
         """
-        return self._max_list_length
+        return self._max_page_length
 
     @property
     def max_retry(self) -> int:
