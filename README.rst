@@ -20,13 +20,13 @@ Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 .. contents:: Topics
 
 .. warning::
-    Actually not usable, in active development.
+    Actually in development.
 
 
 
-.. image:: ./Gn2Gn.png
+.. image:: ./docs/source/_static/src_gn2gn.png
     :align: center
-    :alt: Logo DREAL AuRA
+    :alt: Project logo
 
 
 Project Setup
