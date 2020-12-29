@@ -2,9 +2,9 @@
  Gn2Gn Client
 **************
 
-.. image:: https://img.shields.io/badge/python-3.6#-yellowgreen
+.. image:: https://img.shields.io/badge/python-3.7+-yellowgreen
    :target: https://www.python.org/
-.. image:: https://img.shields.io/badge/PostgreSQL-10#-blue
+.. image:: https://img.shields.io/badge/PostgreSQL-10+-blue
    :target: https://www.postgresql.org/
 .. image:: https://img.shields.io/badge/packaging%20tool-poetry-important
    :target: https://python-poetry.org/
