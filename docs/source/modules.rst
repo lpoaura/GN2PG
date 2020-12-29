@@ -1,5 +1,5 @@
-gn2gn
-=====
+Source code documentation
+=========================
 
 .. toctree::
    :maxdepth: 4

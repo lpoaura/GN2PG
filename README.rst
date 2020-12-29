@@ -48,14 +48,14 @@ HowTo
 =====
 
 Help
-####
+++++
 
 .. code-block:: bash
 
     gn2gn_cli --help
 
 Init config file
-################
+++++++++++++++++
 
 This command init a TOML config file within ``~/.gn2gn`` hidden directory (in user ``HOME`` directory), named as you want. PLEASE DO NOT SPECIFY PATH!
 
@@ -113,7 +113,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 
  
 InitDB  Schema and tables
-#########################
++++++++++++++++++++++++++
 
 To create json tables where datas will be downloaded, run : 
 
@@ -123,7 +123,7 @@ To create json tables where datas will be downloaded, run :
 
 
 Full download
-#############
++++++++++++++
 
 To full download json datas into synthese_json table, run : 
 
@@ -132,7 +132,7 @@ To full download json datas into synthese_json table, run :
     gn2gn_cli --full <myconfigfile>
 
 Incremental download
-####################
+++++++++++++++++++++
 
 .. warning::
 
@@ -140,12 +140,12 @@ Incremental download
 
 
 Logs
-####
+++++
 
 Log files are stored in ``$HOME/.gn2gn/log`` directory.
 
 Import datas into GeoNature datas
-#################################
++++++++++++++++++++++++++++++++++
 
 .. warning::
 
