@@ -99,7 +99,7 @@ msgstr ""
 msgid "Scheduling work for site %s"
 msgstr ""
 
-#: import_gn/transfer_gn.py:287
+#: import_gn/main.py:287
 msgid "Skipping site %s"
 msgstr ""
 

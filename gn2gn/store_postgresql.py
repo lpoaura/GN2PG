@@ -116,9 +116,7 @@ def store_1_observation(item: dict) -> None:
     # each row contains uniq_id, update timestamp and full json body
     elem = item.elem
     uniq_id = elem["ID_perm_SINP"]
-    logger.debug(
-        f"Storing observation {uniq_id} to database",
-    )
+    logger.debug(f"Storing observation {uniq_id} to database",)
     # Find last update timestamp
     if "Date_modification" in elem:
         update_date = elem["Date_modification"]
@@ -129,10 +127,7 @@ def store_1_observation(item: dict) -> None:
     metadata = item.metadata
     source = item.source
     insert_stmt = insert(metadata).values(
-        uuid=uniq_id,
-        source=source,
-        update_ts=update_date,
-        item=elem,
+        uuid=uniq_id, source=source, update_ts=update_date, item=elem,
     )
     do_update_stmt = insert_stmt.on_conflict_do_update(
         constraint=metadata.primary_key,
@@ -190,12 +185,7 @@ class PostgresqlUtils:
             "download_log",
             Column("source", String, nullable=False, index=True),
             Column("controler", String, nullable=False),
-            Column(
-                "download_ts",
-                DateTime,
-                server_default=func.now(),
-                nullable=False,
-            ),
+            Column("download_ts", DateTime, server_default=func.now(), nullable=False,),
             Column("error_count", Integer, index=True),
             Column("http_status", Integer, index=True),
             Column("comment", String),
@@ -238,7 +228,9 @@ class PostgresqlUtils:
 
     def create_json_tables(self):
         """Create all internal and jsonb tables."""
-        logger.info(f"Connecting to {self._config.db_name} database, to finalize creation")
+        logger.info(
+            f"Connecting to {self._config.db_name} database, to finalize creation"
+        )
         self._db = create_engine(URL(**self._db_url), echo=False)
         conn = self._db.connect()
         # Create extensions
@@ -355,7 +347,9 @@ class StorePostgresql:
         self._table_defs["synthese"]["metadata"] = self._metadata.tables[
             dbschema + ".synthese_json"
         ]
-        self._table_defs["meta"]["metadata"] = self._metadata.tables[dbschema + ".datasets_json"]
+        self._table_defs["meta"]["metadata"] = self._metadata.tables[
+            dbschema + ".datasets_json"
+        ]
 
         return None
 
@@ -471,7 +465,9 @@ class StorePostgresql:
             Optional comment, in free text.
         """
         # Store to database, if enabled
-        metadata = self._metadata.tables[self._config.db_schema_import + "." + "download_log"]
+        metadata = self._metadata.tables[
+            self._config.db_schema_import + "." + "download_log"
+        ]
         stmt = metadata.insert().values(
             source=self._config.std_name,
             controler=controler,
@@ -495,7 +491,9 @@ class StorePostgresql:
             Timestamp of last update of this taxo_group.
         """
         # Store to database, if enabled
-        metadata = self._metadata.tables[self._config.db_schema_import + "." + "increment_log"]
+        metadata = self._metadata.tables[
+            self._config.db_schema_import + "." + "increment_log"
+        ]
 
         insert_stmt = insert(metadata).values(source=source, last_ts=last_ts)
         do_update_stmt = insert_stmt.on_conflict_do_update(
@@ -520,7 +518,9 @@ class StorePostgresql:
         """
         row = None
         # Store to database, if enabled
-        metadata = self._metadata.tables[self._config.db_schema_import + "." + "increment_log"]
+        metadata = self._metadata.tables[
+            self._config.db_schema_import + "." + "increment_log"
+        ]
         stmt = select([metadata.c.last_ts]).where(metadata.c.source == source)
         result = self._conn.execute(stmt)
         row = result.fetchone()

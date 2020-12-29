@@ -28,12 +28,7 @@ coloredlogs.DEFAULT_FIELD_STYLES["module"] = {"color": "blue"}
 my_logging_dict = {
     "version": 1,
     "disable_existing_loggers": True,  # set True to suppress existing loggers from other modules
-    "loggers": {
-        "root": {
-            "level": "DEBUG",
-            "handlers": ["console", "file"],
-        },
-    },
+    "loggers": {"root": {"level": "DEBUG", "handlers": ["console", "file"],},},
     "formatters": {
         "colored_console": {
             "()": "coloredlogs.ColoredFormatter",
@@ -76,6 +71,6 @@ coloredlogs.install(
 
 # Install gettext for any file in the application
 localedir = Path(__file__).resolve().parent / "locale"
-gettext.bindtextdomain("import_gn", str(localedir))
-gettext.textdomain("import_gn")
+gettext.bindtextdomain("gn2gn", str(localedir))
+gettext.textdomain("gn2gn")
 _ = gettext.gettext

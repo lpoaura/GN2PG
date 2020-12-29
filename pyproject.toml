@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "gn2gn_client"
 packages = [
-    { include = "import_gn" },
+    { include = "gn2gn" },
 ]
 version = "0.0.2"
 description = "Outil d'import de données entre instances GeoNature (côté client)"
@@ -27,7 +27,7 @@ classifiers= [
     ]
 
 [tool.poetry.scripts]
-gn2gn_cli = "import_gn.transfer_gn:run"
+gn2gn_cli = "gn2gn.main:run"
 
 
 [tool.poetry.dependencies]

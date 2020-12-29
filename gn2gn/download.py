@@ -30,7 +30,9 @@ class DownloadGn:
     """Top class, not for direct use.
     Provides internal and template methods."""
 
-    def __init__(self, config, api_instance, backend, max_retry=None, max_requests=None):
+    def __init__(
+        self, config, api_instance, backend, max_retry=None, max_requests=None
+    ):
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
@@ -85,7 +87,7 @@ class DownloadGn:
         for opt_params in opt_params_iter:
             i += 1
             logger.debug(f"opt_params = {opt_params}")
-            pages = self._api_instance.get_page_list(opt_params)
+            pages = self._api_instance._page_list(opt_params)
             i = 1
             self._backend.log(
                 self._config.source,

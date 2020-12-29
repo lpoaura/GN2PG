@@ -9,10 +9,8 @@ Properties:
 
 Exceptions:
 
-- BiolovisionApiException    - General exception
+- APIException    - General exception
 - HTTPError                  - HTTP protocol error
-- MaxChunksError             - Too many chunks returned from API calls
-- IncorrectParameter         - Incorrect or missing parameter
 
 """
 import json
@@ -36,7 +34,7 @@ class HTTPError(APIException):
 
 
 class BaseAPI:
-    """Top class, not for direct use. Provides internal and template methods."""
+    """Top class, not for direct use. Provides internal and template methods to use GeoNature API."""
 
     def __init__(self, config, controler, max_retry=None, max_requests=None):
         self._config = config
@@ -62,13 +60,12 @@ class BaseAPI:
                 "id_application": config.id_application,
             }
         )
-        login = self._session.post(
-            self._api_url + "auth/login",
-            data=auth_payload,
-        )
+        login = self._session.post(self._api_url + "auth/login", data=auth_payload,)
         try:
             if login.status_code == 200:
-                logger.info(f"Successfully logged in into GeoNature named {self._config.name}")
+                logger.info(
+                    f"Successfully logged in into GeoNature named {self._config.name}"
+                )
             else:
                 logger.critical(
                     (
@@ -84,7 +81,9 @@ class BaseAPI:
         #  Find exports api path
         try:
             m = self._session.get(self._api_url + "gn_commons/modules")
-            logger.info(_(f"Modules API status code is {m.status_code} for url {m.url}"))
+            logger.info(
+                _(f"Modules API status code is {m.status_code} for url {m.url}")
+            )
             if m.status_code == 200:
                 modules = json.loads(m.content)
                 for item in modules:
@@ -132,16 +131,24 @@ class BaseAPI:
         Returns:
             str: export API URL
         """
-        export_url = self._api_url + self._export_api_path + "/api/" + str(self._config.export_id)
+        export_url = (
+            self._api_url
+            + self._export_api_path
+            + "/api/"
+            + str(self._config.export_id)
+        )
         if params:
             export_url = export_url + "?" + urlencode(params)
         return export_url
 
-    def get_page_list(self, params, **kwargs):
-        """[summary]
+    def _page_list(self, **kwargs) -> list:
+        """List offset pages to download data, based on API "total_filtered" and "limit" values
 
         Args:
-            params ([type]): [description]
+            **kwargs : Keyword args to filter data from API (cf. swagger API doc)
+
+        Returns:
+            list: url page list
         """
         params = {}
         for key, value in kwargs.items():
@@ -149,9 +156,7 @@ class BaseAPI:
         # GET from API
         session = self._session
         api_url = self._url(params)
-        r = session.get(
-            url=api_url,
-        )
+        r = session.get(url=api_url,)
         if r.status_code == 200:
             resp = r.json()
             total_filtered = resp["total_filtered"]
@@ -168,23 +173,15 @@ class BaseAPI:
                 page_list.append(self._url(params))
             return page_list
 
-    def get_page(self, page_url, **kwargs):
-        """Query for a single entity of the given controler.
+    def get_page(self, page_url):
+        """[summary]
 
-        Calls  /ctrl/id API.
+        Args:
+            page_url ([type]): [description]
+            **kwargs (str):
 
-        Parameters
-        ----------
-        id_entity : str
-            entity to retrieve.
-        **kwargs :
-            optional URL parameters, empty by default.
-            See Biolovision API documentation.
-
-        Returns
-        -------
-        json : dict or None
-            dict decoded from json if status OK, else None
+        Returns:
+            [type]: [description]
         """
         try:
             logger.info(f"Download page {page_url}")
