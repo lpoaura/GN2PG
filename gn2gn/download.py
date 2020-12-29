@@ -80,7 +80,6 @@ class DownloadGn:
             self._api_instance.controler,
             self._api_instance.transfer_errors,
             self._api_instance.http_status,
-            f"opt_params = {opt_params}",
         )
         progress = 0
         for p in pages:
