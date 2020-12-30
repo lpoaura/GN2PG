@@ -15,6 +15,7 @@ Properties
 import logging
 from datetime import datetime
 
+from psycopg2.errors import ForeignKeyViolation
 from sqlalchemy import (
     Column,
     DateTime,
@@ -23,10 +24,9 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
     String,
     Table,
-    UniqueConstraint,
     create_engine,
+    exc,
     func,
-    select,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
@@ -212,6 +212,19 @@ class PostgresqlUtils:
         )
         return None
 
+    def _create_error_log(self):
+        """Create error_log table if table does not exist."""
+        self._create_table(
+            "error_log",
+            Column("source", String, nullable=False),
+            Column("id_data", Integer, nullable=False, index=True),
+            Column("controler", String, nullable=False),
+            Column("last_ts", DateTime, server_default=func.now(), nullable=False),
+            Column("item", JSONB),
+            Column("error", String),
+        )
+        return None
+
     def _create_datasets_json(self):
         """Create entities_json table if it does not exist."""
         self._create_table(
@@ -282,6 +295,7 @@ class PostgresqlUtils:
         # Check if tables exist or else create them
         self._create_download_log()
         self._create_increment_log()
+        self._create_error_log()
         self._create_datasets_json()
         self._create_data_json()
 
@@ -396,25 +410,36 @@ class StorePostgresql:
         # Loop on data array to store each element to database
         metadata = self._table_defs[controler]["metadata"]
         i = 0
+        ne = 0
         for elem in items_dict:
-            i = i + 1
-            # Convert to json
-            insert_stmt = insert(metadata).values(
-                id_data=elem[id_key_name],
-                controler=controler,
-                type=self._config.data_type,
-                uuid=elem[uuid_key_name],
-                source=self._config.std_name,
-                item=elem,
-                update_ts=datetime.now(),
-            )
-            do_update_stmt = insert_stmt.on_conflict_do_update(
-                constraint=metadata.primary_key,
-                set_=dict(item=elem, update_ts=datetime.now()),
-            )
-            self._conn.execute(do_update_stmt)
+            try:
+                i = i + 1
+                # Convert to json
+                insert_stmt = insert(metadata).values(
+                    id_data=elem[id_key_name],
+                    controler=controler,
+                    type=self._config.data_type,
+                    uuid=elem[uuid_key_name],
+                    source=self._config.std_name,
+                    item=elem,
+                    update_ts=datetime.now(),
+                )
+                do_update_stmt = insert_stmt.on_conflict_do_update(
+                    constraint=metadata.primary_key,
+                    set_=dict(item=elem, update_ts=datetime.now()),
+                )
+                self._conn.execute(do_update_stmt)
+            except exc.IntegrityError as error:
+                assert isinstance(error.orig, ForeignKeyViolation)  # proves the original exception
+                # raise StorePostgresqlException from error
+                ne = ne + 1
+                self.error_log(controler, elem, str(error))
+                logger.critical(
+                    f"One error occured for data from source {self._config.std_name} whith "
+                    f"{id_key_name} = {elem[id_key_name]}"
+                )
         logger.info(
-            f"{i} items have been stored in db from {controler} of source {self._config.std_name}"
+            f"{i} items have been stored in db from {controler} of source {self._config.std_name} ({ne} error occured)"
         )
         return len(items_dict)
 
@@ -506,5 +531,27 @@ class StorePostgresql:
             constraint=metadata.primary_key, set_=dict(last_ts=last_ts)
         )
         self._conn.execute(do_update_stmt)
+
+        return None
+
+    def error_log(
+        self,
+        controler: str,
+        item: dict,
+        error: str,
+        id_key_name: str = "id_synthese",
+        last_ts: datetime = datetime.now(),
+    ) -> None:
+
+        metadata = self._metadata.tables[self._config.db_schema_import + "." + "error_log"]
+        insert_stmt = insert(metadata).values(
+            source=self._config.std_name,
+            controler=controler,
+            id_data=item[id_key_name],
+            item=item,
+            last_ts=last_ts,
+            error=error,
+        )
+        self._conn.execute(insert_stmt)
 
         return None
