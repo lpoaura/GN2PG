@@ -89,6 +89,40 @@ $$
 
 COMMENT ON FUNCTION gn2gn_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT) IS 'function to basically create acquisition framework';
 
+/* Sources */
+
+
+DROP FUNCTION IF EXISTS gn2gn_import.fct_c_get_or_insert_source(_source TEXT);
+
+CREATE OR REPLACE FUNCTION gn2gn_import.fct_c_get_or_insert_source(_source TEXT) RETURNS INTEGER
+AS
+$$
+DECLARE
+    the_source_id INT ;
+BEGIN
+    INSERT INTO
+        gn_synthese.t_sources(name_source)
+    SELECT
+        _source
+    where
+        not exists(
+                select 1
+                from
+                    gn_synthese.t_sources
+                where name_source = _source
+            );
+    SELECT id_source
+    into the_source_id
+    FROM gn_synthese.t_sources
+    WHERE name_source = _source;
+
+    RETURN the_source_id;
+END
+$$
+    LANGUAGE plpgsql;
+
+
+COMMENT ON FUNCTION gn2gn_import.fct_c_get_or_insert_source(_source TEXT) IS 'function to basically create new sources';
 
 /* UPSERT INTO Synthese */
 
