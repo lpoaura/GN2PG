@@ -84,8 +84,8 @@ class Gn2GnSourceConf:
             self._export_id = config["source"][source]["export_id"]  # type: int
             self._enable = (
                 True
-                if "enabled" not in config["source"][source]
-                else config["source"][source]["enabled"]
+                if "enable" not in config["source"][source]
+                else config["source"][source]["enable"]
             )  # type: bool
             # Database config
             self._db_host = config["db"]["db_host"]  # type: str
