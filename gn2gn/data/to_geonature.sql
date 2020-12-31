@@ -150,7 +150,7 @@ COMMENT ON FUNCTION gn2gn_import.fct_c_get_id_nomenclature_from_label(_type TEXT
 
 /* UPSERT INTO Synthese */
 
-create unique index uidx_synthese_id_source_id_entity_source_pk_value on gn_synthese.synthese(id_source, entity_source_pk_value);
+create unique index IF NOT EXISTS uidx_synthese_id_source_id_entity_source_pk_value on gn_synthese.synthese(id_source, entity_source_pk_value);
 
 DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature ON gn2gn_import.data_json;
 

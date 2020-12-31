@@ -239,9 +239,17 @@ Logs
 
 Log files are stored in ``$HOME/.gn2gn/log`` directory.
 
+
 Import datas into GeoNature datas
 +++++++++++++++++++++++++++++++++
 
-.. warning::
+Default script to auto populate GeoNature is called "synthese". 
 
-    [WIP] Not yet implemented!
+.. code-block::bash
+
+    gn2gn_cli --custom-script synthese <myconfigfile>
+
+
+.. tip::
+
+    You can also replacing synthese script by your own scripts, using file path instead of ``synthese``.

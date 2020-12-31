@@ -70,6 +70,14 @@ def arguments(args):
         help=_("Create or recreate json tables"),
         action="store_true",
     )
+    customscript_group = parser.add_mutually_exclusive_group()
+    customscript_group.add_argument(
+        "--custom-script",
+        nargs="?",
+        help=_('Execute custom SQL Script in DB, default is "synthese"'),
+        # action="store_true",
+        default="synthese",
+    )
     download_group = parser.add_mutually_exclusive_group()
     download_group.add_argument("--full", help=_("Perform a full download"), action="store_true")
     download_group.add_argument(
@@ -174,6 +182,10 @@ def main(args):
     if args.json_tables_create:
         logger.info("Create, if not exists, json tables")
         manage_pg.create_json_tables()
+
+    if args.custom_script:
+        logger.info("Execute custom script on db")
+        manage_pg.custom_script(args.custom_script)
 
     if args.full:
         logger.info("Perform full action")

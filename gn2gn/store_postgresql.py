@@ -14,7 +14,9 @@ Properties
 """
 import logging
 from datetime import datetime
+from pathlib import Path
 
+import pkg_resources
 from psycopg2.errors import ForeignKeyViolation
 from sqlalchemy import (
     Column,
@@ -332,6 +334,44 @@ class PostgresqlUtils:
         result = conn.execute(text).fetchall()
 
         return result
+
+    def custom_script(self, script: str = "synthese") -> None:
+        """[summary]
+
+        Args:
+            script (str, optional): [description]. Defaults to "synthese".
+
+        Returns:
+            [type]: [description]
+        """
+        logger.info(_(f"Start to execute {script} script"))
+        self._db = create_engine(URL(**self._db_url), echo=False)
+        conn = self._db.connect()
+        dbschema = self._config.db_schema_import
+        if script == "synthese":
+            file = pkg_resources.resource_filename(__name__, "data/to_geonature.sql")
+            logger.info(_(f"You choosed to use internal to_geonature.sql script"))
+        else:
+            if Path(script).is_file():
+                logger.info(_(f"file {script} exists, continue"))
+                file = Path(script)
+            else:
+                logger.critical(_(f"file  {script} DO NOT EXISTS, continue"))
+                exit
+        with open(file) as filecontent:
+            sqlscript = filecontent.read()
+            sqlscript.replace("gn2gn_import", self._config.db_schema_import)
+
+        self._metadata = MetaData(schema=dbschema)
+        # self._metadata.reflect(self._db)
+        try:
+            conn.execute(sqlscript)
+            logger.info(_(f"script {script} successfully applied"))
+        except Exception as e:
+            logger.critical(f"{str(e)}")
+            logger.critical(f"failed to apply script {script}")
+
+        return None
 
 
 class StorePostgresql:
