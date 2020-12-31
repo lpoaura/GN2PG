@@ -245,7 +245,7 @@ Import datas into GeoNature datas
 
 Default script to auto populate GeoNature is called "synthese". 
 
-.. code-block::bash
+.. code-block:: bash
 
     gn2gn_cli --custom-script synthese <myconfigfile>
 
