@@ -30,7 +30,9 @@ class DownloadGn:
     """Top class, not for direct use.
     Provides internal and template methods."""
 
-    def __init__(self, config, api_instance, backend, max_retry=None, max_requests=None):
+    def __init__(
+        self, config, api_instance, backend, max_retry=None, max_requests=None
+    ):
         self._config = config
         self._api_instance = api_instance
         self._backend = backend

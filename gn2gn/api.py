@@ -60,13 +60,12 @@ class BaseAPI:
                 "id_application": config.id_application,
             }
         )
-        login = self._session.post(
-            self._api_url + "auth/login",
-            data=auth_payload,
-        )
+        login = self._session.post(self._api_url + "auth/login", data=auth_payload,)
         try:
             if login.status_code == 200:
-                logger.info(f"Successfully logged in into GeoNature named {self._config.name}")
+                logger.info(
+                    f"Successfully logged in into GeoNature named {self._config.name}"
+                )
             else:
                 logger.critical(
                     (
@@ -82,7 +81,9 @@ class BaseAPI:
         #  Find exports api path
         try:
             m = self._session.get(self._api_url + "gn_commons/modules")
-            logger.info(_(f"Modules API status code is {m.status_code} for url {m.url}"))
+            logger.info(
+                _(f"Modules API status code is {m.status_code} for url {m.url}")
+            )
             if m.status_code == 200:
                 modules = json.loads(m.content)
                 for item in modules:
@@ -130,7 +131,12 @@ class BaseAPI:
         Returns:
             str: export API URL
         """
-        export_url = self._api_url + self._export_api_path + "/api/" + str(self._config.export_id)
+        export_url = (
+            self._api_url
+            + self._export_api_path
+            + "/api/"
+            + str(self._config.export_id)
+        )
         if params:
             export_url = export_url + "?" + urlencode(params)
         return export_url
@@ -150,9 +156,7 @@ class BaseAPI:
         # GET from API
         session = self._session
         api_url = self._url(params)
-        r = session.get(
-            url=api_url,
-        )
+        r = session.get(url=api_url,)
         if r.status_code == 200:
             resp = r.json()
             total_filtered = resp["total_filtered"]

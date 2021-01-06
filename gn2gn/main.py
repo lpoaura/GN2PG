@@ -49,16 +49,13 @@ def arguments(args):
     )
     out_group = parser.add_mutually_exclusive_group()
     out_group.add_argument(
-        "-v",
-        "--verbose",
-        help=_("Increase output verbosity"),
-        action="store_true",
+        "-v", "--verbose", help=_("Increase output verbosity"), action="store_true",
     )
-    out_group.add_argument("-q", "--quiet", help=_("Reduce output verbosity"), action="store_true")
+    out_group.add_argument(
+        "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
+    )
     parser.add_argument(
-        "--init",
-        help=_("Initialize the TOML configuration file"),
-        action="store_true",
+        "--init", help=_("Initialize the TOML configuration file"), action="store_true",
     )
     parser.add_argument(
         "--edit",
@@ -79,11 +76,11 @@ def arguments(args):
         default="synthese",
     )
     download_group = parser.add_mutually_exclusive_group()
-    download_group.add_argument("--full", help=_("Perform a full download"), action="store_true")
     download_group.add_argument(
-        "--update",
-        help=_("Perform an incremental download"),
-        action="store_true",
+        "--full", help=_("Perform a full download"), action="store_true"
+    )
+    download_group.add_argument(
+        "--update", help=_("Perform an incremental download"), action="store_true",
     )
     parser.add_argument("file", help="Configuration file name")
 
@@ -109,10 +106,7 @@ def main(args):
 
     # create file handler which logs even debug messages
     fh = TimedRotatingFileHandler(
-        str(LOGDIR / (__name__ + ".log")),
-        when="midnight",
-        interval=1,
-        backupCount=100,
+        str(LOGDIR / (__name__ + ".log")), when="midnight", interval=1, backupCount=100,
     )
     # create console handler with a higher log level
     # ch = logging.StreamHandler()
@@ -160,9 +154,7 @@ def main(args):
     try:
         cfg_ctrl = Gn2GnConf(args.file)
     except TomlDecodeError:
-        logger.critical(
-            f"Incorrect content in TOML configuration {args.file}",
-        )
+        logger.critical(f"Incorrect content in TOML configuration {args.file}",)
         sys.exit(0)
     # try:
     #     config_schema.validate(cfg_ctrl)
@@ -242,9 +234,13 @@ def full_download_1source(ctrl, cfg):
     logger.debug(cfg)
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
-        logger.debug(_(f"{cfg.source} => Starting download using controler {downloader.name}"))
+        logger.debug(
+            _(f"{cfg.source} => Starting download using controler {downloader.name}")
+        )
         downloader.store()
-        logger.info(_(f"{cfg.source} => Ending download using controler {downloader.name}"))
+        logger.info(
+            _(f"{cfg.source} => Ending download using controler {downloader.name}")
+        )
 
 
 def full_download(cfg_ctrl):

@@ -103,12 +103,18 @@ class Gn2GnSourceConf:
                     tuning, "max_page_length", 1000
                 )  # type: int
                 self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)  # type: int
-                self._max_requests = coalesce_in_dict(tuning, "max_requests", 0)  # type: int
-                self._retry_delay = coalesce_in_dict(tuning, "retry_delay", 5)  # type: int
+                self._max_requests = coalesce_in_dict(
+                    tuning, "max_requests", 0
+                )  # type: int
+                self._retry_delay = coalesce_in_dict(
+                    tuning, "retry_delay", 5
+                )  # type: int
                 self._unavailable_delay = coalesce_in_dict(
                     tuning, "unavailable_delay", 600
                 )  # type: int
-                self._lru_maxsize = coalesce_in_dict(tuning, "lru_maxsize", 32)  # type: int
+                self._lru_maxsize = coalesce_in_dict(
+                    tuning, "lru_maxsize", 32
+                )  # type: int
 
         except Exception:  # pragma: no cover
             logger.exception(_(f"Error creating {source} configuration"))
@@ -353,7 +359,9 @@ class Gn2GnConf:
         i = 0
         for source in self._config["source"]:
             source_name = simplify(source["name"])
-            logger.info(f"Source \"{source['name']}\" identifier will be \"{source_name}\"")
+            logger.info(
+                f"Source \"{source['name']}\" identifier will be \"{source_name}\""
+            )
 
             if source_name in [s for s in self._source_list.keys()]:
                 logger.critical(
