@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "gn2gn_client"
+name = "gn2pg_client"
 packages = [
-    { include = "gn2gn" },
+    { include = "gn2pg" },
 ]
-version = "0.0.4-dev"
-description = "Outil d'import de données entre instances GeoNature (côté client)"
+version = "0.0.5-dev"
+description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]
 license = "AGPL-3.0-or-later"
@@ -27,7 +27,7 @@ classifiers= [
     ]
 
 [tool.poetry.scripts]
-gn2gn_cli = "gn2gn.main:run"
+gn2pg_cli = "gn2pg.main:run"
 
 
 [tool.poetry.dependencies]

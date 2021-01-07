@@ -8,8 +8,8 @@ from pytest import raises
 
 parametrize = pytest.mark.parametrize
 
-from gn2gn import metadata
-from gn2gn.main import main
+from gn2pg import metadata
+from gn2pg.main import main
 
 
 class TestMain(object):
@@ -33,8 +33,6 @@ class TestMain(object):
             main(["GeoNature 2 GeoNature Client application", versionarg])
         out, err = capsys.readouterr()
         # Should pr"int out version.
-        assert out.splitlines()[0] == "{0} {1}".format(
-            metadata.project, metadata.version
-        )
+        assert out.splitlines()[0] == "{0} {1}".format(metadata.project, metadata.version)
         # Should exit with zero return code.
         assert exc_info.value.code == 0

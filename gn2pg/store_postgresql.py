@@ -336,31 +336,33 @@ class PostgresqlUtils:
         return result
 
     def custom_script(self, script: str = "synthese") -> None:
-        """[summary]
+        """EXecute custom script on DB.
+        eg.:  triggers to populate local tables like GeoNature synthese
 
         Args:
-            script (str, optional): [description]. Defaults to "synthese".
-
-        Returns:
-            [type]: [description]
+            script (str, optional): custom script path. Defaults to "synthese".
         """
         logger.info(_(f"Start to execute {script} script"))
         self._db = create_engine(URL(**self._db_url), echo=False)
         conn = self._db.connect()
         dbschema = self._config.db_schema_import
         if script == "synthese":
-            file = pkg_resources.resource_filename(__name__, "data/to_geonature.sql")
-            logger.info(_(f"You choosed to use internal to_geonature.sql script"))
+            file = pkg_resources.resource_filename(__name__, "data/synthese_from_label.sql")
+            logger.info(
+                _(
+                    f"You choosed to use internal to_geonature.sql script in schema {self._config.db_schema_import}"
+                )
+            )
         else:
             if Path(script).is_file():
                 logger.info(_(f"file {script} exists, continue"))
                 file = Path(script)
             else:
-                logger.critical(_(f"file  {script} DO NOT EXISTS, continue"))
+                logger.critical(_(f"file {script} DO NOT EXISTS, exit"))
                 exit
         with open(file) as filecontent:
             sqlscript = filecontent.read()
-            sqlscript.replace("gn2gn_import", self._config.db_schema_import)
+            sqlscript = sqlscript.replace("gn2pg_import", self._config.db_schema_import)
 
         self._metadata = MetaData(schema=dbschema)
         # self._metadata.reflect(self._db)

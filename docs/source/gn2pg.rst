@@ -1,69 +1,69 @@
-gn2gn package
+gn2pg package
 =============
 
 Submodules
 ----------
 
-gn2gn.api module
+gn2pg.api module
 ----------------
 
-.. automodule:: gn2gn.api
+.. automodule:: gn2pg.api
    :members:
    :undoc-members:
    :show-inheritance:
 
-gn2gn.check\_conf module
+gn2pg.check\_conf module
 ------------------------
 
-.. automodule:: gn2gn.check_conf
+.. automodule:: gn2pg.check_conf
    :members:
    :undoc-members:
    :show-inheritance:
 
-gn2gn.download module
+gn2pg.download module
 ---------------------
 
-.. automodule:: gn2gn.download
+.. automodule:: gn2pg.download
    :members:
    :undoc-members:
    :show-inheritance:
 
-gn2gn.env module
+gn2pg.env module
 ----------------
 
-.. automodule:: gn2gn.env
+.. automodule:: gn2pg.env
    :members:
    :undoc-members:
    :show-inheritance:
 
-gn2gn.main module
+gn2pg.main module
 -----------------
 
-.. automodule:: gn2gn.main
+.. automodule:: gn2pg.main
    :members:
    :undoc-members:
    :show-inheritance:
 
-gn2gn.metadata module
+gn2pg.metadata module
 ---------------------
 
-.. automodule:: gn2gn.metadata
+.. automodule:: gn2pg.metadata
    :members:
    :undoc-members:
    :show-inheritance:
 
-gn2gn.store\_postgresql module
+gn2pg.store\_postgresql module
 ------------------------------
 
-.. automodule:: gn2gn.store_postgresql
+.. automodule:: gn2pg.store_postgresql
    :members:
    :undoc-members:
    :show-inheritance:
 
-gn2gn.utils module
+gn2pg.utils module
 ------------------
 
-.. automodule:: gn2gn.utils
+.. automodule:: gn2pg.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -71,7 +71,7 @@ gn2gn.utils module
 Module contents
 ---------------
 
-.. automodule:: gn2gn
+.. automodule:: gn2pg
    :members:
    :undoc-members:
    :show-inheritance:

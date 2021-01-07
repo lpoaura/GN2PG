@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 import sphinx_rtd_theme
 
 # Import project metadata
-from gn2gn import metadata
+from gn2pg import metadata
 
 # -- General configuration ----------------------------------------------------
 

@@ -6,23 +6,23 @@ Help
 
 .. code-block:: bash
 
-    gn2gn_cli --help
+    gn2pg_cli --help
 
 Init config file
 ++++++++++++++++
 
-This command init a TOML config file within ``~/.gn2gn`` hidden directory (in user ``HOME`` directory), named as you want. PLEASE DO NOT SPECIFY PATH!
+This command init a TOML config file within ``~/.gn2pg`` hidden directory (in user ``HOME`` directory), named as you want. PLEASE DO NOT SPECIFY PATH!
 
 .. code-block:: bash
 
-    gn2gn_cli --init <myconfigfile>
+    gn2pg_cli --init <myconfigfile>
 
 
 Config file is structured as this. ``[[source]]`` block can be duplicate as many as needed (one block for each source).
 
 .. code-block:: TOML
 
-    # Gn2Gn configuration file
+    # GN2PG configuration file
 
     # Local db configuration
     [db]
@@ -85,11 +85,11 @@ To create json tables where datas will be downloaded, run :
 
 .. code-block:: bash
 
-    gn2gn_cli --json-tables-create <myconfigfile>
+    gn2pg_cli --json-tables-create <myconfigfile>
 
 .. code-block::
 
-                                                       Table « gn2gn_import.data_json »
+                                                       Table « gn2pg_import.data_json »
     ┌───────────┬─────────────────────────────┬─────────────────┬───────────┬────────────┬──────────┬───────────────────────┬─────────────┐
     │  Colonne  │            Type             │ Collationnement │ NULL-able │ Par défaut │ Stockage │ Cible de statistiques │ Description │
     ├───────────┼─────────────────────────────┼─────────────────┼───────────┼────────────┼──────────┼───────────────────────┼─────────────┤
@@ -103,11 +103,11 @@ To create json tables where datas will be downloaded, run :
     └───────────┴─────────────────────────────┴─────────────────┴───────────┴────────────┴──────────┴───────────────────────┴─────────────┘
     Index :
         "pk_source_data" PRIMARY KEY, btree (id_data, source, type)
-        "ix_gn2gn_import_data_json_id_data" btree (id_data)
-        "ix_gn2gn_import_data_json_uuid" btree (uuid)
+        "ix_gn2pg_import_data_json_id_data" btree (id_data)
+        "ix_gn2pg_import_data_json_uuid" btree (uuid)
     Méthode d'accès : heap
 
-                                            Table « gn2gn_import.datasets_json »
+                                            Table « gn2pg_import.datasets_json »
     ┌─────────┬───────────────────┬─────────────────┬───────────┬────────────┬──────────┬───────────────────────┬─────────────┐
     │ Colonne │       Type        │ Collationnement │ NULL-able │ Par défaut │ Stockage │ Cible de statistiques │ Description │
     ├─────────┼───────────────────┼─────────────────┼───────────┼────────────┼──────────┼───────────────────────┼─────────────┤
@@ -119,7 +119,7 @@ To create json tables where datas will be downloaded, run :
         "meta_json_pk" PRIMARY KEY, btree (uuid, source)
     Méthode d'accès : heap
 
-                                                    Table « gn2gn_import.download_log »
+                                                    Table « gn2pg_import.download_log »
     ┌─────────────┬─────────────────────────────┬─────────────────┬───────────┬────────────┬──────────┬───────────────────────┬─────────────┐
     │   Colonne   │            Type             │ Collationnement │ NULL-able │ Par défaut │ Stockage │ Cible de statistiques │ Description │
     ├─────────────┼─────────────────────────────┼─────────────────┼───────────┼────────────┼──────────┼───────────────────────┼─────────────┤
@@ -131,12 +131,12 @@ To create json tables where datas will be downloaded, run :
     │ comment     │ character varying           │                 │           │            │ extended │                       │             │
     └─────────────┴─────────────────────────────┴─────────────────┴───────────┴────────────┴──────────┴───────────────────────┴─────────────┘
     Index :
-        "ix_gn2gn_import_download_log_error_count" btree (error_count)
-        "ix_gn2gn_import_download_log_http_status" btree (http_status)
-        "ix_gn2gn_import_download_log_source" btree (source)
+        "ix_gn2pg_import_download_log_error_count" btree (error_count)
+        "ix_gn2pg_import_download_log_http_status" btree (http_status)
+        "ix_gn2pg_import_download_log_source" btree (source)
     Méthode d'accès : heap
 
-                                                    Table « gn2gn_import.increment_log »
+                                                    Table « gn2pg_import.increment_log »
     ┌───────────┬─────────────────────────────┬─────────────────┬───────────┬────────────┬──────────┬───────────────────────┬─────────────┐
     │  Colonne  │            Type             │ Collationnement │ NULL-able │ Par défaut │ Stockage │ Cible de statistiques │ Description │
     ├───────────┼─────────────────────────────┼─────────────────┼───────────┼────────────┼──────────┼───────────────────────┼─────────────┤
@@ -148,64 +148,64 @@ To create json tables where datas will be downloaded, run :
         "increment_log_pkey" PRIMARY KEY, btree (source)
     Méthode d'accès : heap
 
-                        Index « gn2gn_import.increment_log_pkey »
+                        Index « gn2pg_import.increment_log_pkey »
     ┌─────────┬───────────────────┬───────┬────────────┬──────────┬───────────────────────┐
     │ Colonne │       Type        │ Clé ? │ Définition │ Stockage │ Cible de statistiques │
     ├─────────┼───────────────────┼───────┼────────────┼──────────┼───────────────────────┤
     │ source  │ character varying │ oui   │ source     │ extended │                       │
     └─────────┴───────────────────┴───────┴────────────┴──────────┴───────────────────────┘
-    clé primaire, btree, pour la table « gn2gn_import.increment_log »
+    clé primaire, btree, pour la table « gn2pg_import.increment_log »
 
-            Index « gn2gn_import.ix_gn2gn_import_data_json_id_data »
+            Index « gn2pg_import.ix_gn2pg_import_data_json_id_data »
     ┌─────────┬─────────┬───────┬────────────┬──────────┬───────────────────────┐
     │ Colonne │  Type   │ Clé ? │ Définition │ Stockage │ Cible de statistiques │
     ├─────────┼─────────┼───────┼────────────┼──────────┼───────────────────────┤
     │ id_data │ integer │ oui   │ id_data    │ plain    │                       │
     └─────────┴─────────┴───────┴────────────┴──────────┴───────────────────────┘
-    btree, pour la table « gn2gn_import.data_json »
+    btree, pour la table « gn2pg_import.data_json »
 
-            Index « gn2gn_import.ix_gn2gn_import_data_json_uuid »
+            Index « gn2pg_import.ix_gn2pg_import_data_json_uuid »
     ┌─────────┬──────┬───────┬────────────┬──────────┬───────────────────────┐
     │ Colonne │ Type │ Clé ? │ Définition │ Stockage │ Cible de statistiques │
     ├─────────┼──────┼───────┼────────────┼──────────┼───────────────────────┤
     │ uuid    │ uuid │ oui   │ uuid       │ plain    │                       │
     └─────────┴──────┴───────┴────────────┴──────────┴───────────────────────┘
-    btree, pour la table « gn2gn_import.data_json »
+    btree, pour la table « gn2pg_import.data_json »
 
-            Index « gn2gn_import.ix_gn2gn_import_download_log_error_count »
+            Index « gn2pg_import.ix_gn2pg_import_download_log_error_count »
     ┌─────────────┬─────────┬───────┬─────────────┬──────────┬───────────────────────┐
     │   Colonne   │  Type   │ Clé ? │ Définition  │ Stockage │ Cible de statistiques │
     ├─────────────┼─────────┼───────┼─────────────┼──────────┼───────────────────────┤
     │ error_count │ integer │ oui   │ error_count │ plain    │                       │
     └─────────────┴─────────┴───────┴─────────────┴──────────┴───────────────────────┘
-    btree, pour la table « gn2gn_import.download_log »
+    btree, pour la table « gn2pg_import.download_log »
 
-            Index « gn2gn_import.ix_gn2gn_import_download_log_http_status »
+            Index « gn2pg_import.ix_gn2pg_import_download_log_http_status »
     ┌─────────────┬─────────┬───────┬─────────────┬──────────┬───────────────────────┐
     │   Colonne   │  Type   │ Clé ? │ Définition  │ Stockage │ Cible de statistiques │
     ├─────────────┼─────────┼───────┼─────────────┼──────────┼───────────────────────┤
     │ http_status │ integer │ oui   │ http_status │ plain    │                       │
     └─────────────┴─────────┴───────┴─────────────┴──────────┴───────────────────────┘
-    btree, pour la table « gn2gn_import.download_log »
+    btree, pour la table « gn2pg_import.download_log »
 
-                Index « gn2gn_import.ix_gn2gn_import_download_log_source »
+                Index « gn2pg_import.ix_gn2pg_import_download_log_source »
     ┌─────────┬───────────────────┬───────┬────────────┬──────────┬───────────────────────┐
     │ Colonne │       Type        │ Clé ? │ Définition │ Stockage │ Cible de statistiques │
     ├─────────┼───────────────────┼───────┼────────────┼──────────┼───────────────────────┤
     │ source  │ character varying │ oui   │ source     │ extended │                       │
     └─────────┴───────────────────┴───────┴────────────┴──────────┴───────────────────────┘
-    btree, pour la table « gn2gn_import.download_log »
+    btree, pour la table « gn2pg_import.download_log »
 
-                            Index « gn2gn_import.meta_json_pk »
+                            Index « gn2pg_import.meta_json_pk »
     ┌─────────┬───────────────────┬───────┬────────────┬──────────┬───────────────────────┐
     │ Colonne │       Type        │ Clé ? │ Définition │ Stockage │ Cible de statistiques │
     ├─────────┼───────────────────┼───────┼────────────┼──────────┼───────────────────────┤
     │ uuid    │ uuid              │ oui   │ uuid       │ plain    │                       │
     │ source  │ character varying │ oui   │ source     │ extended │                       │
     └─────────┴───────────────────┴───────┴────────────┴──────────┴───────────────────────┘
-    clé primaire, btree, pour la table « gn2gn_import.datasets_json »
+    clé primaire, btree, pour la table « gn2pg_import.datasets_json »
 
-                            Index « gn2gn_import.pk_source_data »
+                            Index « gn2pg_import.pk_source_data »
     ┌─────────┬───────────────────┬───────┬────────────┬──────────┬───────────────────────┐
     │ Colonne │       Type        │ Clé ? │ Définition │ Stockage │ Cible de statistiques │
     ├─────────┼───────────────────┼───────┼────────────┼──────────┼───────────────────────┤
@@ -213,7 +213,7 @@ To create json tables where datas will be downloaded, run :
     │ source  │ character varying │ oui   │ source     │ extended │                       │
     │ type    │ character varying │ oui   │ type       │ extended │                       │
     └─────────┴───────────────────┴───────┴────────────┴──────────┴───────────────────────┘
-    clé primaire, btree, pour la table « gn2gn_import.data_json »
+    clé primaire, btree, pour la table « gn2pg_import.data_json »
 
 
 
@@ -224,7 +224,7 @@ To full download json datas into synthese_json table, run :
 
 .. code-block:: bash
 
-    gn2gn_cli --full <myconfigfile>
+    gn2pg_cli --full <myconfigfile>
 
 Incremental download
 ++++++++++++++++++++
@@ -237,7 +237,7 @@ Incremental download
 Logs
 ++++
 
-Log files are stored in ``$HOME/.gn2gn/log`` directory.
+Log files are stored in ``$HOME/.gn2pg/log`` directory.
 
 
 Import datas into GeoNature datas
@@ -247,7 +247,7 @@ Default script to auto populate GeoNature is called "synthese".
 
 .. code-block:: bash
 
-    gn2gn_cli --custom-script synthese <myconfigfile>
+    gn2pg_cli --custom-script synthese <myconfigfile>
 
 
 .. tip::

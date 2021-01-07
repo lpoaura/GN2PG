@@ -15,7 +15,7 @@ import pkg_resources
 from toml import TomlDecodeError
 
 from . import _, __version__, metadata
-from .check_conf import Gn2GnConf
+from .check_conf import Gn2PgConf
 from .download import Data, Datasets
 from .env import ENVDIR, LOGDIR
 from .store_postgresql import PostgresqlUtils, StorePostgresql
@@ -39,7 +39,7 @@ def arguments(args):
         :obj:`argparse.Namespace`: command line parameters namespace
     """
     # Get options
-    parser = argparse.ArgumentParser(description="Gn2Gn Client app")
+    parser = argparse.ArgumentParser(description="Gn2Pg Client app")
     parser.add_argument(
         "-V",
         "--version",
@@ -49,13 +49,16 @@ def arguments(args):
     )
     out_group = parser.add_mutually_exclusive_group()
     out_group.add_argument(
-        "-v", "--verbose", help=_("Increase output verbosity"), action="store_true",
+        "-v",
+        "--verbose",
+        help=_("Increase output verbosity"),
+        action="store_true",
     )
-    out_group.add_argument(
-        "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
-    )
+    out_group.add_argument("-q", "--quiet", help=_("Reduce output verbosity"), action="store_true")
     parser.add_argument(
-        "--init", help=_("Initialize the TOML configuration file"), action="store_true",
+        "--init",
+        help=_("Initialize the TOML configuration file"),
+        action="store_true",
     )
     parser.add_argument(
         "--edit",
@@ -72,15 +75,13 @@ def arguments(args):
         "--custom-script",
         nargs="?",
         help=_('Execute custom SQL Script in DB, default is "synthese"'),
-        # action="store_true",
-        default="synthese",
     )
     download_group = parser.add_mutually_exclusive_group()
+    download_group.add_argument("--full", help=_("Perform a full download"), action="store_true")
     download_group.add_argument(
-        "--full", help=_("Perform a full download"), action="store_true"
-    )
-    download_group.add_argument(
-        "--update", help=_("Perform an incremental download"), action="store_true",
+        "--update",
+        help=_("Perform an incremental download"),
+        action="store_true",
     )
     parser.add_argument("file", help="Configuration file name")
 
@@ -106,7 +107,10 @@ def main(args):
 
     # create file handler which logs even debug messages
     fh = TimedRotatingFileHandler(
-        str(LOGDIR / (__name__ + ".log")), when="midnight", interval=1, backupCount=100,
+        str(LOGDIR / (__name__ + ".log")),
+        when="midnight",
+        interval=1,
+        backupCount=100,
     )
     # create console handler with a higher log level
     # ch = logging.StreamHandler()
@@ -152,9 +156,11 @@ def main(args):
         return None
     logger.info("Getting configuration data from %s", args.file)
     try:
-        cfg_ctrl = Gn2GnConf(args.file)
+        cfg_ctrl = Gn2PgConf(args.file)
     except TomlDecodeError:
-        logger.critical(f"Incorrect content in TOML configuration {args.file}",)
+        logger.critical(
+            f"Incorrect content in TOML configuration {args.file}",
+        )
         sys.exit(0)
     # try:
     #     config_schema.validate(cfg_ctrl)
@@ -176,7 +182,7 @@ def main(args):
         manage_pg.create_json_tables()
 
     if args.custom_script:
-        logger.info("Execute custom script on db")
+        logger.info(_(f"Execute custom script {args.custom_script} on db"))
         manage_pg.custom_script(args.custom_script)
 
     if args.full:
@@ -186,17 +192,15 @@ def main(args):
     return None
 
 
-def init(file: str):
-    """
+def init(file: str) -> None:
+    """Init config file from template
 
     Args:
-        config:
-
-    Returns:
-
+        file (str): [description]
     """
+
     logger = logging.getLogger("transfer_gn")
-    toml_src = pkg_resources.resource_filename(__name__, "data/gn2gnconfig.toml")
+    toml_src = pkg_resources.resource_filename(__name__, "data/gn2pgconfig.toml")
     toml_dst = str(ENVDIR / file)
     if Path(toml_dst).is_file():
         ENVDIR.mkdir(exist_ok=True)
@@ -217,7 +221,7 @@ def init(file: str):
     sys.exit(0)
 
 
-def edit(file: str):
+def edit(file: str) -> None:
     """Open editor to edit config file
 
     Args:
@@ -234,13 +238,9 @@ def full_download_1source(ctrl, cfg):
     logger.debug(cfg)
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
-        logger.debug(
-            _(f"{cfg.source} => Starting download using controler {downloader.name}")
-        )
+        logger.debug(_(f"{cfg.source} => Starting download using controler {downloader.name}"))
         downloader.store()
-        logger.info(
-            _(f"{cfg.source} => Ending download using controler {downloader.name}")
-        )
+        logger.info(_(f"{cfg.source} => Ending download using controler {downloader.name}"))
 
 
 def full_download(cfg_ctrl):

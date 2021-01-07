@@ -1,7 +1,7 @@
-gn2gn
+gn2pg
 =====
 
 .. toctree::
    :maxdepth: 4
 
-   gn2gn
+   gn2pg

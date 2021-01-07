@@ -33,4 +33,4 @@ USER xfer
 
 VOLUME [$USERDIR]
 
-ENTRYPOINT [ "gn2gn_cli" ]
+ENTRYPOINT [ "gn2pg_cli" ]

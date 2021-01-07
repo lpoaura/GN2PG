@@ -15,15 +15,15 @@ from .utils import coalesce_in_dict, simplify
 logger = logging.getLogger("transfer_gn.check_conf")
 
 
-class Gn2GnConfException(Exception):
+class Gn2PgConfException(Exception):
     """An exception occurred while loading parameters."""
 
 
-class MissingConfigurationFile(Gn2GnConfException):
+class MissingConfigurationFile(Gn2PgConfException):
     """Incorrect or missing parameter."""
 
 
-class IncorrectParameter(Gn2GnConfException):
+class IncorrectParameter(Gn2PgConfException):
     """Incorrect or missing parameter."""
 
 
@@ -64,7 +64,7 @@ _ConfSchema = Schema(
 )
 
 
-class Gn2GnSourceConf:
+class Gn2PgSourceConf:
     """Source conf generator"""
 
     def __init__(self, source: str, config: _ConfType) -> None:
@@ -103,18 +103,12 @@ class Gn2GnSourceConf:
                     tuning, "max_page_length", 1000
                 )  # type: int
                 self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)  # type: int
-                self._max_requests = coalesce_in_dict(
-                    tuning, "max_requests", 0
-                )  # type: int
-                self._retry_delay = coalesce_in_dict(
-                    tuning, "retry_delay", 5
-                )  # type: int
+                self._max_requests = coalesce_in_dict(tuning, "max_requests", 0)  # type: int
+                self._retry_delay = coalesce_in_dict(tuning, "retry_delay", 5)  # type: int
                 self._unavailable_delay = coalesce_in_dict(
                     tuning, "unavailable_delay", 600
                 )  # type: int
-                self._lru_maxsize = coalesce_in_dict(
-                    tuning, "lru_maxsize", 32
-                )  # type: int
+                self._lru_maxsize = coalesce_in_dict(tuning, "lru_maxsize", 32)  # type: int
 
         except Exception:  # pragma: no cover
             logger.exception(_(f"Error creating {source} configuration"))
@@ -238,7 +232,7 @@ class Gn2GnSourceConf:
             dict: Database connection querystrings
         """
         if "application_name" not in self._db_querystring:
-            self._db_querystring["application_name"] = "gn2gn_cli"
+            self._db_querystring["application_name"] = "gn2pg_cli"
         return self._db_querystring
 
     @property
@@ -332,7 +326,7 @@ class Gn2GnSourceConf:
         return self._lru_maxsize
 
 
-class Gn2GnConf:
+class Gn2PgConf:
     """Read config file and expose list of sources configuration"""
 
     def __init__(self, file: str) -> None:
@@ -359,9 +353,7 @@ class Gn2GnConf:
         i = 0
         for source in self._config["source"]:
             source_name = simplify(source["name"])
-            logger.info(
-                f"Source \"{source['name']}\" identifier will be \"{source_name}\""
-            )
+            logger.info(f"Source \"{source['name']}\" identifier will be \"{source_name}\"")
 
             if source_name in [s for s in self._source_list.keys()]:
                 logger.critical(
@@ -370,7 +362,7 @@ class Gn2GnConf:
                         f"already used by another source"
                     )
                 )
-            self._source_list[source_name] = Gn2GnSourceConf(i, self._config)
+            self._source_list[source_name] = Gn2PgSourceConf(i, self._config)
             logger.debug(
                 f"Settings for {source_name} are : {self._source_list[source_name].__dict__}"
             )

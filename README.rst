@@ -1,5 +1,5 @@
 **************
- Gn2Gn Client
+ GN2PG Client
 **************
 
 .. image:: https://img.shields.io/badge/python-3.7+-yellowgreen
@@ -24,7 +24,7 @@ Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 
 
 
-.. image:: ./docs/source/_static/src_gn2gn.png
+.. image:: ./docs/source/_static/src_gn2pg.png
     :align: center
     :alt: Project logo
 
@@ -32,17 +32,17 @@ Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 Project Setup
 =============
 
-Gn2Gn Client can be installed by running ``pip``. It requires Python 3.7.4# to run.
+GN2PG Client can be installed by running ``pip``. It requires Python 3.7.4# to run.
 
 .. code-block:: bash
 
-    pip install gn2gn-client
+    pip install gn2pg-client
 
 
 Issues
 ======
 
-Please report any bugs or requests that you have using the `GitHub issue tracker <https://github.com/lpoaura/gn2gn_client/issues>`_!
+Please report any bugs or requests that you have using the `GitHub issue tracker <https://github.com/lpoaura/gn2pg_client/issues>`_!
 
 HowTo
 =====
@@ -52,23 +52,23 @@ Help
 
 .. code-block:: bash
 
-    gn2gn_cli --help
+    gn2pg_cli --help
 
 Init config file
 ################
 
-This command init a TOML config file within ``~/.gn2gn`` hidden directory (in user ``HOME`` directory), named as you want. PLEASE DO NOT SPECIFY PATH!
+This command init a TOML config file within ``~/.gn2pg`` hidden directory (in user ``HOME`` directory), named as you want. PLEASE DO NOT SPECIFY PATH!
 
 .. code-block:: bash
 
-    gn2gn_cli --init <myconfigfile>
+    gn2pg_cli --init <myconfigfile>
 
 
 Config file is structured as this. ``[[source]]`` block can be duplicate as many as needed (one block for each source).
 
 .. code-block:: TOML
 
-    # Gn2Gn configuration file
+    # GN2PG configuration file
 
     # Local db configuration
     [db]
@@ -119,7 +119,7 @@ To create json tables where datas will be downloaded, run :
 
 .. code-block:: bash
 
-    gn2gn_cli --json-tables-create <myconfigfile>
+    gn2pg_cli --json-tables-create <myconfigfile>
 
 
 Full download
@@ -129,7 +129,7 @@ To full download json datas into synthese_json table, run :
 
 .. code-block:: bash
 
-    gn2gn_cli --full <myconfigfile>
+    gn2pg_cli --full <myconfigfile>
 
 Incremental download
 ####################
@@ -142,7 +142,7 @@ Incremental download
 Logs
 ####
 
-Log files are stored in ``$HOME/.gn2gn/log`` directory.
+Log files are stored in ``$HOME/.gn2pg/log`` directory.
 
 Import datas into GeoNature datas
 #################################
@@ -151,7 +151,7 @@ Default script to auto populate GeoNature is called "synthese".
 
 .. code-block:: bash
 
-    gn2gn_cli --custom-script synthese <myconfigfile>
+    gn2pg_cli --custom-script synthese <myconfigfile>
 
 
 .. tip::
@@ -168,7 +168,7 @@ Pull requests must be pulled to `dev` branch. For example with this command:
 
 .. code-block:: bash
 
-    gh repo fork --clone lpoaura/gn2gn_client
+    gh repo fork --clone lpoaura/gn2pg_client
 
 
 Install project and development requirements (require `poetry <https://python-poetry.org/>`_):
@@ -179,11 +179,11 @@ Install project and development requirements (require `poetry <https://python-po
 
 Make your devs and pull requests.
 
-Run `gn2gn_cli` command in dev mode
+Run `gn2pg_cli` command in dev mode
 
 .. code-block:: bash
 
-    poetry run gn2gn_cli <options>
+    poetry run gn2pg_cli <options>
 
 Renew requirements file for non poetry developers
 #################################################

@@ -1,26 +1,26 @@
-Gn2Gn Client application
+GN2PG Client application
 ========================
 
 This project provides an import tool between GeoNature_ instances (client side).
 
-.. image:: ../../Gn2Gn.png
+.. image:: ./_static/src_gn2pg.png
     :align: center
     :alt: Logo project
 
 Project Setup
 =============
 
-Gn2Gn Client can be installed by running ``pip``. It requires Python 3.7.4+ to run.
+GN2PG Client can be installed by running ``pip``. It requires Python 3.7.4+ to run.
 
 .. code-block:: bash
 
-    pip install gn2gn-client
+    pip install gn2pg-client
 
 
 Issues
 ======
 
-Please report any bugs or requests that you have using the `GitHub issue tracker <https://github.com/lpoaura/gn2gn_client/issues>`_!
+Please report any bugs or requests that you have using the `GitHub issue tracker <https://github.com/lpoaura/gn2pg_client/issues>`_!
 
 
 Contents

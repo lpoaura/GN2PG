@@ -12,9 +12,9 @@
 
 
 
-DROP FUNCTION IF EXISTS gn2gn_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT);
 
-CREATE OR REPLACE FUNCTION gn2gn_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT) RETURNS INTEGER
 AS
 $$
 DECLARE
@@ -42,12 +42,12 @@ $$
     LANGUAGE plpgsql;
 
 
-COMMENT ON FUNCTION gn2gn_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT) IS 'function to basically create acquisition framework';
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT) IS 'function to basically create acquisition framework';
 
 /* Datasets */
-DROP FUNCTION IF EXISTS gn2gn_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT);
 
-CREATE OR REPLACE FUNCTION gn2gn_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT) RETURNS INTEGER
 AS
 $$
 DECLARE
@@ -87,14 +87,14 @@ $$
     LANGUAGE plpgsql;
 
 
-COMMENT ON FUNCTION gn2gn_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT) IS 'function to basically create acquisition framework';
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT) IS 'function to basically create acquisition framework';
 
 /* Sources */
 
 
-DROP FUNCTION IF EXISTS gn2gn_import.fct_c_get_or_insert_source(_source TEXT);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_source(_source TEXT);
 
-CREATE OR REPLACE FUNCTION gn2gn_import.fct_c_get_or_insert_source(_source TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_or_insert_source(_source TEXT) RETURNS INTEGER
 AS
 $$
 DECLARE
@@ -122,13 +122,13 @@ $$
     LANGUAGE plpgsql;
 
 
-COMMENT ON FUNCTION gn2gn_import.fct_c_get_or_insert_source(_source TEXT) IS 'function to basically create new sources';
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_source(_source TEXT) IS 'function to basically create new sources';
 
 
 /*  Nomenclatures */
 
-DROP FUNCTION IF EXISTS gn2gn_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT);
-create or replace function gn2gn_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT) RETURNS INTEGER
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT);
+create or replace function gn2pg_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT) RETURNS INTEGER
 AS
 $$
 DECLARE
@@ -146,16 +146,16 @@ END
 $$
     LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION gn2gn_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT) IS 'function to retrieve nomenclature ID from label';
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT) IS 'function to retrieve nomenclature ID from label';
 
 /* UPSERT INTO Synthese */
 
 create unique index IF NOT EXISTS uidx_synthese_id_source_id_entity_source_pk_value on gn_synthese.synthese(id_source, entity_source_pk_value);
 
-DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature ON gn2gn_import.data_json;
+DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature ON gn2pg_import.data_json;
 
-DROP FUNCTION IF EXISTS gn2gn_import.fct_tri_c_upsert_data_to_geonature() CASCADE;
-CREATE OR REPLACE FUNCTION gn2gn_import.fct_tri_c_upsert_data_to_geonature() RETURNS TRIGGER
+DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_upsert_data_to_geonature() CASCADE;
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature() RETURNS TRIGGER
     LANGUAGE plpgsql
 AS
 $$
@@ -228,60 +228,60 @@ BEGIN
     SELECT st_srid(the_geom_local) INTO _local_srid from gn_synthese.synthese limit 1;
     SELECT new.uuid INTO the_unique_id_sinp;
     SELECT CAST(new.item #>> '{id_perm_grp_sinp}' AS UUID) INTO the_unique_id_sinp_grp;
-    SELECT gn2gn_import.fct_c_get_or_insert_source(new.source) INTO the_id_source;
+    SELECT gn2pg_import.fct_c_get_or_insert_source(new.source) INTO the_id_source;
 --     id_module                                INT;
     select new.item #>> '{id_synthese}' INTO the_entity_source_pk_value;
     SELECT
-        gn2gn_import.fct_c_get_or_insert_basic_af_from_uuid_name(
+        gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(
                 CAST(new.item #>> '{ca_uuid}' AS UUID),
                 new.item #>> '{ca_nom}')
     INTO the_id_af;
     SELECT
-        gn2gn_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(
+        gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(
                 CAST(new.item #>> '{jdd_uuid}' AS UUID),
                 new.item #>> '{jdd_nom}',
                 the_id_af)
     INTO the_id_dataset;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('NAT_OBJ_GEO', new.item #>> '{nature_objet_geo}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('NAT_OBJ_GEO', new.item #>> '{nature_objet_geo}')
     INTO the_id_nomenclature_geo_object_nature;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('TYP_GRP', new.item #>> '{type_regroupement}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_GRP', new.item #>> '{type_regroupement}')
     INTO the_id_nomenclature_grp_typ;
     SELECT new.item #>> '{methode_regroupement}' INTO the_grp_method;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('METH_OBS', new.item #>> '{technique_obs}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('METH_OBS', new.item #>> '{technique_obs}')
     INTO the_id_nomenclature_obs_technique;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('STATUT_BIO', new.item #>> '{statut_biologique}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_BIO', new.item #>> '{statut_biologique}')
     INTO the_id_nomenclature_bio_status;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('ETA_BIO', new.item #>> '{etat_biologique}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('ETA_BIO', new.item #>> '{etat_biologique}')
     INTO the_id_nomenclature_bio_condition;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('NATURALITE', new.item #>> '{naturalite}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('NATURALITE', new.item #>> '{naturalite}')
     INTO the_id_nomenclature_naturalness;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('PREUVE_EXIST', new.item #>> '{preuve_existante}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('PREUVE_EXIST', new.item #>> '{preuve_existante}')
     INTO the_id_nomenclature_exist_proof;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('STATUT_VALID', new.item #>> '{statut_validation}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_VALID', new.item #>> '{statut_validation}')
     INTO the_id_nomenclature_valid_status;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('NIV_PRECIS', new.item #>> '{precision_diffusion}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('NIV_PRECIS', new.item #>> '{precision_diffusion}')
     INTO the_id_nomenclature_diffusion_level;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('STADE_VIE', new.item #>> '{stade_vie}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('STADE_VIE', new.item #>> '{stade_vie}')
     INTO the_id_nomenclature_life_stage;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('SEXE', new.item #>> '{sexe}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('SEXE', new.item #>> '{sexe}')
     INTO the_id_nomenclature_sex;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('OBJ_DENBR', new.item #>> '{objet_denombrement}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('OBJ_DENBR', new.item #>> '{objet_denombrement}')
     INTO the_id_nomenclature_obj_count;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('TYP_DENBR', new.item #>> '{type_denombrement}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_DENBR', new.item #>> '{type_denombrement}')
     INTO the_id_nomenclature_type_count;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('SENSIBILITE', new.item #>> '{niveau_sensibilite}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('SENSIBILITE', new.item #>> '{niveau_sensibilite}')
     INTO the_id_nomenclature_sensitivity;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('STATUT_OBS', new.item #>> '{statut_observation}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_OBS', new.item #>> '{statut_observation}')
     INTO the_id_nomenclature_observation_status;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('DEE_FLOU', new.item #>> '{floutage_dee}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('DEE_FLOU', new.item #>> '{floutage_dee}')
     INTO the_id_nomenclature_blurring;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('STATUT_SOURCE', new.item #>> '{statut_source}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_SOURCE', new.item #>> '{statut_source}')
     INTO the_id_nomenclature_source_status;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('TYP_INF_GEO', new.item #>> '{type_info_geo}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_INF_GEO', new.item #>> '{type_info_geo}')
     INTO the_id_nomenclature_info_geo_type;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('OCC_COMPORTEMENT', new.item #>> '{comportement}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('OCC_COMPORTEMENT', new.item #>> '{comportement}')
     INTO the_id_nomenclature_behaviour;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('STAT_BIOGEO', new.item #>> '{statut_biogeo}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('STAT_BIOGEO', new.item #>> '{statut_biogeo}')
     INTO the_id_nomenclature_biogeo_status;
     SELECT new.item #>> '{reference_biblio}' INTO the_reference_biblio;
     SELECT new.item #>> '{nombre_min}' INTO the_count_min;
@@ -309,7 +309,7 @@ BEGIN
     SELECT new.item #>> '{observateurs}' INTO the_observers;
     SELECT new.item #>> '{determinateur}' INTO the_determiner;
     SELECT NULL INTO the_id_digitiser;
-    SELECT gn2gn_import.fct_c_get_id_nomenclature_from_label('TYPE', new.item #>> '{label}')
+    SELECT gn2pg_import.fct_c_get_id_nomenclature_from_label('TYPE', new.item #>> '{label}')
     INTO the_id_nomenclature_determination_method;
     SELECT new.item #>> '{comment_releve}' INTO the_comment_context;
     SELECT new.item #>> '{comment_occurence}' INTO the_comment_description;
@@ -509,13 +509,13 @@ END;
 $$;
 
 
-COMMENT ON FUNCTION gn2gn_import.fct_tri_c_upsert_data_to_geonature() IS 'Trigger function to upsert datas from import to synthese';
+COMMENT ON FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature() IS 'Trigger function to upsert datas from import to synthese';
 
-DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature ON gn2gn_import.data_json;
+DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature ON gn2pg_import.data_json;
 
 CREATE TRIGGER tri_c_upsert_data_to_geonature
     AFTER INSERT OR UPDATE
-    ON gn2gn_import.data_json
+    ON gn2pg_import.data_json
     FOR EACH ROW
-EXECUTE PROCEDURE gn2gn_import.fct_tri_c_upsert_data_to_geonature();
+EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature();
 

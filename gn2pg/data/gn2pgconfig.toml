@@ -1,4 +1,4 @@
-# Gn2Gn configuration file
+# GN2PG configuration file
 
 # Local db configuration
 [db]
@@ -38,7 +38,7 @@ export_id = 1
 [tuning]
 # Max items in an API list request. 
 # Longer lists are split by API in max_list_length chunks.
-max_list_length = 100
+max_page_length = 1000
 # Max retries of API calls before aborting.
 max_retry = 5
 # Maximum number of API requests, for debugging only.
