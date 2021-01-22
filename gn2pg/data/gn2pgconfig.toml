@@ -26,6 +26,8 @@ user_password = "<monPwd>"
 url = "<http://geonature1/>"
 # GeoNature source Export id
 export_id = 1
+# Data type (used to distinct datas and to conditionning triggers)
+data_type = "synthese_with_cd_nomenclature"
 
 [[source]]
 # Source configuration
@@ -34,6 +36,7 @@ user_name = "<monuser>"
 user_password = "<monPwd>"
 url = "<http://geonature2/>"
 export_id = 1
+data_type = "synthese_with_cd_nomenclature"
 
 [tuning]
 # Max items in an API list request. 

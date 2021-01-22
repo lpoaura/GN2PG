@@ -147,16 +147,16 @@ Log files are stored in ``$HOME/.gn2pg/log`` directory.
 Import datas into GeoNature datas
 #################################
 
-Default script to auto populate GeoNature is called "synthese". 
+Default script to auto populate GeoNature is called "to_gnsynthese". 
 
 .. code-block:: bash
 
-    gn2pg_cli --custom-script synthese <myconfigfile>
+    gn2pg_cli --custom-script to_gnsynthese <myconfigfile>
 
 
 .. tip::
 
-    You can also replacing synthese script by your own scripts, using file path instead of ``synthese``.
+    You can also replacing synthese script by your own scripts, using file path instead of ``to_gnsynthese``.
 
 
 Contributing

@@ -50,6 +50,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
     url = "<http://geonature1/>"
     # GeoNature source Export id
     export_id = 1
+    data_type = "synthese_with_cd_nomenclature"
 
     [[source]]
     # Source configuration
@@ -71,7 +72,8 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 
 .. tip::
 
-   By default, data type is ``synthese``, and this type is used conditioning triggers to populate ``gn_synthese.synthese``. This value can be customized for each source with key ``data_type``.
+   Default ``data_type`` (if not defined) is ``synthese_with_cd_nomenclature``, this type is used to conditioning triggers to populate ``gn_synthese.synthese``. This value can be customized for each source with key ``data_type``.
+   If source type is a synthese export with labels, set ``type`` to ``synthese_with_label``.
 
 .. tip::
 
@@ -247,7 +249,7 @@ Default script to auto populate GeoNature is called "synthese".
 
 .. code-block:: bash
 
-    gn2pg_cli --custom-script synthese <myconfigfile>
+    gn2pg_cli --custom-script to_gnsynthese <myconfigfile>
 
 
 .. tip::
