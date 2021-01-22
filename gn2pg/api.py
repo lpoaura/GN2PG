@@ -16,6 +16,7 @@ Exceptions:
 import json
 import logging
 from math import floor
+from typing import Optional
 from urllib.parse import urlencode
 
 import requests
@@ -66,9 +67,7 @@ class BaseAPI:
         )
         try:
             if login.status_code == 200:
-                logger.info(
-                    f"Successfully logged in into GeoNature named {self._config.name}"
-                )
+                logger.info(f"Successfully logged in into GeoNature named {self._config.name}")
             else:
                 logger.critical(
                     (
@@ -84,9 +83,7 @@ class BaseAPI:
         #  Find exports api path
         try:
             m = self._session.get(self._api_url + "gn_commons/modules")
-            logger.info(
-                _(f"Modules API status code is {m.status_code} for url {m.url}")
-            )
+            logger.info(_(f"Modules API status code is {m.status_code} for url {m.url}"))
             if m.status_code == 200:
                 modules = json.loads(m.content)
                 for item in modules:
@@ -134,17 +131,12 @@ class BaseAPI:
         Returns:
             str: export API URL
         """
-        export_url = (
-            self._api_url
-            + self._export_api_path
-            + "/api/"
-            + str(self._config.export_id)
-        )
+        export_url = self._api_url + self._export_api_path + "/api/" + str(self._config.export_id)
         if params:
             export_url = export_url + "?" + urlencode(params)
         return export_url
 
-    def _page_list(self, **kwargs) -> list:
+    def _page_list(self, **kwargs) -> Optional[list]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
 
         Args:
@@ -162,6 +154,7 @@ class BaseAPI:
         r = session.get(
             url=api_url,
         )
+        page_list = []
         if r.status_code == 200:
             resp = r.json()
             total_filtered = resp["total_filtered"]
@@ -172,13 +165,15 @@ class BaseAPI:
                     f" data in {total_pages+1} page(s)"
                 )
             )
-            page_list = []
+
             for p in range(total_pages + 1):
                 params["offset"] = p
                 page_list.append(self._url(params))
             return page_list
+        else:
+            return None
 
-    def get_page(self, page_url: str) -> dict:
+    def get_page(self, page_url: str) -> Optional[dict]:
         """Get data from one API page
 
         Args:
@@ -197,6 +192,7 @@ class BaseAPI:
         except APIException as e:
             logger.critical(f"Download data from {page_url} failed")
             logger.critical(f"{str(e)}")
+            return None
 
 
 class DataAPI(BaseAPI):

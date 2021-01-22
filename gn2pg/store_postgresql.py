@@ -15,6 +15,7 @@ Properties
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pkg_resources
 from psycopg2.errors import ForeignKeyViolation
@@ -47,7 +48,7 @@ class StorePostgresqlException(Exception):
 class DataItem:
     """Properties of an observation, for writing to DB."""
 
-    def __init__(self, source: str, metadata: str, conn: str, elem: dict) -> None:
+    def __init__(self, source: str, metadata: MetaData, conn: Any, elem: dict) -> None:
         """Item elements
 
         Args:
@@ -75,7 +76,7 @@ class DataItem:
         return self._source
 
     @property
-    def metadata(self) -> str:
+    def metadata(self) -> MetaData:
         """Return SqlAlchemy metadata
 
         Returns:
@@ -84,7 +85,7 @@ class DataItem:
         return self._metadata
 
     @property
-    def conn(self) -> str:
+    def conn(self) -> Any:
         """Return db connection
 
         Returns:
@@ -102,7 +103,7 @@ class DataItem:
         return self._elem
 
 
-def store_1_observation(item: dict) -> None:
+def store_1_observation(item: DataItem) -> None:
     """Process and store a single observation.
 
     - find insert or update date
@@ -255,9 +256,7 @@ class PostgresqlUtils:
 
     def create_json_tables(self):
         """Create all internal and jsonb tables."""
-        logger.info(
-            f"Connecting to {self._config.db_name} database, to finalize creation"
-        )
+        logger.info(f"Connecting to {self._config.db_name} database, to finalize creation")
         self._db = create_engine(URL(**self._db_url), echo=False)
         conn = self._db.connect()
         # Create extensions
@@ -337,21 +336,19 @@ class PostgresqlUtils:
 
         return result
 
-    def custom_script(self, script: str = "synthese") -> None:
+    def custom_script(self, script: str = "to_gnsynthese") -> None:
         """EXecute custom script on DB.
         eg.:  triggers to populate local tables like GeoNature synthese
 
         Args:
-            script (str, optional): custom script path. Defaults to "synthese".
+            script (str, optional): custom script path. Defaults to "to_gnsynthese".
         """
         logger.info(_(f"Start to execute {script} script"))
         self._db = create_engine(URL(**self._db_url), echo=False)
         conn = self._db.connect()
         dbschema = self._config.db_schema_import
-        if script == "synthese":
-            file = pkg_resources.resource_filename(
-                __name__, "data/synthese_from_label.sql"
-            )
+        if script == "to_gnsynthese":
+            file = pkg_resources.resource_filename(__name__, "data/to_gnsynthese.sql")
             logger.info(
                 _(
                     f"You choosed to use internal to_geonature.sql script in schema {self._config.db_schema_import}"
@@ -413,12 +410,8 @@ class StorePostgresql:
             "meta": {"type": "metadata", "metadata": None},
         }
 
-        self._table_defs["data"]["metadata"] = self._metadata.tables[
-            dbschema + ".data_json"
-        ]
-        self._table_defs["meta"]["metadata"] = self._metadata.tables[
-            dbschema + ".datasets_json"
-        ]
+        self._table_defs["data"]["metadata"] = self._metadata.tables[dbschema + ".data_json"]
+        self._table_defs["meta"]["metadata"] = self._metadata.tables[dbschema + ".datasets_json"]
 
         return None
 
@@ -480,9 +473,7 @@ class StorePostgresql:
                 )
                 self._conn.execute(do_update_stmt)
             except exc.IntegrityError as error:
-                assert isinstance(
-                    error.orig, ForeignKeyViolation
-                )  # proves the original exception
+                assert isinstance(error.orig, ForeignKeyViolation)  # proves the original exception
                 # raise StorePostgresqlException from error
                 ne = ne + 1
                 self.error_log(controler, elem, str(error))
@@ -553,9 +544,7 @@ class StorePostgresql:
         """
 
         # Store to database, if enabled
-        metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "download_log"
-        ]
+        metadata = self._metadata.tables[self._config.db_schema_import + "." + "download_log"]
         stmt = metadata.insert().values(
             source=self._config.std_name,
             controler=controler,
@@ -578,9 +567,7 @@ class StorePostgresql:
             None
         """
         # Store to database, if enabled
-        metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "increment_log"
-        ]
+        metadata = self._metadata.tables[self._config.db_schema_import + "." + "increment_log"]
 
         insert_stmt = insert(metadata).values(source=source, last_ts=last_ts)
         do_update_stmt = insert_stmt.on_conflict_do_update(
@@ -599,9 +586,7 @@ class StorePostgresql:
         last_ts: datetime = datetime.now(),
     ) -> None:
 
-        metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "error_log"
-        ]
+        metadata = self._metadata.tables[self._config.db_schema_import + "." + "error_log"]
         insert_stmt = insert(metadata).values(
             source=self._config.std_name,
             controler=controler,

@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Some utils"""
 
+from typing import Any
+
 
 class BColors:
     """Colors used for cli"""
@@ -38,7 +40,7 @@ def simplify(source: str) -> str:
     return newsource
 
 
-def coalesce_in_dict(source: dict, key: str, default: any) -> any:
+def coalesce_in_dict(source: dict, key: str, default: Any) -> Any:
     """[summary]
 
     Args:
