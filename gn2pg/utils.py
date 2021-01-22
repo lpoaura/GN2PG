@@ -18,7 +18,9 @@ class BColors:
 
 
 transtable = str.maketrans(
-    "àâäéèêëîïôöùûüŷÿç~- ", "aaaeeeeiioouuuyyc___", "&'([{|}])`^\\/+-=*°$£%§.?!;:<>",
+    "àâäéèêëîïôöùûüŷÿç~- ",
+    "aaaeeeeiioouuuyyc___",
+    "&'([{|}])`^\\/+-=*°$£%§.?!;:<>",
 )
 
 

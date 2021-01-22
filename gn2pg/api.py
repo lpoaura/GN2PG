@@ -60,7 +60,10 @@ class BaseAPI:
                 "id_application": config.id_application,
             }
         )
-        login = self._session.post(self._api_url + "auth/login", data=auth_payload,)
+        login = self._session.post(
+            self._api_url + "auth/login",
+            data=auth_payload,
+        )
         try:
             if login.status_code == 200:
                 logger.info(
@@ -156,7 +159,9 @@ class BaseAPI:
         # GET from API
         session = self._session
         api_url = self._url(params)
-        r = session.get(url=api_url,)
+        r = session.get(
+            url=api_url,
+        )
         if r.status_code == 200:
             resp = r.json()
             total_filtered = resp["total_filtered"]

@@ -54,7 +54,9 @@ def arguments(args):
         help=_("Increase output verbosity"),
         action="store_true",
     )
-    out_group.add_argument("-q", "--quiet", help=_("Reduce output verbosity"), action="store_true")
+    out_group.add_argument(
+        "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
+    )
     parser.add_argument(
         "--init",
         help=_("Initialize the TOML configuration file"),
@@ -77,7 +79,9 @@ def arguments(args):
         help=_('Execute custom SQL Script in DB, default is "synthese"'),
     )
     download_group = parser.add_mutually_exclusive_group()
-    download_group.add_argument("--full", help=_("Perform a full download"), action="store_true")
+    download_group.add_argument(
+        "--full", help=_("Perform a full download"), action="store_true"
+    )
     download_group.add_argument(
         "--update",
         help=_("Perform an incremental download"),
@@ -238,9 +242,13 @@ def full_download_1source(ctrl, cfg):
     logger.debug(cfg)
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
-        logger.debug(_(f"{cfg.source} => Starting download using controler {downloader.name}"))
+        logger.debug(
+            _(f"{cfg.source} => Starting download using controler {downloader.name}")
+        )
         downloader.store()
-        logger.info(_(f"{cfg.source} => Ending download using controler {downloader.name}"))
+        logger.info(
+            _(f"{cfg.source} => Ending download using controler {downloader.name}")
+        )
 
 
 def full_download(cfg_ctrl):
