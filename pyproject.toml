@@ -3,7 +3,7 @@ name = "gn2pg_client"
 packages = [
     { include = "gn2pg" },
 ]
-version = "0.0.5-dev"
+version = "0.0.6-dev"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]

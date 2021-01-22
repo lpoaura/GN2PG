@@ -8,8 +8,10 @@ Information describing the project.
 package = "gn2pg_client"
 project = "GeoNature 2 PostgreSQL Client application"
 project_no_spaces = project.replace(" ", "")
-version = "0.0.5-dev"
-description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
+version = "0.0.6-dev"
+description = (
+    "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
+)
 authors = ["@lpofredc"]
 authors_string = ", ".join(authors)
 emails = ["frederic.cloitre@lpo.fr"]
