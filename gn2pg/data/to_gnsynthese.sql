@@ -56,8 +56,9 @@ CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_u
 DECLARE
     the_dataset_id int;
 BEGIN
-    INSERT INTO gn_meta.t_datasets (id_acquisition_framework, dataset_name, dataset_shortname, dataset_desc, marine_domain, terrestrial_domain, meta_create_date)
+    INSERT INTO gn_meta.t_datasets (unique_dataset_id, id_acquisition_framework, dataset_name, dataset_shortname, dataset_desc, marine_domain, terrestrial_domain, meta_create_date)
     SELECT
+        _uuid,
         _id_af,
         _name,
     LEFT (_name,
@@ -84,7 +85,7 @@ WHERE
 END
 $func$
 LANGUAGE plpgsql;
-COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name (_uuid UUID, _name TEXT, _id_af INT) IS 'function to basically create acquisition framework';
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name (_uuid UUID, _name TEXT, _id_af INT) IS 'function to basically create datasets';
 
 /* Sources */
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_source (_source TEXT);
