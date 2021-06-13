@@ -1,6 +1,12 @@
 /*
  SQL Scripts to automate populate of a GeoNature database from imported data
 
+ Before to start, please adapt the name of the schema 'gn2pg_import' to the one you set in your config file. 
+ You can run either all the script at once of do it manually (without the first Begin line). 
+ Indeed, you might have problem with the following line if you have duplicated data in your GeoNature synthesis:
+ 'CREATE UNIQUE INDEX IF NOT EXISTS uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese (id_source, entity_source_pk_value);'
+ To check if you have duplicates (and delete them if wanted), see : https://github.com/PnX-SI/GeoNature/commit/02b704f1898abc8ae7820e6b3d42f7840f3c971a
+
  Import steps when UPSERT data are:
  1. get or create Acquisition Framework (from Acquisition Framework UUID)
  2. get or create Dataset (from Dataset UUID)
@@ -15,11 +21,12 @@ CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_n
 DECLARE
     the_af_id int;
 BEGIN
-    INSERT INTO gn_meta.t_acquisition_frameworks (unique_acquisition_framework_id, acquisition_framework_name, acquisition_framework_desc, acquisition_framework_start_date)
+    INSERT INTO gn_meta.t_acquisition_frameworks (unique_acquisition_framework_id, acquisition_framework_name, acquisition_framework_desc, acquisition_framework_start_date, meta_create_date)
     SELECT
         _uuid,
         _name,
         'Description of acquisition framework : ' || _name,
+        now(), 
         now()
     WHERE
         NOT EXISTS (
@@ -49,8 +56,9 @@ CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_u
 DECLARE
     the_dataset_id int;
 BEGIN
-    INSERT INTO gn_meta.t_datasets (id_acquisition_framework, dataset_name, dataset_shortname, dataset_desc, marine_domain, terrestrial_domain, meta_create_date)
+    INSERT INTO gn_meta.t_datasets (unique_dataset_id, id_acquisition_framework, dataset_name, dataset_shortname, dataset_desc, marine_domain, terrestrial_domain, meta_create_date)
     SELECT
+        _uuid,
         _id_af,
         _name,
     LEFT (_name,
@@ -77,7 +85,7 @@ WHERE
 END
 $func$
 LANGUAGE plpgsql;
-COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name (_uuid UUID, _name TEXT, _id_af INT) IS 'function to basically create acquisition framework';
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name (_uuid UUID, _name TEXT, _id_af INT) IS 'function to basically create datasets';
 
 /* Sources */
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_source (_source TEXT);

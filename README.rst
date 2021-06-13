@@ -96,6 +96,11 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
     url = "<http://geonature1/>"
     # GeoNature source Export id
     export_id = 1
+    # Data type is facultative. By default the value is 'synthese'. Therefore, triggers from to_gnsynthese.sql are not activated.
+    # If you want to insert your date into a GeoNature database please choose either 'synthese_with_cd_nomenclature' or 'synthese_with_label'.
+    # If not, delete the line.
+    data_type = "synthese_with_cd_nomenclature"
+
 
     [[source]]
     # Source configuration
@@ -104,6 +109,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
     user_password = "<monPwd>"
     url = "<http://geonature2/>"
     export_id = 1
+    data_type = "synthese_with_cd_nomenclature"
 
 
 
