@@ -72,16 +72,24 @@ class Gn2PgSourceConf:
         try:
             # Source configs
             self._name = config["source"][source]["name"]  # type: str
-            self._user_name = config["source"][source]["user_name"]  # type: str
-            self._user_password = config["source"][source]["user_password"]  # type: str
+            self._user_name = config["source"][source][
+                "user_name"
+            ]  # type: str
+            self._user_password = config["source"][source][
+                "user_password"
+            ]  # type: str
             self._url = config["source"][source]["url"]  # type: str
             self._id_application = coalesce_in_dict(
                 config["source"][source], "id_application", 3
             )  # type: int
             self._data_type = coalesce_in_dict(
-                config["source"][source], "data_type", "synthese_with_cd_nomenclature"
+                config["source"][source],
+                "data_type",
+                "synthese_with_cd_nomenclature",
             )  # type: str
-            self._export_id = config["source"][source]["export_id"]  # type: int
+            self._export_id = config["source"][source][
+                "export_id"
+            ]  # type: int
             self._enable = (
                 True
                 if "enable" not in config["source"][source]
@@ -93,7 +101,9 @@ class Gn2PgSourceConf:
             self._db_user = config["db"]["db_user"]  # type: str
             self._db_password = config["db"]["db_password"]  # type: str
             self._db_name = config["db"]["db_name"]  # type: str
-            self._db_schema_import = config["db"]["db_schema_import"]  # type: str
+            self._db_schema_import = config["db"][
+                "db_schema_import"
+            ]  # type: str
             self._db_querystring = coalesce_in_dict(
                 config["db"], "db_querystring", {}
             )  # type: dict
@@ -102,13 +112,21 @@ class Gn2PgSourceConf:
                 self._max_page_length = coalesce_in_dict(
                     tuning, "max_page_length", 1000
                 )  # type: int
-                self._max_retry = coalesce_in_dict(tuning, "max_retry", 5)  # type: int
-                self._max_requests = coalesce_in_dict(tuning, "max_requests", 0)  # type: int
-                self._retry_delay = coalesce_in_dict(tuning, "retry_delay", 5)  # type: int
+                self._max_retry = coalesce_in_dict(
+                    tuning, "max_retry", 5
+                )  # type: int
+                self._max_requests = coalesce_in_dict(
+                    tuning, "max_requests", 0
+                )  # type: int
+                self._retry_delay = coalesce_in_dict(
+                    tuning, "retry_delay", 5
+                )  # type: int
                 self._unavailable_delay = coalesce_in_dict(
                     tuning, "unavailable_delay", 600
                 )  # type: int
-                self._lru_maxsize = coalesce_in_dict(tuning, "lru_maxsize", 32)  # type: int
+                self._lru_maxsize = coalesce_in_dict(
+                    tuning, "lru_maxsize", 32
+                )  # type: int
 
         except Exception:  # pragma: no cover
             logger.exception(_(f"Error creating {source} configuration"))
@@ -346,14 +364,18 @@ class Gn2PgConf:
             self._config = load(p)
             _ConfSchema.validate(self._config)
         except Exception as e:
-            logger.critical(f"Incorrect content in YAML configuration {file} : {e}")
+            logger.critical(
+                f"Incorrect content in YAML configuration {file} : {e}"
+            )
             raise
 
         self._source_list = {}  # type: _ConfType
         i = 0
         for source in self._config["source"]:
             source_name = simplify(source["name"])
-            logger.info(f"Source \"{source['name']}\" identifier will be \"{source_name}\"")
+            logger.info(
+                f"Source \"{source['name']}\" identifier will be \"{source_name}\""
+            )
 
             if source_name in [s for s in self._source_list.keys()]:
                 logger.critical(

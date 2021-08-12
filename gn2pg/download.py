@@ -19,7 +19,7 @@ logger = logging.getLogger("transfer_gn.download_gn")
 
 
 class DownloadGnException(Exception):
-    """An exception occurred while handling download or store. """
+    """An exception occurred while handling download or store."""
 
 
 class NotImplementedException(DownloadGnException):
@@ -75,8 +75,12 @@ class DownloadGn:
             None
         """
 
-        logger.debug(_(f"Getting items from controler {self._api_instance.controler}"))
-        pages = self._api_instance._page_list(limit=self._config.max_page_length)
+        logger.debug(
+            _(f"Getting items from controler {self._api_instance.controler}")
+        )
+        pages = self._api_instance._page_list(
+            limit=self._config.max_page_length
+        )
         self._backend.log(
             self._config.source,
             self._api_instance.controler,
@@ -93,9 +97,23 @@ class DownloadGn:
             logger.info(
                 f"Storing {len_items} datas ({progress}/{total_len} "
                 f"{round((progress/total_len)*100,2)}%)"
-                f" from {self._config.name} {self._api_instance.controler}"
+                f"from {self._config.name} {self._api_instance.controler}"
             )
-            self._backend.store_data(self._api_instance.controler, resp["items"])
+            self._backend.store_data(
+                self._api_instance.controler, resp["items"]
+            )
+        return None
+
+    def update(self, since: str = None) -> None:
+        """[summary]
+
+        Args:
+            since ([type], optional): [description]. Defaults to None.
+
+        Returns:
+            [type]: [description]
+        """
+
         return None
 
 
@@ -108,7 +126,9 @@ class Data(DownloadGn):
     """
 
     def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(config, DataAPI(config), backend, max_retry, max_requests)
+        super().__init__(
+            config, DataAPI(config), backend, max_retry, max_requests
+        )
         return None
 
 
@@ -121,5 +141,7 @@ class Datasets(DownloadGn):
     """
 
     def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(config, DatasetsAPI(config), backend, max_retry, max_requests)
+        super().__init__(
+            config, DatasetsAPI(config), backend, max_retry, max_requests
+        )
         return None

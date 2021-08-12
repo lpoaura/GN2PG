@@ -1,8 +1,8 @@
 /*
  SQL Scripts to automate populate of a GeoNature database from imported data
 
- Before to start, please adapt the name of the schema 'gn2pg_import' to the one you set in your config file. 
- You can run either all the script at once of do it manually (without the first Begin line). 
+ Before to start, please adapt the name of the schema 'gn2pg_import' to the one you set in your config file.
+ You can run either all the script at once of do it manually (without the first Begin line).
  Indeed, you might have problem with the following line if you have duplicated data in your GeoNature synthesis:
  'CREATE UNIQUE INDEX IF NOT EXISTS uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese (id_source, entity_source_pk_value);'
  To check if you have duplicates (and delete them if wanted), see : https://github.com/PnX-SI/GeoNature/commit/02b704f1898abc8ae7820e6b3d42f7840f3c971a
@@ -26,7 +26,7 @@ BEGIN
         _uuid,
         _name,
         'Description of acquisition framework : ' || _name,
-        now(), 
+        now(),
         now()
     WHERE
         NOT EXISTS (
@@ -574,4 +574,3 @@ CREATE TRIGGER tri_c_upsert_data_to_geonature_with_cd_nomenclature
     WHEN (new.type LIKE 'synthese_with_cd_nomenclature')
     EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_cd_nomenclature ();
 COMMIT;
-

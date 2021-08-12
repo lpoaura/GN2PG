@@ -156,7 +156,9 @@ def main(args):
 
     # Get configuration from file
     if not (ENVDIR / args.file).is_file():
-        logger.critical("Configuration file %s does not exist", str(ENVDIR / args.file))
+        logger.critical(
+            "Configuration file %s does not exist", str(ENVDIR / args.file)
+        )
         return None
     logger.info("Getting configuration data from %s", args.file)
     try:
@@ -204,7 +206,9 @@ def init(file: str) -> None:
     """
 
     logger = logging.getLogger("transfer_gn")
-    toml_src = pkg_resources.resource_filename(__name__, "data/gn2pgconfig.toml")
+    toml_src = pkg_resources.resource_filename(
+        __name__, "data/gn2pgconfig.toml"
+    )
     toml_dst = str(ENVDIR / file)
     if Path(toml_dst).is_file():
         ENVDIR.mkdir(exist_ok=True)
@@ -219,7 +223,9 @@ def init(file: str) -> None:
             exit()
         else:
             logger.warning(f"file {toml_dst} will be overwritten")
-    logger.info(f"Creating TOML configuration file {toml_dst}, from {toml_src}")
+    logger.info(
+        f"Creating TOML configuration file {toml_dst}, from {toml_src}"
+    )
     shutil.copyfile(toml_src, toml_dst)
     logger.info(f"Please edit {toml_dst} before running the script")
     sys.exit(0)
@@ -243,11 +249,15 @@ def full_download_1source(ctrl, cfg):
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
         logger.debug(
-            _(f"{cfg.source} => Starting download using controler {downloader.name}")
+            _(
+                f"{cfg.source} => Starting download using controler {downloader.name}"
+            )
         )
         downloader.store()
         logger.info(
-            _(f"{cfg.source} => Ending download using controler {downloader.name}")
+            _(
+                f"{cfg.source} => Ending download using controler {downloader.name}"
+            )
         )
 
 

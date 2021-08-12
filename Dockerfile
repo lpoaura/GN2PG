@@ -8,7 +8,7 @@ ENV PYTHONFAULTHANDLER=1 \
 
 
 RUN apt-get update && apt-get -y upgrade && \
-    apt-get install -y libpq-dev  
+    apt-get install -y libpq-dev
 
 FROM base as builder
 
@@ -20,7 +20,7 @@ COPY pyproject.toml poetry.lock ./
 RUN pip install poetry
 
 COPY . .
-RUN poetry install 
+RUN poetry install
 RUN poetry build
 
 FROM base as final

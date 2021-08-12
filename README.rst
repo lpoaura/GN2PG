@@ -83,7 +83,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
         sslmode = "prefer"
 
 
-    # Source configuration, 
+    # Source configuration,
     # Ducplicate this block for each source (1 source = 1 export)
     [[source]]
     # Source name, will be use to tag stored data in import table
@@ -117,11 +117,11 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 
    You can add variable in source block ``enable = false`` to disable a source
 
- 
+
 InitDB  Schema and tables
 #########################
 
-To create json tables where datas will be downloaded, run : 
+To create json tables where datas will be downloaded, run :
 
 .. code-block:: bash
 
@@ -131,7 +131,7 @@ To create json tables where datas will be downloaded, run :
 Full download
 #############
 
-To full download json datas into synthese_json table, run : 
+To full download json datas into synthese_json table, run :
 
 .. code-block:: bash
 
@@ -153,7 +153,7 @@ Log files are stored in ``$HOME/.gn2pg/log`` directory.
 Import datas into GeoNature datas
 #################################
 
-Default script to auto populate GeoNature is called "to_gnsynthese". 
+Default script to auto populate GeoNature is called "to_gnsynthese".
 
 .. code-block:: bash
 
@@ -168,7 +168,7 @@ Default script to auto populate GeoNature is called "to_gnsynthese".
 Contributing
 ============
 
-All devs must be done in forks. 
+All devs must be done in forks.
 
 Pull requests must be pulled to `dev` branch. For example with this command:
 

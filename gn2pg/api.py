@@ -67,7 +67,9 @@ class BaseAPI:
         )
         try:
             if login.status_code == 200:
-                logger.info(f"Successfully logged in into GeoNature named {self._config.name}")
+                logger.info(
+                    f"Successfully logged in into GeoNature named {self._config.name}"
+                )
             else:
                 logger.critical(
                     (
@@ -83,13 +85,19 @@ class BaseAPI:
         #  Find exports api path
         try:
             m = self._session.get(self._api_url + "gn_commons/modules")
-            logger.info(_(f"Modules API status code is {m.status_code} for url {m.url}"))
+            logger.info(
+                _(
+                    f"Modules API status code is {m.status_code} for url {m.url}"
+                )
+            )
             if m.status_code == 200:
                 modules = json.loads(m.content)
                 for item in modules:
                     if item["module_code"] == "EXPORTS":
                         self._export_api_path = item["module_path"]
-                        logger.debug(f"Export api path is {self._export_api_path}")
+                        logger.debug(
+                            f"Export api path is {self._export_api_path}"
+                        )
                         break
             else:
                 logger.critical(
@@ -131,7 +139,12 @@ class BaseAPI:
         Returns:
             str: export API URL
         """
-        export_url = self._api_url + self._export_api_path + "/api/" + str(self._config.export_id)
+        export_url = (
+            self._api_url
+            + self._export_api_path
+            + "/api/"
+            + str(self._config.export_id)
+        )
         if params:
             export_url = export_url + "?" + urlencode(params)
         return export_url

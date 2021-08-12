@@ -13,7 +13,7 @@ db_schema_import = "schema"
     sslmode = "prefer"
 
 
-# Source configuration, 
+# Source configuration,
 # Ducplicate this block for each source (1 source = 1 export)
 [[source]]
 # Source name, will be use to tag stored data in import table
@@ -39,7 +39,7 @@ export_id = 1
 data_type = "synthese_with_cd_nomenclature"
 
 [tuning]
-# Max items in an API list request. 
+# Max items in an API list request.
 # Longer lists are split by API in max_list_length chunks.
 max_page_length = 1000
 # Max retries of API calls before aborting.
