@@ -76,7 +76,7 @@ def arguments(args):
     customscript_group.add_argument(
         "--custom-script",
         nargs="?",
-        help=_('Execute custom SQL Script in DB, default is "synthese"'),
+        help=_('Execute custom SQL Script in DB, default is "to_gnsynthese"'),
     )
     download_group = parser.add_mutually_exclusive_group()
     download_group.add_argument(
@@ -278,6 +278,51 @@ def full_download(cfg_ctrl):
             logger.info(_(f"Source {source} is disabled"))
 
     return None
+
+
+def update_download_1source(ctrl, cfg):
+    """[summary]
+
+    Args:
+        ctrl ([type]): [description]
+        cfg ([type]): [description]
+    """
+    logger = logging.getLogger("transfer_gn")
+    # logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
+    logger.debug(cfg)
+    with StorePostgresql(cfg) as store_pg:
+        downloader = ctrl(cfg, store_pg)
+        logger.debug(
+            _(
+                f"{cfg.source} => Starting updating using controler {downloader.name}"
+            )
+        )
+        downloader.update()
+        logger.info(
+            _(
+                f"{cfg.source} => Ending updating using controler {downloader.name}"
+            )
+        )
+
+
+def update_download(cfg_ctrl):
+    """[summary]
+
+    Args:
+        cfg_ctrl ([type]): [description]
+    """
+    logger = logging.getLogger("transfer_gn")
+    logger.info(cfg_ctrl)
+    cfg_source_list = cfg_ctrl.source_list
+    cfg = list(cfg_source_list.values())[0]
+    logger.info(_("Defining full download jobs"))
+    for source, cfg in cfg_source_list.items():
+        if cfg.enable:
+            logger.info(_(f"Starting full download for source {source}"))
+            # full_download_1(Datasets, cfg)
+            update_download_1source(Data, cfg)
+        else:
+            logger.info(_(f"Source {source} is disabled"))
 
 
 def run():
