@@ -11,6 +11,7 @@ Properties
 
 """
 import logging
+from typing import NoReturn
 
 from . import _, __version__
 from .api import DataAPI, DatasetsAPI
@@ -32,7 +33,7 @@ class DownloadGn:
 
     def __init__(
         self, config, api_instance, backend, max_retry=None, max_requests=None
-    ):
+    ) -> NoReturn:
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
@@ -44,20 +45,19 @@ class DownloadGn:
             "max_retry": max_retry,
             "max_requests": max_requests,
         }
-        return None
 
     @property
-    def version(self):
+    def version(self) -> str:
         """Return version."""
         return __version__
 
     @property
-    def transfer_errors(self):
+    def transfer_errors(self) -> int:
         """Return the number of HTTP errors during this session."""
         return self._api_instance.transfer_errors
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the controler name."""
         return self._api_instance.controler
 
@@ -68,7 +68,7 @@ class DownloadGn:
     # ---------------
     # Generic methods
     # ---------------
-    def store(self) -> None:
+    def store(self) -> NoReturn:
         """Store data into Database
 
         Returns:
@@ -102,19 +102,19 @@ class DownloadGn:
             self._backend.store_data(
                 self._api_instance.controler, resp["items"]
             )
-        return None
 
-    def update(self, since: str = None) -> None:
+    def update(self, since: str) -> NoReturn:
         """[summary]
 
         Args:
-            since ([type], optional): [description]. Defaults to None.
+            since (str): DateTime limit to update.
 
         Returns:
             [type]: [description]
         """
-
-        return None
+        logger.debug(
+            _(f"Updating items from controler {self._api_instance.controler}")
+        )
 
 
 class Data(DownloadGn):
