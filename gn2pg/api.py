@@ -130,24 +130,34 @@ class BaseAPI:
         """Return the controler name."""
         return self._ctrl
 
-    def _url(self, params: dict = None) -> str:
-        """Generate API URL with QueryStrings if params
+    def _data_url(self, params: dict = None) -> str:
+        """Generate export API URL with QueryStrings if params.
 
         Args:
             params (dict, optional): dict of querystring parameters. Defaults to None.
 
         Returns:
-            str: export API URL
+            str: export API URL.
         """
-        export_url = (
-            self._api_url
-            + self._export_api_path
-            + "/api/"
-            + str(self._config.export_id)
-        )
+        export_url = f"{self._api_url}{self._export_api_path}/api/{str(self._config.export_id)}"
         if params:
             export_url = export_url + "?" + urlencode(params)
         return export_url
+
+    def _log_url(self, action: str, params: dict = None) -> str:
+        """Generate API log url (for "upsert" or "delete") with QueryStrings if params.
+
+        Args:
+            action (str): "upsert" or "delete".
+            params (dict, optional): URL querystrings used by API. Defaults to None.
+
+        Returns:
+            str: log url.
+        """
+        log_url = f"{self._api_url}/synthese/log/{action}"
+        if params:
+            log_url = log_url + "?" + urlencode(params)
+        return log_url
 
     def _page_list(self, **kwargs) -> Optional[list]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
@@ -163,7 +173,7 @@ class BaseAPI:
             params[key] = value
         # GET from API
         session = self._session
-        api_url = self._url(params)
+        api_url = self._data_url(params)
         r = session.get(
             url=api_url,
         )
@@ -174,7 +184,7 @@ class BaseAPI:
             total_pages = floor(total_filtered / resp["limit"])
             logger.debug(
                 _(
-                    f"API {self._url(params)} contains {total_filtered}"
+                    f"API {self._data_url(params)} contains {total_filtered}"
                     f" data in {total_pages+1} page(s)"
                 )
             )
