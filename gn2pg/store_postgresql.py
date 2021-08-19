@@ -15,10 +15,9 @@ Properties
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 import pkg_resources
-from psycopg2.errors import ForeignKeyViolation
 from sqlalchemy import (
     Column,
     DateTime,
@@ -50,7 +49,7 @@ class DataItem:
 
     def __init__(
         self, source: str, metadata: MetaData, conn: Any, elem: dict
-    ) -> None:
+    ) -> NoReturn:
         """Item elements
 
         Args:
@@ -66,7 +65,6 @@ class DataItem:
         self._metadata = metadata
         self._conn = conn
         self._elem = elem
-        return None
 
     @property
     def source(self) -> str:
@@ -105,54 +103,54 @@ class DataItem:
         return self._elem
 
 
-def store_1_observation(item: DataItem) -> None:
-    """Process and store a single observation.
+# def store_1_observation(item: DataItem) -> None:
+#     """Process and store a single observation.
 
-    - find insert or update date
-    - store json in Postgresql
+#     - find insert or update date
+#     - store json in Postgresql
 
-    Args:
-        item (dict): ObservationItem, Observation item containing all parameters.
+#     Args:
+#         item (dict): ObservationItem, Observation item containing all parameters.
 
-    Returns:
-        None
-    """
-    # Insert simple observations,
-    # each row contains uniq_id, update timestamp and full json body
-    elem = item.elem
-    uniq_id = elem["ID_perm_SINP"]
-    logger.debug(
-        f"Storing observation {uniq_id} to database",
-    )
-    # Find last update timestamp
-    if "Date_modification" in elem:
-        update_date = elem["Date_modification"]
-    else:
-        update_date = elem["Date_creation"]
+#     Returns:
+#         None
+#     """
+#     # Insert simple observations,
+#     # each row contains uniq_id, update timestamp and full json body
+#     elem = item.elem
+#     uniq_id = elem["ID_perm_SINP"]
+#     logger.debug(
+#         f"Storing observation {uniq_id} to database",
+#     )
+#     # Find last update timestamp
+#     if "Date_modification" in elem:
+#         update_date = elem["Date_modification"]
+#     else:
+#         update_date = elem["Date_creation"]
 
-    # Store in Postgresql
-    metadata = item.metadata
-    source = item.source
-    insert_stmt = insert(metadata).values(
-        uuid=uniq_id,
-        source=source,
-        update_ts=update_date,
-        item=elem,
-    )
-    do_update_stmt = insert_stmt.on_conflict_do_update(
-        constraint=metadata.primary_key,
-        set_=dict(update_ts=update_date, item=elem),
-        where=(metadata.c.update_ts < update_date),
-    )
+#     # Store in Postgresql
+#     metadata = item.metadata
+#     source = item.source
+#     insert_stmt = insert(metadata).values(
+#         uuid=uniq_id,
+#         source=source,
+#         update_ts=update_date,
+#         item=elem,
+#     )
+#     do_update_stmt = insert_stmt.on_conflict_do_update(
+#         constraint=metadata.primary_key,
+#         set_=dict(update_ts=update_date, item=elem),
+#         where=(metadata.c.update_ts < update_date),
+#     )
 
-    item.conn.execute(do_update_stmt)
-    return None
+#     item.conn.execute(do_update_stmt)
+#     return None
 
 
 class PostgresqlUtils:
     """Provides create and delete Postgresql database method."""
 
-    def __init__(self, config):
+    def __init__(self, config) -> NoReturn:
         self._config = config
         self._db_url = {
             "drivername": "postgresql+psycopg2",
@@ -163,13 +161,13 @@ class PostgresqlUtils:
             "database": self._config.db_name,
         }
         if self._config.db_querystring:
-            self._db_url["query"]: self._config.db_querystring
+            self._db_url["query"] = self._config.db_querystring
 
     # ----------------
     # Internal methods
     # ----------------
 
-    def _create_table(self, name, *cols):
+    def _create_table(self, name, *cols) -> NoReturn:
         """Check if table exists, and create it if not
 
         Parameters
@@ -189,9 +187,8 @@ class PostgresqlUtils:
             table.create(self._db)
         else:
             logger.info("Table %s already exists => Keeping it", name)
-        return None
 
-    def _create_download_log(self):
+    def _create_download_log(self) -> NoReturn:
         """Create download_log table if it does not exist."""
         self._create_table(
             "download_log",
@@ -207,9 +204,8 @@ class PostgresqlUtils:
             Column("http_status", Integer, index=True),
             Column("comment", String),
         )
-        return None
 
-    def _create_increment_log(self):
+    def _create_increment_log(self) -> NoReturn:
         """Create increment_log table if it does not exist."""
         self._create_table(
             "increment_log",
@@ -219,9 +215,8 @@ class PostgresqlUtils:
                 "last_ts", DateTime, server_default=func.now(), nullable=False
             ),
         )
-        return None
 
-    def _create_error_log(self):
+    def _create_error_log(self) -> NoReturn:
         """Create error_log table if table does not exist."""
         self._create_table(
             "error_log",
@@ -234,9 +229,8 @@ class PostgresqlUtils:
             Column("item", JSONB),
             Column("error", String),
         )
-        return None
 
-    def _create_datasets_json(self):
+    def _create_datasets_json(self) -> NoReturn:
         """Create entities_json table if it does not exist."""
         self._create_table(
             "datasets_json",
@@ -245,9 +239,8 @@ class PostgresqlUtils:
             Column("item", JSONB, nullable=False),
             PrimaryKeyConstraint("uuid", "source", name="meta_json_pk"),
         )
-        return None
 
-    def _create_data_json(self):
+    def _create_data_json(self) -> NoReturn:
         """Create observations_json table if it does not exist."""
         self._create_table(
             "data_json",
@@ -267,9 +260,8 @@ class PostgresqlUtils:
                 "id_data", "source", "type", name="pk_source_data"
             ),
         )
-        return None
 
-    def create_json_tables(self):
+    def create_json_tables(self) -> NoReturn:
         """Create all internal and jsonb tables."""
         logger.info(
             f"Connecting to {self._config.db_name} database, to finalize creation"
@@ -324,8 +316,6 @@ class PostgresqlUtils:
         conn.close()
         self._db.dispose()
 
-        return None
-
     def count_json_data(self):
         """Count observations stored in json table, by source and type.
 
@@ -355,7 +345,7 @@ class PostgresqlUtils:
 
         return result
 
-    def custom_script(self, script: str = "to_gnsynthese") -> None:
+    def custom_script(self, script: str = "to_gnsynthese") -> NoReturn:
         """EXecute custom script on DB.
         eg.:  triggers to populate local tables like GeoNature synthese
 
@@ -396,8 +386,6 @@ class PostgresqlUtils:
         except Exception as e:
             logger.critical(f"{str(e)}")
             logger.critical(f"failed to apply script {script}")
-
-        return None
 
 
 class StorePostgresql:
@@ -461,6 +449,44 @@ class StorePostgresql:
     # ----------------
     # Internal methods
     # ----------------
+    def store_1_data(
+        self,
+        controler: str,
+        elem: dict,
+        id_key_name: str = "id_synthese",
+        uuid_key_name: str = "id_perm_sinp",
+    ) -> None:
+        """Store 1 item in db (using upsert statement)
+
+        Args:
+            controler (str): Destionation table
+            elem (dict): json data as dict
+            id_key_name (str, optional): Data id in source database. Defaults to "id_synthese".
+            uuid_key_name (str, optional): Universal unique identifier of the data. Defaults to "id_perm_sinp".
+        """
+        metadata = self._table_defs[controler]["metadata"]
+        try:
+            insert_stmt = insert(metadata).values(
+                id_data=elem[id_key_name],
+                controler=controler,
+                type=self._config.data_type,
+                uuid=elem[uuid_key_name],
+                source=self._config.std_name,
+                item=elem,
+                update_ts=datetime.now(),
+            )
+            do_update_stmt = insert_stmt.on_conflict_do_update(
+                constraint=metadata.primary_key,
+                set_=dict(item=elem, update_ts=datetime.now()),
+            )
+            self._conn.execute(do_update_stmt)
+        except exc.StatementError as error:
+            self.error_log(controler, elem, str(error))
+            logger.critical(
+                f"One error occured for data from source {self._config.std_name} whith "
+                f"{id_key_name} = {elem[id_key_name]}"
+            )
+
     def store_data(
         self,
         controler: str,
@@ -480,31 +506,16 @@ class StorePostgresql:
             int: items dict length
         """
         # Loop on data array to store each element to database
-        metadata = self._table_defs[controler]["metadata"]
         i = 0
         ne = 0
         for elem in items_dict:
             try:
                 i = i + 1
                 # Convert to json
-                insert_stmt = insert(metadata).values(
-                    id_data=elem[id_key_name],
-                    controler=controler,
-                    type=self._config.data_type,
-                    uuid=elem[uuid_key_name],
-                    source=self._config.std_name,
-                    item=elem,
-                    update_ts=datetime.now(),
-                )
-                do_update_stmt = insert_stmt.on_conflict_do_update(
-                    constraint=metadata.primary_key,
-                    set_=dict(item=elem, update_ts=datetime.now()),
-                )
-                self._conn.execute(do_update_stmt)
-            except exc.IntegrityError as error:
-                assert isinstance(
-                    error.orig, ForeignKeyViolation
-                )  # proves the original exception
+                self.store_1_data(controler, elem, id_key_name, uuid_key_name)
+
+            except exc.StatementError as error:
+                # assert isinstance(error.orig, ForeignKeyViolation)  # proves the original exception
                 # raise StorePostgresqlException from error
                 ne = ne + 1
                 self.error_log(controler, elem, str(error))
@@ -517,15 +528,14 @@ class StorePostgresql:
         )
         return len(items_dict)
 
-    # ---------------
+    # ----------------
     # External methods
-    # ---------------
+    # ----------------
 
-    def _delete_data(
+    def delete_data(
         self,
-        obs_list,
-        uuid_key_name: str = "id_perm_sinp",
-    ):
+        obs_list: list,
+    ) -> int:
         """Delete observations stored in database.
 
         Parameters
