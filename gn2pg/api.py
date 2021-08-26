@@ -141,8 +141,8 @@ class BaseAPI:
         """
         if kind == "data":
             url = f"{self._api_url}{self._export_api_path}/api/{str(self._config.export_id)}"
-        elif kind in ("upsert", "delete"):
-            url = f"{self._api_url}synthese/log/{kind}"
+        elif kind == "log":
+            url = f"{self._api_url}synthese/log"
         else:
             return None
         if len(params) > 0:
@@ -165,6 +165,7 @@ class BaseAPI:
         """
         # GET from API
         session = self._session
+
         # Check kind value
         if self._url(kind) is None:
             return None
@@ -174,26 +175,28 @@ class BaseAPI:
         r = session.get(
             url=api_url,
         )
-
-        page_list = []
+        logger.debug(
+            f"Defining page_list from {api_url} with status code {r.status_code}"
+        )
         if r.status_code == 200:
-            resp = r.json()
-            total_filtered = resp["total_filtered"]
-            total_pages = floor(total_filtered / resp["limit"]) + 1
-            logger.debug(
-                _(
-                    f"API {self._url(params)} contains {total_filtered}"
-                    f" data in {total_pages} page(s)"
+            page_list = []
+            if r.status_code == 200:
+                resp = r.json()
+                total_filtered = resp["total_filtered"]
+                total_pages = floor(total_filtered / resp["limit"]) + 1
+                logger.debug(
+                    _(
+                        f"API {api_url} contains {total_filtered} data in {total_pages} page(s)"
+                    )
                 )
-            )
 
-            for p in range(total_pages):
-                offset_params = list(params)
-                p = p + 1 if kind != "data" else p
-                offset_params.append(("offset", p))
-                page_list.append(self._url(kind, offset_params))
-            return page_list
+                for p in range(total_pages):
+                    offset_params = list(params)
+                    offset_params.append(("offset", p))
+                    page_list.append(self._url(kind, offset_params))
+                return page_list
         else:
+            logger.info(f"No data available from from {self._config.name}")
             return None
 
     def get_page(self, page_url: str) -> Optional[dict]:

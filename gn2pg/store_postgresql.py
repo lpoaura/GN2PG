@@ -539,7 +539,9 @@ class StorePostgresql:
 
     def delete_data(
         self,
-        obs_list: list,
+        items: list,
+        id_key_name: str = "id_synthese",
+        controler: str = "data",
     ) -> int:
         """Delete observations stored in database.
 
@@ -555,17 +557,21 @@ class StorePostgresql:
         """
         del_count = 0
         # Store to database, if enabled
-        logger.info(f"Deleting {len(obs_list)} datas from database")
-        for item in obs_list:
+        for item in items:
+            logger.debug(
+                f"Deleting item with id {item[id_key_name]} from source {self._config.name} (controler {controler})"
+            )
             nd = self._conn.execute(
                 self._table_defs["data"]["metadata"]
                 .delete()
                 .where(
                     and_(
-                        self._table_defs["observations"]["metadata"].c.id_data
-                        == item["id_key_name"],
-                        self._table_defs["observations"]["metadata"].c.source
-                        == self._config.source,
+                        self._table_defs["data"]["metadata"].c.id_data
+                        == item[id_key_name],
+                        self._table_defs["data"]["metadata"].c.controler
+                        == controler,
+                        self._table_defs["data"]["metadata"].c.source
+                        == self._config.name,
                     )
                 )
             )

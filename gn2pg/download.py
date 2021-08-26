@@ -69,6 +69,7 @@ class DownloadGn:
     # ---------------
     # Generic methods
     # ---------------
+
     def store(self) -> NoReturn:
         """Store data into Database
 
@@ -121,14 +122,15 @@ class DownloadGn:
         Returns:
             [type]: [description]
         """
+        # Update new or modified data from API
         logger.debug(
             _(f"Updating items from controler {self._api_instance.controler}")
         )
         # Get last update from increment log.
         increment_ts = datetime.now()
-        params = []
-        for a in ["I", "U"]:
-            params.append(("action", a))
+
+        params = [("action", a) for a in ["I", "U"]]
+
         if since is None:
             since = (
                 self._backend.increment_get(self._api_instance.controler)
@@ -136,39 +138,70 @@ class DownloadGn:
                 is not None
                 else self._backend.download_get(self._api_instance.controler)
             )
-            logger.debug(f"since is None : {since}")
-            logger.debug(
-                f"since is None : {self._backend.download_get(self._api_instance.controler)}"
-            )
+
+        params.extend(
+            [
+                ("limit", self._config.max_page_length),
+                ("filter_d_up_derniere_action", since),
+            ]
+        )
+
         logger.info(
             _(
                 f"Getting new or update data from source {self._config.source} since {since}"
             )
         )
-        params.append(("limit", self._config.max_page_length))
-        params.append(("filter_d_up_derniere_action", since))
-        pages = self._api_instance._page_list(kind="data", params=params)
-        progress = 0
-        for p in pages:
-            resp = self._api_instance.get_page(p)
-            items = resp["items"]
-            len_items = len(items)
-            total_len = resp["total_filtered"]
-            progress = progress + len_items
-            logger.info(
-                f"Storing {len_items} datas ({progress}/{total_len} "
-                f"{round((progress/total_len)*100,2)}%)"
-                f"from {self._config.name} {self._api_instance.controler}"
-            )
-            self._backend.store_data(
-                self._api_instance.controler, resp["items"]
-            )
 
+        upsert_pages = self._api_instance._page_list(
+            kind="data", params=params
+        )
+
+        if upsert_pages is not None:
+            progress = 0
+            for u_page in upsert_pages:
+                u_resp = self._api_instance.get_page(u_page)
+                u_items = u_resp["items"]
+                u_len_items = len(u_items)
+                u_total_len = u_resp["total_filtered"]
+                progress = progress + u_len_items
+                logger.info(
+                    f"Storing {u_len_items} datas ({progress}/{u_total_len} "
+                    f"{round((progress/u_total_len)*100,2)}%)"
+                    f"from {self._config.name} {self._api_instance.controler}"
+                )
+                self._backend.store_data(
+                    self._api_instance.controler, u_resp["items"]
+                )
+
+        # Delete data deleted from source
         logger.info(
             _(
-                f"Deleting deleted data from source {self._config.source} since {since}"
+                f"Preparing data delete from source {self._config.name} since {since}"
             )
         )
+
+        deleted_pages = self._api_instance._page_list(
+            kind="log",
+            params=[
+                ("filter_d_up_meta_last_action_date", since),
+                ("limit", self._config.max_page_length),
+                ("last_action", "D"),
+            ],
+        )
+        if deleted_pages:
+            for d_page in deleted_pages:
+                progress = 0
+                d_resp = self._api_instance.get_page(d_page)
+                d_items = d_resp["items"]
+                d_len_items = len(d_items)
+                total_len = d_resp["total_filtered"]
+                progress = progress + d_len_items
+                logger.info(
+                    f"Deleting {d_len_items} datas ({progress}/{total_len} "
+                    f"{round((progress/total_len)*100,2)}%)"
+                    f"from {self._config.name} {self._api_instance.controler}"
+                )
+                self._backend.delete_data(d_resp["items"])
 
         self._backend.increment_log(
             controler=self._api_instance.controler, last_ts=increment_ts
