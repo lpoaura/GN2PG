@@ -68,7 +68,10 @@ def arguments(args):
     customscript_group.add_argument(
         "--custom-script",
         nargs="?",
-        help=_('Execute custom SQL Script in DB, default is "to_gnsynthese"'),
+        help=_(
+            '''Execute custom SQL script in DB, default is "to_gnsynthese".
+        You can also use your own script by using full file path instead of "to_gnsynthese"'''
+        ),
     )
     download_group = parser.add_mutually_exclusive_group()
     download_group.add_argument(

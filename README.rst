@@ -12,6 +12,8 @@
    :target: https://github.com/psf/black
 .. image:: https://img.shields.io/badge/licence-AGPL--3.0-blue
    :target: https://opensource.org/licenses/AGPL-3.0
+.. image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2Flpoaura%2FGN2PG.svg?type=shield
+   :target: https://app.fossa.com/projects/git%2Bgithub.com%2Flpoaura%2FGN2PG?ref=badge_shield
 
 This project provides an import tool between GeoNature_ instances (client side).
 Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
@@ -131,7 +133,7 @@ To create json tables where datas will be downloaded, run :
 Full download
 #############
 
-To full download json datas into synthese_json table, run :
+To download all datas from API, run :
 
 .. code-block:: bash
 
@@ -140,10 +142,17 @@ To full download json datas into synthese_json table, run :
 Incremental download
 ####################
 
-.. warning::
+To update data since last download, run :
 
-    [WIP] Not yet implemented!
+.. code-block:: bash
 
+    gn2pg_cli --update <myconfigfile>
+
+
+Debug mode
+############
+
+Debug mode can be activated using ``--verbose`` CLI argument
 
 Logs
 ####
