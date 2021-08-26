@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Program entry point"""
+"""Main cli functions"""
 
 
 import logging
@@ -66,6 +66,8 @@ def edit(file: str) -> None:
 
 def full_download_1source(ctrl, cfg):
     """Downloads from a single controler."""
+    # TODO: Insert start ts in increment_log
+
     logger = logging.getLogger("transfer_gn")
     # logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
     logger.debug(cfg)
@@ -103,17 +105,26 @@ def full_download(cfg_ctrl):
     return None
 
 
-def update_download_1source(ctrl, cfg):
+def update_1source(ctrl, cfg):
     """[summary]
 
     Args:
         ctrl ([type]): [description]
         cfg ([type]): [description]
     """
+    # TODO: get since TS from increment_log table
+
+    # TODO: querying upserted data from API
+    # TODO: download and store each data
+    # TODO: querying deleted data from API
+    # TODO: delete deleted data from db
+
     logger = logging.getLogger("transfer_gn")
     # logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
-    logger.debug(cfg)
+    logger.debug(f"CFG source {cfg.name}")
+    logger.debug(f"CTRL {ctrl}")
     with StorePostgresql(cfg) as store_pg:
+        # last_ts = store_pg.increment_get()
         downloader = ctrl(cfg, store_pg)
         logger.debug(
             _(
@@ -128,7 +139,7 @@ def update_download_1source(ctrl, cfg):
         )
 
 
-def update_download(cfg_ctrl):
+def update(cfg_ctrl):
     """[summary]
 
     Args:
@@ -141,8 +152,8 @@ def update_download(cfg_ctrl):
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
-            logger.info(_(f"Starting full download for source {source}"))
+            logger.info(_(f"Starting update download for source {source}"))
             # full_download_1(Datasets, cfg)
-            update_download_1source(Data, cfg)
+            update_1source(Data, cfg)
         else:
             logger.info(_(f"Source {source} is disabled"))

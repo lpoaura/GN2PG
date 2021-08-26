@@ -130,7 +130,7 @@ class BaseAPI:
         """Return the controler name."""
         return self._ctrl
 
-    def _data_url(self, params: dict = None) -> str:
+    def _url(self, kind: str = "data", params: list = []) -> str:
         """Generate export API URL with QueryStrings if params.
 
         Args:
@@ -139,27 +139,22 @@ class BaseAPI:
         Returns:
             str: export API URL.
         """
-        export_url = f"{self._api_url}{self._export_api_path}/api/{str(self._config.export_id)}"
-        if params:
-            export_url = export_url + "?" + urlencode(params)
-        return export_url
+        if kind == "data":
+            url = f"{self._api_url}{self._export_api_path}/api/{str(self._config.export_id)}"
+        elif kind in ("upsert", "delete"):
+            url = f"{self._api_url}synthese/log/{kind}"
+        else:
+            return None
+        if len(params) > 0:
+            logger.debug(f"params {params}")
+            url = url + "?" + urlencode(params)
+        return url
 
-    def _log_url(self, action: str, params: dict = None) -> str:
-        """Generate API log url (for "upsert" or "delete") with QueryStrings if params.
-
-        Args:
-            action (str): "upsert" or "delete".
-            params (dict, optional): URL querystrings used by API. Defaults to None.
-
-        Returns:
-            str: log url.
-        """
-        log_url = f"{self._api_url}/synthese/log/{action}"
-        if params:
-            log_url = log_url + "?" + urlencode(params)
-        return log_url
-
-    def _page_list(self, **kwargs) -> Optional[list]:
+    def _page_list(
+        self,
+        params: list,
+        kind: str = "data",
+    ) -> Optional[list]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
 
         Args:
@@ -168,30 +163,35 @@ class BaseAPI:
         Returns:
             list: url page list
         """
-        params = {}
-        for key, value in kwargs.items():
-            params[key] = value
         # GET from API
         session = self._session
-        api_url = self._data_url(params)
+        # Check kind value
+        if self._url(kind) is None:
+            return None
+
+        api_url = self._url(kind, params)
+
         r = session.get(
             url=api_url,
         )
+
         page_list = []
         if r.status_code == 200:
             resp = r.json()
             total_filtered = resp["total_filtered"]
-            total_pages = floor(total_filtered / resp["limit"])
+            total_pages = floor(total_filtered / resp["limit"]) + 1
             logger.debug(
                 _(
-                    f"API {self._data_url(params)} contains {total_filtered}"
-                    f" data in {total_pages+1} page(s)"
+                    f"API {self._url(params)} contains {total_filtered}"
+                    f" data in {total_pages} page(s)"
                 )
             )
 
-            for p in range(total_pages + 1):
-                params["offset"] = p
-                page_list.append(self._url(params))
+            for p in range(total_pages):
+                offset_params = list(params)
+                p = p + 1 if kind != "data" else p
+                offset_params.append(("offset", p))
+                page_list.append(self._url(kind, offset_params))
             return page_list
         else:
             return None

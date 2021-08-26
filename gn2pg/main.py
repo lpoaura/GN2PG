@@ -7,23 +7,18 @@ import logging
 import logging.config
 import sys
 from logging.handlers import TimedRotatingFileHandler
+from typing import NoReturn
 
 from toml import TomlDecodeError
 
 from . import _, __version__, metadata
 from .check_conf import Gn2PgConf
-from .download import Data, Datasets
 from .env import ENVDIR, LOGDIR
-from .helpers import edit, full_download, init
+from .helpers import edit, full_download, init, update
 from .store_postgresql import PostgresqlUtils
 from .utils import BColors
 
 logger = logging.getLogger(__name__)
-
-CTRL_DEFS = {
-    "data": Data,
-    "dataset": Datasets,
-}
 
 
 def arguments(args):
@@ -89,7 +84,7 @@ def arguments(args):
     return parser.parse_args(args)
 
 
-def main(args):
+def main(args) -> NoReturn:
     """Main entry point allowing external calls
 
     Args:
@@ -192,7 +187,9 @@ def main(args):
         logger.info("Perform full action")
         full_download(cfg_ctrl)
 
-    return None
+    if args.update:
+        logger.info("Perform update action")
+        update(cfg_ctrl)
 
 
 def run():

@@ -15,7 +15,7 @@ Properties
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any, NoReturn, Optional
 
 import pkg_resources
 from sqlalchemy import (
@@ -29,6 +29,7 @@ from sqlalchemy import (
     create_engine,
     exc,
     func,
+    select,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
@@ -209,10 +210,13 @@ class PostgresqlUtils:
         """Create increment_log table if it does not exist."""
         self._create_table(
             "increment_log",
-            Column("source", String, primary_key=True, nullable=False),
+            Column("source", String, nullable=False),
             Column("controler", String, nullable=False),
             Column(
                 "last_ts", DateTime, server_default=func.now(), nullable=False
+            ),
+            PrimaryKeyConstraint(
+                "source", "controler", name="increment_log_pk"
             ),
         )
 
@@ -465,6 +469,7 @@ class StorePostgresql:
             uuid_key_name (str, optional): Universal unique identifier of the data. Defaults to "id_perm_sinp".
         """
         metadata = self._table_defs[controler]["metadata"]
+        logger.debug(elem[id_key_name])
         try:
             insert_stmt = insert(metadata).values(
                 id_data=elem[id_key_name],
@@ -490,7 +495,7 @@ class StorePostgresql:
     def store_data(
         self,
         controler: str,
-        items_dict: dict,
+        items: list,
         id_key_name: str = "id_synthese",
         uuid_key_name: str = "id_perm_sinp",
     ) -> int:
@@ -508,7 +513,7 @@ class StorePostgresql:
         # Loop on data array to store each element to database
         i = 0
         ne = 0
-        for elem in items_dict:
+        for elem in items:
             try:
                 i = i + 1
                 # Convert to json
@@ -526,7 +531,7 @@ class StorePostgresql:
         logger.info(
             f"{i} items have been stored in db from {controler} of source {self._config.std_name} ({ne} error occured)"
         )
-        return len(items_dict)
+        return len(items)
 
     # ----------------
     # External methods
@@ -568,9 +573,8 @@ class StorePostgresql:
 
         return del_count
 
-    def log(
+    def download_log(
         self,
-        source: str,
         controler: str,
         error_count: int = 0,
         http_status: int = 0,
@@ -588,7 +592,6 @@ class StorePostgresql:
         Returns:
             None
         """
-
         # Store to database, if enabled
         metadata = self._metadata.tables[
             self._config.db_schema_import + "." + "download_log"
@@ -604,28 +607,82 @@ class StorePostgresql:
 
         return None
 
-    def increment_log(self, source: str, last_ts: datetime) -> None:
-        """Write last increment timestamp to database.
+    def increment_log(self, controler: str, last_ts: datetime) -> NoReturn:
+        """Store last increment timestamp to database.
 
         Args:
-            source (str): GeoNature source name.
-            last_ts (datetime): Timestamp of last update.
+            controler (str): controler name
+            last_ts (datetime): last increment timestamp
 
         Returns:
-            None
+            NoReturn: ...
         """
         # Store to database, if enabled
         metadata = self._metadata.tables[
             self._config.db_schema_import + "." + "increment_log"
         ]
 
-        insert_stmt = insert(metadata).values(source=source, last_ts=last_ts)
+        insert_stmt = insert(metadata).values(
+            source=self._config.std_name, controler=controler, last_ts=last_ts
+        )
         do_update_stmt = insert_stmt.on_conflict_do_update(
             constraint=metadata.primary_key, set_=dict(last_ts=last_ts)
         )
         self._conn.execute(do_update_stmt)
 
         return None
+
+    def download_get(self, controler: str) -> Optional[str]:
+        """Get last download timestamp from database.
+
+        Args:
+            controler (str): Controler name
+
+        Returns:
+            Optional[str]: Return last increment timestamp if exists
+        """
+        row = None
+        metadata = self._metadata.tables[
+            self._config.db_schema_import + "." + "download_log"
+        ]
+        stmt = (
+            select([metadata.c.download_ts])
+            .where(
+                and_(
+                    metadata.c.source == self._config.std_name,
+                    metadata.c.controler == controler,
+                )
+            )
+            .order_by(metadata.c.download_ts.desc())
+        )
+        result = self._conn.execute(stmt)
+        row = result.fetchone()
+
+        return row[0] if row is not None else None
+
+    def increment_get(self, controler: str) -> Optional[str]:
+        """Get last increment timestamp from database.
+
+        Args:
+            controler (str): Controler name
+
+        Returns:
+            Optional[str]: Return last increment timestamp if exists
+        """
+        row = None
+        metadata = self._metadata.tables[
+            self._config.db_schema_import + "." + "increment_log"
+        ]
+        stmt = select([metadata.c.last_ts]).where(
+            and_(
+                metadata.c.source == self._config.std_name,
+                metadata.c.controler == controler,
+            )
+        )
+        result = self._conn.execute(stmt)
+        row = result.fetchone()
+
+        return row[0] if row is not None else None
 
     def error_log(
         self,
@@ -635,6 +692,18 @@ class StorePostgresql:
         id_key_name: str = "id_synthese",
         last_ts: datetime = datetime.now(),
     ) -> None:
+        """Store errors in database
+
+        Args:
+            controler (str): Controler name
+            item (dict): [description]
+            error (str): [description]
+            id_key_name (str, optional): [description]. Defaults to "id_synthese".
+            last_ts (datetime, optional): [description]. Defaults to datetime.now().
+
+        Returns:
+            [type]: [description]
+        """
 
         metadata = self._metadata.tables[
             self._config.db_schema_import + "." + "error_log"

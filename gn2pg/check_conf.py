@@ -50,6 +50,7 @@ _ConfSchema = Schema(
                 Optional("id_application"): int,
                 Optional("enable"): bool,
                 Optional("data_type"): str,
+                Optional("last_action_date"): str,
             }
         ],
         Optional("tuning"): {
