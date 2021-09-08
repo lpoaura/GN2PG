@@ -196,12 +196,17 @@ class DownloadGn:
                 d_len_items = len(d_items)
                 total_len = d_resp["total_filtered"]
                 progress = progress + d_len_items
-                logger.info(
-                    f"Deleting {d_len_items} datas ({progress}/{total_len} "
-                    f"{round((progress/total_len)*100,2)}%)"
-                    f"from {self._config.name} {self._api_instance.controler}"
-                )
-                self._backend.delete_data(d_resp["items"])
+                if total_len > 0:
+                    logger.info(
+                        f"Deleting {d_len_items} datas ({progress}/{total_len} "
+                        f"{round((progress/total_len)*100,2)}%)"
+                        f"from {self._config.name} {self._api_instance.controler}"
+                    )
+                    self._backend.delete_data(d_resp["items"])
+                else:
+                    logger.info(
+                        f"No new deleted data from {self._config.name} {self._api_instance.controler}"
+                    )
 
         self._backend.increment_log(
             controler=self._api_instance.controler, last_ts=increment_ts
