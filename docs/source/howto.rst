@@ -228,6 +228,8 @@ To full download json datas into synthese_json table, run :
 
     gn2pg_cli --full <myconfigfile>
 
+    
+
 Incremental download
 ++++++++++++++++++++
 
@@ -236,6 +238,13 @@ To update datas into synthese_json table, run :
 .. code-block:: bash
 
     gn2pg_cli --update <myconfigfile>
+
+
+To automate the launching of updates, you can write the cron task using the following command, for example every 30 minutes.
+
+.. code-block::
+
+    */30 * * * * /usr/bin/env bash -c "source <path to python environment>/bin/activate && gn2pg_cli --update <myconfigfile>" > /dev/null 2>&1
 
 
 Logs
