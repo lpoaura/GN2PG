@@ -231,9 +231,11 @@ To full download json datas into synthese_json table, run :
 Incremental download
 ++++++++++++++++++++
 
-.. warning::
+To update datas into synthese_json table, run : 
 
-    [WIP] Not yet implemented!
+.. code-block:: bash
+
+    gn2pg_cli --update <myconfigfile>
 
 
 Logs

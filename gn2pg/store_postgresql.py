@@ -1,17 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Methods to store Biolovision data to Postgresql database.
+"""Methods to store data to Postgresql database."""
 
-
-Methods
-
-- store_data      - Store generic data structure to file
-
-Properties
-
--
-
-"""
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -545,15 +535,13 @@ class StorePostgresql:
     ) -> int:
         """Delete observations stored in database.
 
-        Parameters
-        ----------
-        data_list : list
-            Data returned from API call.
+        Args:
+            items (list): items to delete
+            id_key_name (str, optional): id key name from source. Defaults to "id_synthese".
+            controler (str, optional): Name of API controler. Defaults to "data".
 
-        Returns
-        -------
-        int
-            Count of items deleted.
+        Returns:
+            int: Count of items deleted.
         """
         del_count = 0
         # Store to database, if enabled

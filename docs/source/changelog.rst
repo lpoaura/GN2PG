@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+version 0.1.0-dev
++++++++++++++++++
+
+* new feature: incremental update
+
+
 version 0.0.5-dev
 +++++++++++++++++
 
