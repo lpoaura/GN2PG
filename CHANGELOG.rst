@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+version 0.1.1-dev
++++++++++++++++++
+
+* Fix wrong log function name (previously renamed download_log). cf. issue #17.
+
 version 0.1.0-dev
 +++++++++++++++++
 
