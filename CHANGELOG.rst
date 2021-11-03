@@ -1,10 +1,16 @@
 CHANGELOG
 =========
 
+version 0.1.2-dev
++++++++++++++++++
+
+* Fix ``error_count`` type. cf. issue `gn2pg_import - error_count donnée en entrée invalide #18 <https://github.com/lpoaura/GN2PG/issues/18>`_
+
+
 version 0.1.1-dev
 +++++++++++++++++
 
-* Fix wrong log function name (previously renamed download_log). cf. issue #17.
+* Fix wrong log function name (previously renamed download_log). cf. issue `StorePostgresql object has no attribute log #17  <https://github.com/lpoaura/GN2PG/issues/17>`_.
 
 version 0.1.0-dev
 +++++++++++++++++
