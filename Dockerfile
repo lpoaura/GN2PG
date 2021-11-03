@@ -1,11 +1,11 @@
-FROM python:3.8-slim as base
+FROM python:3.8-slim-buster as base
 LABEL maintainer="@lpofredc"
 
-ENV PYTHONFAULTHANDLER=1 \
-    PYTHONHASHSEED=random \
-    PYTHONUNBUFFERED=1 \
-    USERDIR=/xfer
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
 
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get -y upgrade && \
     apt-get install -y libpq-dev
@@ -25,12 +25,19 @@ RUN poetry build
 
 FROM base as final
 
-WORKDIR $USERDIR
-COPY --from=builder /app/dist/*.whl /tmp
+RUN groupadd -r -g 1000 xfer && useradd --no-log-init -r -g 1000 -d /home/xfer -m -u 1000 xfer && \
+    chown -R xfer /home/xfer
+#    echo "export PATH=$PATH:~/.local/bin" >> ~/.profile
+
+COPY --from=builder /app/dist/*.whl /tmp/
+
 RUN pip install /tmp/*.whl
-RUN addgroup --system -gid 1001 xfer && adduser --system --home $USERDIR --uid 1001 --group xfer && chown -R xfer:xfer $USERDIR
+
 USER xfer
+RUN mkdir /home/xfer/.gn2pg
+# VOLUME /home/xfer/.gn2pg
 
-VOLUME [$USERDIR]
+#COPY docker-entrypoint.sh /entrypoint.sh
+#ENTRYPOINT ["/bin/sh", "entrypoint.sh"]
 
-ENTRYPOINT [ "gn2pg_cli" ]
+ENTRYPOINT ["gn2pg_cli"]
