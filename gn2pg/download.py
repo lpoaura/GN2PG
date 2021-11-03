@@ -86,7 +86,6 @@ class DownloadGn:
         params.append(("limit", self._config.max_page_length))
         pages = self._api_instance._page_list(kind="data", params=params)
         self._backend.download_log(
-            self._config.source,
             self._api_instance.controler,
             self._api_instance.transfer_errors,
             self._api_instance.http_status,

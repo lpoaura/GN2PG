@@ -572,7 +572,7 @@ class StorePostgresql:
         controler: str,
         error_count: int = 0,
         http_status: int = 0,
-        comment: str = "",
+        comment: str = None,
     ):
         """Write download log entries to database.
 
