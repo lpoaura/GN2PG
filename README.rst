@@ -15,16 +15,11 @@
 .. image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2Flpoaura%2FGN2PG.svg?type=shield
    :target: https://app.fossa.com/projects/git%2Bgithub.com%2Flpoaura%2FGN2PG?ref=badge_shield
 
-This project provides an import tool between GeoNature_ instances (client side).
+This project provides an import data from GeoNature_ instances to a PostgreSQL database (client side).
 Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 
 
 .. contents:: Topics
-
-.. warning::
-    Actually in development.
-
-
 
 .. image:: ./docs/source/_static/src_gn2pg.png
     :align: center
@@ -34,7 +29,7 @@ Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 Project Setup
 =============
 
-GN2PG Client can be installed by running ``pip``. It requires Python 3.7.4# to run.
+GN2PG Client can be installed by running ``pip``. It requires Python 3.7.4 or above to run.
 
 .. code-block:: bash
 
@@ -123,7 +118,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 InitDB  Schema and tables
 #########################
 
-To create json tables where datas will be downloaded, run :
+To create json tables where datas will be stored, run :
 
 .. code-block:: bash
 
@@ -184,14 +179,9 @@ Default script to auto populate GeoNature is called "to_gnsynthese".
 Contributing
 ============
 
-All devs must be done in forks.
+All devs must be done in forks (see `GitHub doc <https://docs.github.com/en/get-started/quickstart/fork-a-repo>`_).
 
-Pull requests must be pulled to `dev` branch. For example with this command:
-
-.. code-block:: bash
-
-    gh repo fork --clone lpoaura/gn2pg_client
-
+Pull requests must be pulled to `dev` branch.
 
 Install project and development requirements (require `poetry <https://python-poetry.org/>`_):
 
@@ -201,7 +191,7 @@ Install project and development requirements (require `poetry <https://python-po
 
 Make your devs and pull requests.
 
-Run `gn2pg_cli` command in dev mode
+Test `gn2pg_cli` in dev mode by running this command:
 
 .. code-block:: bash
 
