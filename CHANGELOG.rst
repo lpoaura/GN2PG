@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+version 1.0.1
++++++++++++++
+
+* Fix custom-script error due to % character in sql script (RAISE INFO command).
+* Update dependencies
+
 version 1.0.0
 +++++++++++++
 
