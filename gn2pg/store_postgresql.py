@@ -356,7 +356,7 @@ class PostgresqlUtils:
             )
             logger.info(
                 _(
-                    f"You choosed to use internal to_geonature.sql script in schema {self._config.db_schema_import}"
+                    f"You choosed to use internal to_gnsynthese.sql script in schema {self._config.db_schema_import}"
                 )
             )
         else:
