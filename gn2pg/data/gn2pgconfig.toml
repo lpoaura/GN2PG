@@ -1,0 +1,56 @@
+# GN2PG configuration file
+
+# Local db configuration
+[db]
+db_host = "localhost"
+db_port = 5432
+db_user = "<dbUser>"
+db_password = "<dbPassword>"
+db_name = "<dbName>"
+db_schema_import = "schema"
+    # Additional connection options (optional)
+    [db.db_querystring]
+    sslmode = "prefer"
+
+
+# Source configuration,
+# Ducplicate this block for each source (1 source = 1 export)
+[[source]]
+# Source name, will be use to tag stored data in import table
+name = "Source1"
+# GeoNature source login
+user_name = "<monuser>"
+# GeoNature source password
+user_password = "<monPwd>"
+# GeoNature source URL
+url = "<http://geonature1/>"
+# GeoNature source Export id
+export_id = 1
+# Data type (used to distinct datas and to conditionning triggers)
+data_type = "synthese_with_cd_nomenclature"
+
+[[source]]
+# Source configuration
+name = "Source2"
+user_name = "<monuser>"
+user_password = "<monPwd>"
+url = "<http://geonature2/>"
+export_id = 1
+data_type = "synthese_with_cd_nomenclature"
+
+[tuning]
+# Max items in an API list request.
+# Longer lists are split by API in max_list_length chunks.
+max_page_length = 1000
+# Max retries of API calls before aborting.
+max_retry = 5
+# Maximum number of API requests, for debugging only.
+# - 0 means unlimited
+# - >0 limit number of API requests
+max_requests = 0
+# Delay between retries after an error
+retry_delay = 5
+# Delay between retries after an error HTTP 503 (service unavailable)
+unavailable_delay = 600
+# LRU cache size for common requests (taxo_groups...)
+lru_maxsize = 32
