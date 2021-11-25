@@ -1139,7 +1139,6 @@ CREATE OR REPLACE FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature()
 AS
 $func$
 BEGIN
-    RAISE NOTICE '<fct_tri_c_delete_data_to_geonature_with_nomenclature_label> Delete data id: %, source: %, type: %', old.id_data, old.source, old.type;
     DELETE
         FROM
             gn_synthese.synthese
