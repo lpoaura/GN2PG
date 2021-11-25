@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+version 1.0.0
++++++++++++++
+
+* First official release
+* Add forgotten delete trigger on `gn_synthese.synthese`
+
 version 0.1.2-dev
 +++++++++++++++++
 
