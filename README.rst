@@ -63,6 +63,12 @@ This command init a TOML config file within ``~/.gn2pg`` hidden directory (in us
 
 Config file is structured as this. ``[[source]]`` block can be duplicate as many as needed (one block for each source).
 
+The ``data_type`` value on each source is used to characterize the type of data. This value is used to identify which triggers to be triggered when inserting, updating or deleting data.
+Current provided trigger configs are:
+
+* ``synthese_with_cd_nomenclature`` which provide triggers to insert basically data on synthese and generate basic metadatas (acquisition framework and datasets). Source query sample is provided in file `geonature_export_sinp_with_cd_nomenclature.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_cd_nomenclature.sql>`_ 
+* ``synthese_with_metadata`` which provide triggers to insert data in synthese and populate most of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source query sample is provided in file `geonature_export_sinp_with_metadata.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql>`_ 
+
 .. code-block:: TOML
 
     # GN2PG configuration file
@@ -94,7 +100,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
     # GeoNature source Export id
     export_id = 1
     # Data type is facultative. By default the value is 'synthese'. Therefore, triggers from to_gnsynthese.sql are not activated.
-    # If you want to insert your date into a GeoNature database please choose either 'synthese_with_cd_nomenclature' or 'synthese_with_label'.
+    # If you want to insert your data into a GeoNature database please choose either 'synthese_with_cd_nomenclature' or 'synthese_with_metadata'.
     # If not, delete the line.
     data_type = "synthese_with_cd_nomenclature"
 
