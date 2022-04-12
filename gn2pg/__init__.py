@@ -19,7 +19,7 @@ except DistributionNotFound:  # pragma: no cover
 finally:
     del get_distribution, DistributionNotFound
 
-__author__ = metadata.authors[0]
+__author__ = metadata.authors_string
 __license__ = metadata.license
 __copyright__ = metadata.copyright
 

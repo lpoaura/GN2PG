@@ -70,7 +70,7 @@ def arguments(args):
         nargs="?",
         help=_(
             '''Execute custom SQL script in DB, default is "to_gnsynthese".
-        You can also use your own script by using full file path instead of "to_gnsynthese"'''
+        You can also use your own script by using absolute file path instead of "to_gnsynthese"'''
         ),
     )
     download_group = parser.add_mutually_exclusive_group()
@@ -97,7 +97,12 @@ def main(args) -> NoReturn:
 
     epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.project}{BColors.ENDC}{BColors.ENDC} \
 {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
-{BColors.BOLD}URL{BColors.ENDC}: <{metadata.url}>
+{BColors.BOLD}LICENSE{BColors.ENDC}: {metadata.license}
+{BColors.BOLD}AUTHORS{BColors.ENDC}: {metadata.authors_string}
+{BColors.BOLD}COPYRIGHT{BColors.ENDC}: {metadata.copyright}
+
+{BColors.BOLD}URL{BColors.ENDC}: {metadata.url}
+{BColors.BOLD}DOCS{BColors.ENDC}: {metadata.docs}
 """
     print(epilog)
 
@@ -143,7 +148,7 @@ def main(args) -> NoReturn:
         init(args.file)
         return None
 
-    # If required, first create YAML file
+    # Edit yaml config file
     if args.edit:
         logger.info("Editing TOML configuration file")
         edit(args.file)
@@ -163,12 +168,6 @@ def main(args) -> NoReturn:
             f"Incorrect content in TOML configuration {args.file}",
         )
         sys.exit(0)
-    # try:
-    #     config_schema.validate(cfg_ctrl)
-    #     logger.info(f"Config file is valid")
-    # except Exception as e:
-    #     logger.critical(f"Config file is not valid:\n{e}")
-    #     return None
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
     logger.info(
