@@ -1584,6 +1584,17 @@ $$;
 
 COMMENT ON FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata() IS 'Trigger function to upsert datas from import to synthese';
 
+CREATE TRIGGER tri_c_upsert_data_to_geonature_with_metadata
+    AFTER INSERT OR UPDATE
+    ON gn2pg_import.data_json
+    FOR EACH ROW
+    WHEN (new.type::TEXT ~~ 'synthese_with_metadata'::TEXT)
+EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata();
+
+
+/* END: SYNTHESE WITH METADATA */
+
+
 ALTER FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata() OWNER TO orbadmin;
 
 CREATE OR REPLACE FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature() RETURNS TRIGGER
@@ -1604,22 +1615,6 @@ $$;
 
 COMMENT ON FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature() IS 'Trigger function to delete datas';
 
-CREATE TRIGGER tri_c_delete_data_from_geonature
-    AFTER DELETE
-    ON gn2pg_import.data_json
-    FOR EACH ROW
-    WHEN (old.type::TEXT = ANY
-          (ARRAY ['synthese_with_label'::CHARACTER VARYING, 'synthese_with_cd_nomenclature'::CHARACTER VARYING, 'synthese_with_metadada'::CHARACTER VARYING]::TEXT[]))
-EXECUTE PROCEDURE gn2pg_import.fct_tri_c_delete_data_from_geonature();
-
-CREATE TRIGGER tri_c_upsert_data_to_geonature_with_metadata
-    AFTER INSERT OR UPDATE
-    ON gn2pg_import.data_json
-    FOR EACH ROW
-    WHEN (new.type::TEXT ~~ 'synthese_with_metadata'::TEXT)
-EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata();
-
-/* END: SYNTHESE WITH METADATA */
 
 DROP TRIGGER IF EXISTS tri_c_delete_data_from_geonature ON gn2pg_import.data_json;
 ;
@@ -1628,7 +1623,7 @@ CREATE TRIGGER tri_c_delete_data_from_geonature
     AFTER DELETE
     ON gn2pg_import.data_json
     FOR EACH ROW
-    WHEN (old.type IN ('synthese_with_label', 'synthese_with_cd_nomenclature'))
+    WHEN (old.type IN ('synthese_with_label', 'synthese_with_cd_nomenclature', 'synthese_with_metadata'))
 EXECUTE PROCEDURE gn2pg_import.fct_tri_c_delete_data_from_geonature()
 ;
 
