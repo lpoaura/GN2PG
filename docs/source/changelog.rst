@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+version 1.1.2
++++++++++++++
+
+* Fix null value in `gn_synthese.synthese.the_geom_local` caused by null srid value while getting srid from first data in `gn_synthese.synthese`.
+
 version 1.1.1
 +++++++++++++
 

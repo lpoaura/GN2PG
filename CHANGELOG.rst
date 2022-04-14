@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+version 1.1.2
++++++++++++++
+
+* Fix null value in `gn_synthese.synthese.the_geom_local` caused by null srid value while getting srid from first data in `gn_synthese.synthese`.
+
 version 1.1.1
 +++++++++++++
 
@@ -9,7 +14,7 @@ version 1.1.1
 version 1.1.0
 +++++++++++++
 
-* New SQL scripts for geonature 2 geonature imports which provide triggers to insert data in synthese and populate most of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source query sample is provided in file `geonature_export_sinp_with_metadata.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql>`_ 
+* New SQL scripts for geonature 2 geonature imports which provide triggers to insert data in synthese and populate most of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source query sample is provided in file `geonature_export_sinp_with_metadata.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql>`_
 
 version 1.0.1
 +++++++++++++
