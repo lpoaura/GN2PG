@@ -232,11 +232,8 @@ DECLARE
     the_additional_data                      JSONB;
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
-    SELECT parameter_value::INT
-    INTO _local_srid
-    FROM gn_commons.t_parameters
-    WHERE parameter_name LIKE 'local_srid'
-    LIMIT 1;
+    SELECT find_srid('gn_synthese', 'synthese', 'the_geom_local')
+    INTO _local_srid;
     SELECT new.uuid
     INTO the_unique_id_sinp;
     SELECT cast(new.item #>> '{id_perm_grp_sinp}' AS UUID)
@@ -624,11 +621,8 @@ DECLARE
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
     RAISE NOTICE 'Update synthese_with_cd_nomenclature';
-    SELECT parameter_value::INT
-    INTO _local_srid
-    FROM gn_commons.t_parameters
-    WHERE parameter_name LIKE 'local_srid'
-    LIMIT 1;
+    SELECT find_srid('gn_synthese', 'synthese', 'the_geom_local')
+    INTO _local_srid;
     SELECT new.uuid
     INTO the_unique_id_sinp;
     SELECT cast(new.item #>> '{id_perm_grp_sinp}' AS UUID)
@@ -1282,11 +1276,8 @@ DECLARE
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
     RAISE NOTICE 'Update synthese_with_metadata';
-    SELECT parameter_value::INT
-    INTO _local_srid
-    FROM gn_commons.t_parameters
-    WHERE parameter_name LIKE 'local_srid'
-    LIMIT 1;
+    SELECT find_srid('gn_synthese', 'synthese', 'the_geom_local')
+    INTO _local_srid;
     SELECT new.uuid
     INTO the_unique_id_sinp;
     SELECT cast(new.item #>> '{id_perm_grp_sinp}' AS UUID)
