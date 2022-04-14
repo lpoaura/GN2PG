@@ -232,9 +232,10 @@ DECLARE
     the_additional_data                      JSONB;
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
-    SELECT st_srid(the_geom_local)
+    SELECT parameter_value::INT
     INTO _local_srid
-    FROM gn_synthese.synthese
+    FROM gn_commons.t_parameters
+    WHERE parameter_name LIKE 'local_srid'
     LIMIT 1;
     SELECT new.uuid
     INTO the_unique_id_sinp;
@@ -623,9 +624,10 @@ DECLARE
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
     RAISE NOTICE 'Update synthese_with_cd_nomenclature';
-    SELECT st_srid(the_geom_local)
+    SELECT parameter_value::INT
     INTO _local_srid
-    FROM gn_synthese.synthese
+    FROM gn_commons.t_parameters
+    WHERE parameter_name LIKE 'local_srid'
     LIMIT 1;
     SELECT new.uuid
     INTO the_unique_id_sinp;
@@ -1280,9 +1282,10 @@ DECLARE
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
     RAISE NOTICE 'Update synthese_with_metadata';
-    SELECT st_srid(the_geom_local)
+    SELECT parameter_value::INT
     INTO _local_srid
-    FROM gn_synthese.synthese
+    FROM gn_commons.t_parameters
+    WHERE parameter_name LIKE 'local_srid'
     LIMIT 1;
     SELECT new.uuid
     INTO the_unique_id_sinp;
@@ -1629,4 +1632,3 @@ EXECUTE PROCEDURE gn2pg_import.fct_tri_c_delete_data_from_geonature()
 
 COMMIT
 ;
-
