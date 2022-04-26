@@ -1047,8 +1047,6 @@ BEGIN
 END
 $$;
 
-ALTER FUNCTION gn2pg_import.fct_c_insert_dataset_actor(INTEGER, JSONB, VARCHAR) OWNER TO orbadmin;
-
 CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_actors(_id_af INTEGER, _actor_roles JSONB, _source CHARACTER VARYING) RETURNS VOID
     LANGUAGE plpgsql
 AS
@@ -1587,9 +1585,6 @@ EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata(
 
 
 /* END: SYNTHESE WITH METADATA */
-
-
-ALTER FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata() OWNER TO orbadmin;
 
 CREATE OR REPLACE FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature() RETURNS TRIGGER
     LANGUAGE plpgsql
