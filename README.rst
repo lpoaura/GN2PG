@@ -66,8 +66,8 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 The ``data_type`` value on each source is used to characterize the type of data. This value is used to identify which triggers to be triggered when inserting, updating or deleting data.
 Current provided trigger configs are:
 
-* ``synthese_with_cd_nomenclature`` which provide triggers to insert basically data on synthese and generate basic metadatas (acquisition framework and datasets). Source query sample is provided in file `geonature_export_sinp_with_cd_nomenclature.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_cd_nomenclature.sql>`_ 
-* ``synthese_with_metadata`` which provide triggers to insert data in synthese and populate most of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source query sample is provided in file `geonature_export_sinp_with_metadata.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql>`_ 
+* ``synthese_with_cd_nomenclature`` which provide triggers to insert basically data on synthese and generate basic metadatas (acquisition framework and datasets). Source query sample is provided in file `geonature_export_sinp_with_cd_nomenclature.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_cd_nomenclature.sql>`_
+* ``synthese_with_metadata`` which provide triggers to insert data in synthese and populate most of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source query sample is provided in file `geonature_export_sinp_with_metadata.sql <https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql>`_
 
 .. code-block:: TOML
 
@@ -219,7 +219,7 @@ Licence
 Team
 ====
 
-* `@lpofredc <https://github.com/lpofredc/>`_ (`LPO Auvergne-Rhône-Alpes <https://github.com/lpoaura/>`_), main developper
+* `@lpofredc <https://github.com/lpofredc/>`_ (`LPO Auvergne-Rhône-Alpes <https://github.com/lpoaura/>`_), main developer
 
 
 .. image:: https://raw.githubusercontent.com/lpoaura/biodivsport-widget/master/images/LPO_AuRA_l250px.png
