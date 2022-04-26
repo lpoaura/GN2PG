@@ -17,6 +17,8 @@
 BEGIN
 ;
 
+CREATE SCHEMA IF NOT EXISTS gn2pg_import;
+
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name (_uuid UUID, _name TEXT)
 ;
 
@@ -963,7 +965,7 @@ COMMENT ON FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature() IS 'Trig
 
 /* BEGIN: SYNTHESE WITH METADATA*/
 
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories(_id_ds INTEGER, _territories JSONB)
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories(_id_ds INTEGER, _territories JSONB);
 
 CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_ds_territories(_id_ds INTEGER, _territories JSONB) RETURNS VOID
     LANGUAGE plpgsql

@@ -20,6 +20,7 @@ from sqlalchemy import (
     exc,
     func,
     select,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
@@ -375,7 +376,8 @@ class PostgresqlUtils:
         self._metadata = MetaData(schema=dbschema)
         # self._metadata.reflect(self._db)
         try:
-            conn.execute(sqlscript)
+            # logger.debug(sqlscript)
+            conn.execute(text(sqlscript))
             logger.info(_(f"script {script} successfully applied"))
         except Exception as e:
             logger.critical(f"{str(e)}")
