@@ -7,7 +7,7 @@ db_port = 5432
 db_user = "<dbUser>"
 db_password = "<dbPassword>"
 db_name = "<dbName>"
-db_schema_import = "schema"
+db_schema_import = "gn2pg_import"
     # Additional connection options (optional)
     [db.db_querystring]
     sslmode = "prefer"
