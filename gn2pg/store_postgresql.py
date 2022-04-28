@@ -480,8 +480,8 @@ class StorePostgresql:
         except exc.StatementError as error:
             self.error_log(controler, elem, str(error))
             logger.critical(
-                f"One error occured for data from source {self._config.std_name} whith "
-                f"{id_key_name} = {elem[id_key_name]}"
+                f"One error occured for data from source {self._config.std_name} with "
+                f"{id_key_name} = {elem[id_key_name]}. Error message is {str(error)}"
             )
 
     def store_data(
