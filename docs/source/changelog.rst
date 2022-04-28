@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+version 1.2.0
++++++++++++++
+
+* Update dependencies
+* Removal of requests to assign an owner to functions, cause of errors 
+* Set ``gn2pg_import`` as default schema name in config template
+* Fix custom-script command on default to_gnsynthese.sql script due to ``%`` character
+* Improve t_roles populate on a GeoNature database using json objects with first and last name
+
 version 1.1.2
 +++++++++++++
 
