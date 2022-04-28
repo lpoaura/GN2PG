@@ -622,7 +622,7 @@ DECLARE
     the_additional_data                      JSONB;
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
-    RAISE NOTICE 'Update synthese_with_cd_nomenclature';
+    RAISE DEBUG 'Update synthese_with_cd_nomenclature';
     SELECT find_srid('gn_synthese', 'synthese', 'the_geom_local')
     INTO _local_srid;
     SELECT new.uuid
@@ -974,11 +974,11 @@ $$
 DECLARE
     i RECORD;
 BEGIN
-    RAISE NOTICE '_id_ds %, territories %', _id_ds::INT, _territories;
+    RAISE DEBUG '_id_ds %, territories %', _id_ds::INT, _territories;
 
     FOR i IN (SELECT jsonb_array_elements_text(_territories) item)
         LOOP
-            RAISE NOTICE 'iterritory % %',i, i.item;
+            RAISE DEBUG 'iterritory % %',i, i.item;
             INSERT INTO gn_meta.cor_dataset_territory (id_dataset, id_nomenclature_territory)
             VALUES (_id_ds,
                     ref_nomenclatures.get_id_nomenclature('TERRITOIRE', i.item))
@@ -994,7 +994,7 @@ $$
 DECLARE
     the_id_actor INTEGER;
 BEGIN
-    RAISE NOTICE '_actor_role %', _actor_role;
+    RAISE DEBUG '_actor_role %', _actor_role;
     IF _actor_role ->> 'type_role' = 'organism' THEN
         INSERT INTO utilisateurs.bib_organismes (uuid_organisme, nom_organisme, email_organisme, additional_data)
         VALUES ( (_actor_role ->> 'uuid_actor')::UUID
@@ -1057,7 +1057,7 @@ $$
 DECLARE
     i RECORD;
 BEGIN
-    RAISE NOTICE '_id_af %', _id_af::INT;
+    RAISE DEBUG '_id_af %', _id_af::INT;
     FOR i IN (SELECT jsonb_array_elements(_actor_roles) item)
         LOOP
 
@@ -1119,7 +1119,7 @@ BEGIN
     INTO the_af_id
     FROM gn_meta.t_acquisition_frameworks
     WHERE unique_acquisition_framework_id = (_af_data #>> '{uuid}')::UUID;
-    RAISE NOTICE 'the_af_id %', the_af_id;
+    RAISE DEBUG 'the_af_id %', the_af_id;
     PERFORM
         gn2pg_import.fct_c_insert_af_actors(the_af_id, _af_data -> 'actors', _source);
     RETURN the_af_id;
@@ -1135,7 +1135,7 @@ $$
 DECLARE
     the_dataset_id INT;
 BEGIN
-    RAISE NOTICE 'data_type %', _ds_data #>> '{data_type}';
+    RAISE DEBUG 'data_type %', _ds_data #>> '{data_type}';
     INSERT INTO gn_meta.t_datasets ( unique_dataset_id
                                    , id_acquisition_framework
                                    , dataset_name
@@ -1276,7 +1276,7 @@ DECLARE
     the_additional_data                      JSONB;
     the_meta_validation_date                 TIMESTAMP;
 BEGIN
-    RAISE NOTICE 'Update synthese_with_metadata';
+    RAISE DEBUG 'Update synthese_with_metadata';
     SELECT find_srid('gn_synthese', 'synthese', 'the_geom_local')
     INTO _local_srid;
     SELECT new.uuid
