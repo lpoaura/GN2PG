@@ -998,7 +998,7 @@ BEGIN
     IF _actor_role ->> 'type_role' = 'organism' THEN
         INSERT INTO utilisateurs.bib_organismes (uuid_organisme, nom_organisme, email_organisme, additional_data)
         VALUES ( (_actor_role ->> 'uuid_actor')::UUID
-               , _actor_role #>> '{name}'
+               , _actor_role #>> '{identity,organism_name}'
                , _actor_role ->> 'email'
                , jsonb_build_object('source', _source, 'module', 'gn2pg'))
         ON CONFLICT (uuid_organisme) DO NOTHING;
@@ -1009,7 +1009,8 @@ BEGIN
     ELSIF _actor_role ->> 'type_role' = 'role' THEN
         INSERT INTO utilisateurs.t_roles (uuid_role, nom_role, prenom_role, email, champs_addi)
         VALUES ( (_actor_role ->> 'uuid_actor')::UUID
-               , _actor_role #>> '{name,name}'
+               , _actor_role #>> '{identity,first_name}'
+               , _actor_role #>> '{identity,last_name}'
                , _actor_role ->> 'email'
                , jsonb_build_object('source', _source, 'module', 'gn2pg'))
         ON CONFLICT (uuid_role) DO NOTHING;
@@ -1577,6 +1578,8 @@ END;
 $$;
 
 COMMENT ON FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata() IS 'Trigger function to upsert datas from import to synthese';
+
+DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature_with_metadata ON gn2pg_import.data_json;
 
 CREATE TRIGGER tri_c_upsert_data_to_geonature_with_metadata
     AFTER INSERT OR UPDATE
