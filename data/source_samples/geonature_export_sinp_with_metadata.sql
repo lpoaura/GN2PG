@@ -1,3 +1,5 @@
+DROP VIEW IF EXISTS gn_exports.v_synthese_sinp_with_metadata_for_gn2pg;
+
 CREATE VIEW gn_exports.v_synthese_sinp_with_metadata_for_gn2pg AS
 WITH af_actors AS (SELECT cafa.id_acquisition_framework,
                           json_build_object('type_role',
@@ -14,7 +16,7 @@ WITH af_actors AS (SELECT cafa.id_acquisition_framework,
                                                                                                      tro.nom_role,
                                                                                                      'last_name',
                                                                                                      tro.prenom_role) END,
-                                            'email', COALESCE(borg.email_organisme, tro.email)) AS json_data
+                                            'email', coalesce(borg.email_organisme, tro.email)) AS json_data
                    FROM gn_meta.cor_acquisition_framework_actor cafa
                             LEFT JOIN utilisateurs.bib_organismes borg ON cafa.id_organism = borg.id_organisme
                             LEFT JOIN utilisateurs.t_roles tro ON cafa.id_role = tro.id_role
@@ -52,10 +54,10 @@ WITH af_actors AS (SELECT cafa.id_acquisition_framework,
                                                 WHEN cda.id_organism IS NOT NULL
                                                     THEN json_build_object('organism_name', borg.nom_organisme)
                                                 WHEN cda.id_role IS NOT NULL THEN json_build_object('first_name',
-                                                                                                     tro.nom_role,
-                                                                                                     'last_name',
-                                                                                                     tro.prenom_role) END,
-                                            'email', COALESCE(borg.email_organisme, tro.email)) AS json_data
+                                                                                                    tro.nom_role,
+                                                                                                    'last_name',
+                                                                                                    tro.prenom_role) END,
+                                            'email', coalesce(borg.email_organisme, tro.email)) AS json_data
                    FROM gn_meta.cor_dataset_actor cda
                             LEFT JOIN utilisateurs.bib_organismes borg ON cda.id_organism = borg.id_organisme
                             LEFT JOIN utilisateurs.t_roles tro ON cda.id_role = tro.id_role
@@ -63,13 +65,13 @@ WITH af_actors AS (SELECT cafa.id_acquisition_framework,
                                  ON cda.id_nomenclature_actor_role = tn.id_nomenclature),
      ds AS (SELECT tds.id_dataset,
                    tds.id_acquisition_framework,
-                --    tds.additional_data,
+                   --    tds.additional_data,
                    jsonb_build_object('uuid', tds.unique_dataset_id, 'name', tds.dataset_name, 'desc', tds.dataset_desc,
                                       'shortname', tds.dataset_shortname, 'data_type', ndt.cd_nomenclature,
                                       'collecting_method', ncm.cd_nomenclature, 'data_origin', ndo.cd_nomenclature,
                                       'dataset_objectif', ndso.cd_nomenclature, 'resource_type', nrt.cd_nomenclature,
                                       'source_status', nss.cd_nomenclature, 'territories', array_agg(DISTINCT
-                                                                                                  ref_nomenclatures.get_cd_nomenclature(cdt.id_nomenclature_territory)),
+                                                                                                     ref_nomenclatures.get_cd_nomenclature(cdt.id_nomenclature_territory)),
                                       'actors', json_agg(ds_actors.json_data)) AS dataset_data
             FROM gn_meta.t_datasets tds
                      JOIN ds_actors ON ds_actors.id_dataset = tds.id_dataset
@@ -119,7 +121,8 @@ SELECT s.id_synthese,
        h.lb_hab_fr                                      AS habitat,
        s.place_name                                     AS nom_lieu,
        s.precision,
-       s.additional_data::text                          AS donnees_additionnelles, st_astext(s.the_geom_4326) AS wkt_4326,
+       s.additional_data::TEXT                          AS donnees_additionnelles,
+       st_astext(s.the_geom_4326)                       AS wkt_4326,
        n1.cd_nomenclature                               AS nature_objet_geo,
        n2.cd_nomenclature                               AS type_regroupement,
        s.grp_method                                     AS methode_regroupement,
@@ -140,6 +143,7 @@ SELECT s.id_synthese,
        n17.cd_nomenclature                              AS statut_source,
        n18.cd_nomenclature                              AS type_info_geo,
        n19.cd_nomenclature                              AS methode_determination,
+       n20.cd_nomenclature                              AS statut_validation,
        coalesce(s.meta_update_date, s.meta_create_date) AS derniere_action
 FROM gn_synthese.synthese s
          JOIN ds ON ds.id_dataset = s.id_dataset
@@ -164,4 +168,5 @@ FROM gn_synthese.synthese s
          LEFT JOIN ref_nomenclatures.t_nomenclatures n17 ON s.id_nomenclature_source_status = n17.id_nomenclature
          LEFT JOIN ref_nomenclatures.t_nomenclatures n18 ON s.id_nomenclature_info_geo_type = n18.id_nomenclature
          LEFT JOIN ref_nomenclatures.t_nomenclatures n19 ON s.id_nomenclature_determination_method = n19.id_nomenclature
+         LEFT JOIN ref_nomenclatures.t_nomenclatures n20 ON s.id_nomenclature_valid_status = n20.id_nomenclature
 ORDER BY s.id_synthese;

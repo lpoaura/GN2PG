@@ -1,3 +1,5 @@
+DROP VIEW IF EXISTS gn_exports.v_synthese_sinp_with_cd_nomenclature_for_gn2pg;
+
 CREATE VIEW gn_exports.v_synthese_sinp_with_cd_nomenclature_for_gn2pg AS
 WITH jdd_acteurs AS (
     SELECT d_1.id_dataset,
@@ -68,6 +70,7 @@ SELECT DISTINCT s.id_synthese,
                 n17.cd_nomenclature                              AS statut_source,
                 n18.cd_nomenclature                              AS type_info_geo,
                 n19.cd_nomenclature                              AS methode_determination
+                n20.cd_nomenclature                              AS statut_validation
 FROM gn_synthese.synthese s
          LEFT JOIN gn_synthese.cor_area_synthese cas ON s.id_synthese = cas.id_synthese
          JOIN jdd_acteurs ON jdd_acteurs.id_dataset = s.id_dataset
@@ -94,4 +97,5 @@ FROM gn_synthese.synthese s
          LEFT JOIN ref_nomenclatures.t_nomenclatures n17 ON s.id_nomenclature_source_status = n17.id_nomenclature
          LEFT JOIN ref_nomenclatures.t_nomenclatures n18 ON s.id_nomenclature_info_geo_type = n18.id_nomenclature
          LEFT JOIN ref_nomenclatures.t_nomenclatures n19 ON s.id_nomenclature_determination_method = n19.id_nomenclature
+         LEFT JOIN ref_nomenclatures.t_nomenclatures n20 ON s.id_nomenclature_valid_status = n20.id_nomenclature
 ORDER BY id_synthese;
