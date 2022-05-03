@@ -51,6 +51,7 @@ _ConfSchema = Schema(
                 Optional("enable"): bool,
                 Optional("data_type"): str,
                 Optional("last_action_date"): str,
+                Optional("query_strings"): dict,
             }
         ],
         Optional("tuning"): {
@@ -88,6 +89,9 @@ class Gn2PgSourceConf:
                 "data_type",
                 "synthese_with_cd_nomenclature",
             )  # type: str
+            self._query_strings = coalesce_in_dict(
+                config["source"][source], "query_strings", {}
+            )
             self._export_id = config["source"][source][
                 "export_id"
             ]  # type: int
@@ -224,6 +228,15 @@ class Gn2PgSourceConf:
             bool: True if source is enabled
         """
         return self._enable
+
+    @property
+    def query_strings(self) -> dict:
+        """Return flag to enable or not source
+
+        Returns:
+            dict: Querystrings dictionnary
+        """
+        return self._query_strings
 
     @property
     def db_host(self) -> str:

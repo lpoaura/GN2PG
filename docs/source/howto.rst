@@ -50,7 +50,12 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
     url = "<http://geonature1/>"
     # GeoNature source Export id
     export_id = 1
-    data_type = "synthese_with_cd_nomenclature"
+    data_type = "synthese_with_metadata"
+    # GeoNature ID application (default is 3)
+    id_application = 1
+    # Additional export API QueryStrings to filter or order data
+    [source.query_strings]
+    orderby = 'id_synthese'
 
     [[source]]
     # Source configuration
@@ -73,7 +78,11 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 .. tip::
 
    Default ``data_type`` (if not defined) is ``synthese_with_cd_nomenclature``, this type is used to conditioning triggers to populate ``gn_synthese.synthese``. This value can be customized for each source with key ``data_type``.
-   If source type is a synthese export with labels, set ``type`` to ``synthese_with_label``.
+   Provided ``data_type`` are ``synthese_with_label`` for standard GeoNature export, ``synthese_with_cd_nomenclature`` for a standard export using ``cd_nomenclature``, ``synthese_with_metadata`` for and advanced export included metadata
+
+.. tip::
+
+   It is highly recommanded to set and ``orderby`` setting in ``[source.query_strings]`` block (coming soon, actually in development in export module) to order correctly data in export
 
 .. tip::
 
@@ -265,4 +274,4 @@ Default script to auto populate GeoNature is called "synthese".
 
 .. tip::
 
-    You can also replacing synthese script by your own scripts, using file path instead of ``synthese``.
+    You can also replacing synthese script by your own scripts, using file path instead of ``to_gnsynthese``.

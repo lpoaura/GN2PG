@@ -28,6 +28,11 @@ url = "<http://geonature1/>"
 export_id = 1
 # Data type (used to distinct datas and to conditionning triggers)
 data_type = "synthese_with_cd_nomenclature"
+# GeoNature ID application (default is 3)
+#id_application = 1
+# Additional export API QueryStrings to filter or order data
+#[source.query_strings]
+#orderby = 'id_synthese'
 
 [[source]]
 # Source configuration
