@@ -18,6 +18,8 @@ db_schema_import = "gn2pg_import"
 [[source]]
 # Source name, will be use to tag stored data in import table
 name = "Source1"
+# use false to disable source
+#enable= true
 # GeoNature source login
 user_name = "<monuser>"
 # GeoNature source password
@@ -27,12 +29,12 @@ url = "<http://geonature1/>"
 # GeoNature source Export id
 export_id = 1
 # Data type (used to distinct datas and to conditionning triggers)
-data_type = "synthese_with_cd_nomenclature"
+data_type = "synthese_with_metadata"
 # GeoNature ID application (default is 3)
 #id_application = 1
-# Additional export API QueryStrings to filter or order data
-#[source.query_strings]
-#orderby = 'id_synthese'
+# Additional export API QueryStrings to filter or order data, you can add multiple "orderby" columns by separating column names with ":"
+[source.query_strings]
+orderby = 'id_synthese'
 
 [[source]]
 # Source configuration

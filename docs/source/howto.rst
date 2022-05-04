@@ -38,7 +38,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
 
 
     # Source configuration, 
-    # Ducplicate this block for each source (1 source = 1 export)
+    # Duplicate this block for each source (1 source = 1 export)
     [[source]]
     # Source name, will be use to tag stored data in import table
     name = "Source1"
@@ -53,7 +53,7 @@ Config file is structured as this. ``[[source]]`` block can be duplicate as many
     data_type = "synthese_with_metadata"
     # GeoNature ID application (default is 3)
     id_application = 1
-    # Additional export API QueryStrings to filter or order data
+    # Additional export API QueryStrings to filter or order data, you can add multiple "orderby" columns by separating column names with ":"
     [source.query_strings]
     orderby = 'id_synthese'
 

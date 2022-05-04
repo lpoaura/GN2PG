@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+version 1.3.0
++++++++++++++
+
+* Add optional query strings on API calls, almost required to order export API using key ``orderby``
+
 version 1.2.0
 +++++++++++++
 
