@@ -84,12 +84,12 @@ class DownloadGn:
             _(f"Getting items from controler {self._api_instance.controler}")
         )
         params.append(("limit", self._config.max_page_length))
-        logger.info(self._config._query_strings)
+        # logger.info(self._config._query_strings)
         if self._config.query_strings:
             params = list(
                 set(params + list(self._config.query_strings.items()))
             )
-        logger.info(f"PARAMS  {params}")
+        logger.info(f"QueryStrings  {params}")
         pages = self._api_instance._page_list(kind="data", params=params)
         self._backend.download_log(
             self._api_instance.controler,
@@ -150,6 +150,12 @@ class DownloadGn:
                 ("filter_d_up_derniere_action", since),
             ]
         )
+
+        if self._config.query_strings:
+            params = list(
+                set(params + list(self._config.query_strings.items()))
+            )
+        logger.info(f"QueryStrings  {params}")
 
         logger.info(
             _(
