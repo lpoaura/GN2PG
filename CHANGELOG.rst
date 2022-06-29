@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+version 1.3.1
++++++++++++++
+
+* Fix missing custom query strings on updates.
+
+
 version 1.3.0
 +++++++++++++
 
