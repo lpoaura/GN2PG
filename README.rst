@@ -86,11 +86,11 @@ Current provided trigger configs are:
         sslmode = "prefer"
 
 
-    # Source configuration,
-    # Ducplicate this block for each source (1 source = 1 export)
     [[source]]
     # Source name, will be use to tag stored data in import table
     name = "Source1"
+    # use false to disable source
+    #enable= true
     # GeoNature source login
     user_name = "<monuser>"
     # GeoNature source password
@@ -99,10 +99,13 @@ Current provided trigger configs are:
     url = "<http://geonature1/>"
     # GeoNature source Export id
     export_id = 1
-    # Data type is facultative. By default the value is 'synthese'. Therefore, triggers from to_gnsynthese.sql are not activated.
-    # If you want to insert your data into a GeoNature database please choose either 'synthese_with_cd_nomenclature' or 'synthese_with_metadata'.
-    # If not, delete the line.
-    data_type = "synthese_with_cd_nomenclature"
+    # Data type (used to distinct datas and to conditionning triggers)
+    data_type = "synthese_with_metadata"
+    # GeoNature ID application (default is 3)
+    #id_application = 1
+    # Additional export API QueryStrings to filter or order data, you can add multiple "orderby" columns by separating column names with ":"
+    [source.query_strings]
+    orderby = 'id_synthese'
 
 
     [[source]]
@@ -113,6 +116,8 @@ Current provided trigger configs are:
     url = "<http://geonature2/>"
     export_id = 1
     data_type = "synthese_with_cd_nomenclature"
+    [source.query_strings]
+    orderby = 'id_synthese'
 
 
 

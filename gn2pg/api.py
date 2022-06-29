@@ -15,6 +15,7 @@ Exceptions:
 """
 import json
 import logging
+import time
 from math import floor
 from typing import Optional
 from urllib.parse import urlencode
@@ -165,6 +166,7 @@ class BaseAPI:
         """
         # GET from API
         session = self._session
+        logger.info(f"_page_list PARAMS {params}")
 
         # Check kind value
         if self._url(kind) is None:
@@ -178,7 +180,44 @@ class BaseAPI:
         logger.debug(
             f"Defining page_list from {api_url} with status code {r.status_code}"
         )
-        if r.status_code == 200:
+        self._http_status = r.status_code
+        if self._http_status >= 300:
+            # Request returned an error.
+            # Logging and checking if not too many errors to continue
+            logger.error(
+                _(
+                    f"status code: {r.status_code}, text: {r.text}, for URL {r.url}"
+                )
+            )
+            if (self._http_status >= 400) and (
+                self._http_status <= 499
+            ):  # pragma: no cover
+                # Unreceverable error
+                logger.error(r)
+                logger.critical(
+                    _("Unreceverable error %s, raising exception"),
+                    self._http_status,
+                )
+                raise HTTPError(r.status_code)
+            self._transfer_errors += 1  # pragma: no cover
+            if self._http_status >= 500:  # pragma: no cover
+                # Service unavailable: long wait
+                time.sleep(self._config.tuning_unavailable_delay)
+            else:
+                # A transient error: short wait
+                time.sleep(self._config.tuning_retry_delay)
+            if (
+                self._transfer_errors > self._limits["max_retry"]
+            ):  # pragma: no cover
+                # Too many retries. Raising exception
+                logger.critical(
+                    _("Too many error %s, raising exception"),
+                    self._transfer_errors,
+                )
+                raise HTTPError(r.status_code)
+            return None
+        else:
+            # if r.status_code == 200:
             page_list = []
             if r.status_code == 200:
                 resp = r.json()
@@ -195,9 +234,9 @@ class BaseAPI:
                     offset_params.append(("offset", p))
                     page_list.append(self._url(kind, offset_params))
                 return page_list
-        else:
-            logger.info(f"No data available from from {self._config.name}")
-            return None
+        # else:
+        #     logger.info(f"No data available from from {self._config.name}")
+        #     return None
 
     def get_page(self, page_url: str) -> Optional[dict]:
         """Get data from one API page
