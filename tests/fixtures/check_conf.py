@@ -68,3 +68,8 @@ def gn2pg_conf_file(toml_conf):
 @pytest.fixture
 def gn2pg_conf(gn2pg_conf_file):
     return Gn2PgConf(file=gn2pg_conf_file)
+
+@pytest.fixture
+def gn2pg_conf_one_source(gn2pg_conf):
+    cfg_source_list = gn2pg_conf.source_list
+    return list(cfg_source_list.values())[0]
