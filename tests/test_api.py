@@ -4,13 +4,14 @@ from urllib.parse import urlencode
 
 from gn2pg.api import BaseAPI
 
+
 class TestApi:
     def test_base_api_url(self, gn2pg_conf_one_source):
-        url = re.sub(r'/$', '', gn2pg_conf_one_source._url)
-        gn2pg_conf_one_source._url=url
+        url = re.sub(r"/$", "", gn2pg_conf_one_source._url)
+        gn2pg_conf_one_source._url = url
 
         base_api = BaseAPI(config=gn2pg_conf_one_source, controler=None)
-        
+
         assert base_api._api_url.endswith("/")
 
     def test_page_list(self, base_api):
