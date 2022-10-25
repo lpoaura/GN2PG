@@ -1,9 +1,10 @@
 import math
 from urllib.parse import urlencode
 
+
 class TestApi:
     def test_page_list(self, base_api):
-        params = [("limit",10)]
+        params = [("limit", 10)]
         api_url = base_api._url(params=params)
         r = base_api._session.get(url=api_url)
         resp = r.json()

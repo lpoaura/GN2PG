@@ -2,15 +2,15 @@ import tempfile
 
 import pytest
 
-from gn2pg.env import ENVDIR
 from gn2pg.check_conf import Gn2PgConf
+from gn2pg.env import ENVDIR
 
 
 @pytest.fixture
 def toml_conf(pytestconfig):
-    user = pytestconfig.getoption('user')
-    password = pytestconfig.getoption('password')
-    url = pytestconfig.getoption('url')
+    user = pytestconfig.getoption("user")
+    password = pytestconfig.getoption("password")
+    url = pytestconfig.getoption("url")
     toml_str = f"""
     [db]
     db_host = "localhost"
@@ -56,7 +56,9 @@ def toml_conf(pytestconfig):
 
 @pytest.fixture
 def gn2pg_conf_file(toml_conf):
-    with tempfile.NamedTemporaryFile(dir=ENVDIR, suffix=".toml", delete=True, mode="w") as f:
+    with tempfile.NamedTemporaryFile(
+        dir=ENVDIR, suffix=".toml", delete=True, mode="w"
+    ) as f:
         name = f.name
         f.write(toml_conf)
         f.seek(0)

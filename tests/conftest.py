@@ -4,7 +4,4 @@ def pytest_addoption(parser):
     parser.addoption("--url", action="store", default="default url")
 
 
-pytest_plugins = [
-    "tests.fixtures.api",
-    "tests.fixtures.check_conf"
-]
+pytest_plugins = ["tests.fixtures.api", "tests.fixtures.check_conf"]
