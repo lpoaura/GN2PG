@@ -8,4 +8,4 @@ def pytest_addoption(parser):
     parser.addoption("--db-name", action="store",default="testgn2pg_test")
 
 
-pytest_plugins = ["tests.fixtures.api", "tests.fixtures.check_conf", "tests.fixtures.db"]
+pytest_plugins = ["tests.fixtures.api", "tests.fixtures.check_conf", "tests.fixtures.db", "tests.fixtures.download", "tests.fixtures.store_postgresql"]
