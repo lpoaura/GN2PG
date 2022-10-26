@@ -78,7 +78,7 @@ class DownloadGn:
             "progress": progress + len_items,
             "items": items,
             "len_items": len_items,
-            "total_len": resp["total_filtered"]
+            "total_len": resp["total_filtered"],
         }
 
     def store(self) -> NoReturn:
@@ -166,7 +166,9 @@ class DownloadGn:
         if upsert_pages is not None:
             progress = 0
             for u_page in upsert_pages:
-                response = self.process_progress(progress=progress, page=u_page)
+                response = self.process_progress(
+                    progress=progress, page=u_page
+                )
                 logger.info(
                     f"Storing {response['len_items']} datas ({response['progress']}/{response['total_len']} "
                     f"{round(response['progress']/response['total_len']*100,2)}%)"
@@ -189,14 +191,16 @@ class DownloadGn:
             params={
                 "filter_d_up_meta_last_action_date": since,
                 "limit": self._config.max_page_length,
-                "last_action": "D"
-            }
+                "last_action": "D",
+            },
         )
 
         if deleted_pages:
             for d_page in deleted_pages:
                 progress = 0
-                response = self.process_progress(progress=progress, page=d_page)
+                response = self.process_progress(
+                    progress=progress, page=d_page
+                )
                 if response.get("total_len") > 0:
                     logger.info(
                         f"Deleting {response['len_items']} datas ({response['progress']}/{response['total_len']} "

@@ -31,6 +31,7 @@ from . import _, __version__
 # logger = logging.getLogger("transfer_gn.store_postgresql")
 logger = logging.getLogger("transfer_gn.store_postgresql")
 
+
 def db_url(config):
     return {
         "drivername": "postgresql+psycopg2",
@@ -40,6 +41,7 @@ def db_url(config):
         "port": config.db_port,
         "database": config.db_name,
     }
+
 
 class StorePostgresqlException(Exception):
     """An exception occurred while handling download or store."""

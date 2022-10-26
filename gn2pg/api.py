@@ -48,7 +48,9 @@ class BaseAPI:
         self._http_status = 0
         self._ctrl = controler
         logger.debug(f"controler is {self._ctrl}")
-        self._api_url = config.url + '/'*(not config.url.endswith('/')) + "api/"
+        self._api_url = (
+            config.url + "/" * (not config.url.endswith("/")) + "api/"
+        )
 
         # init session
         self._session = requests.Session()
@@ -171,10 +173,7 @@ class BaseAPI:
 
         api_url = self._url(kind, params)
 
-        r = session.get(
-            url=api_url,
-            params={**params, **{"limit": 1}}
-        )
+        r = session.get(url=api_url, params={**params, **{"limit": 1}})
         logger.debug(
             f"Defining page_list from {api_url} with status code {r.status_code}"
         )
@@ -188,7 +187,10 @@ class BaseAPI:
                 )
             )
 
-            page_list = (self._url(kind,  {**params, **{"offset": p}}) for p in range(total_pages))
+            page_list = (
+                self._url(kind, {**params, **{"offset": p}})
+                for p in range(total_pages)
+            )
             return page_list
         else:
             logger.info(f"No data available from from {self._config.name}")
