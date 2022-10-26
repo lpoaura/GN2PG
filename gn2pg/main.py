@@ -172,7 +172,7 @@ def main(args) -> NoReturn:
     cfg = list(cfg_source_list.values())[0]
     logger.info(
         f"config file have {len(cfg_source_list)} source(s) wich are : "
-        f"{', '.join([src for src in cfg_source_list.keys()])}"
+        f"{', '.join(cfg_source_list.keys())}"
     )
 
     manage_pg = PostgresqlUtils(cfg)

@@ -391,7 +391,7 @@ class Gn2PgConf:
                 f"Source \"{source['name']}\" identifier will be \"{source_name}\""
             )
 
-            if source_name in [s for s in self._source_list.keys()]:
+            if source_name in self._source_list.keys():
                 logger.critical(
                     (
                         f"Source #{i + 1} named \"{source['name']}\" (->{source_name}) "
