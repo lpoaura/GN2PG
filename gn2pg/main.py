@@ -7,7 +7,6 @@ import logging
 import logging.config
 import sys
 from logging.handlers import TimedRotatingFileHandler
-from typing import NoReturn
 
 from toml import TomlDecodeError
 
@@ -87,7 +86,7 @@ def arguments(args):
     return parser.parse_args(args)
 
 
-def main(args) -> NoReturn:
+def main(args) -> None:
     """Main entry point allowing external calls
 
     Args:

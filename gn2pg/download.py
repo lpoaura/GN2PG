@@ -12,7 +12,6 @@ Properties
 """
 import logging
 from datetime import datetime
-from typing import NoReturn
 
 from . import _, __version__
 from .api import DataAPI, DatasetsAPI
@@ -34,7 +33,7 @@ class DownloadGn:
 
     def __init__(
         self, config, api_instance, backend, max_retry=None, max_requests=None
-    ) -> NoReturn:
+    ) -> None:
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
@@ -81,7 +80,7 @@ class DownloadGn:
             "total_len": resp["total_filtered"],
         }
 
-    def store(self) -> NoReturn:
+    def store(self) -> None:
         """Store data into Database
 
         Returns:
@@ -122,7 +121,7 @@ class DownloadGn:
 
     def update(
         self, since: str = None, actions: list = ["I", "U"]
-    ) -> NoReturn:
+    ) -> None:
         """[summary]
 
         Args:
