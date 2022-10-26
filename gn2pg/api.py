@@ -15,7 +15,7 @@ Exceptions:
 """
 import json
 import logging
-from math import floor
+import math
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -48,8 +48,7 @@ class BaseAPI:
         self._http_status = 0
         self._ctrl = controler
         logger.debug(f"controler is {self._ctrl}")
-        url = config.url if config.url[-1:] == "/" else config.url + "/"
-        self._api_url = url + "api/"  # API Url
+        self._api_url = config.url + '/'*(not config.url.endswith('/')) + "api/"
 
         # init session
         self._session = requests.Session()
@@ -130,7 +129,7 @@ class BaseAPI:
         """Return the controler name."""
         return self._ctrl
 
-    def _url(self, kind: str = "data", params: list = []) -> str:
+    def _url(self, kind: str = "data", params: dict = None) -> str:
         """Generate export API URL with QueryStrings if params.
 
         Args:
@@ -145,14 +144,14 @@ class BaseAPI:
             url = f"{self._api_url}synthese/log"
         else:
             return None
-        if len(params) > 0:
+        if params is not None:
             logger.debug(f"params {params}")
             url = url + "?" + urlencode(params)
         return url
 
     def _page_list(
         self,
-        params: list,
+        params: dict,
         kind: str = "data",
     ) -> Optional[list]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
@@ -174,27 +173,23 @@ class BaseAPI:
 
         r = session.get(
             url=api_url,
+            params={**params, **{"limit": 1}}
         )
         logger.debug(
             f"Defining page_list from {api_url} with status code {r.status_code}"
         )
         if r.status_code == 200:
-            page_list = []
-            if r.status_code == 200:
-                resp = r.json()
-                total_filtered = resp["total_filtered"]
-                total_pages = floor(total_filtered / resp["limit"]) + 1
-                logger.debug(
-                    _(
-                        f"API {api_url} contains {total_filtered} data in {total_pages} page(s)"
-                    )
+            resp = r.json()
+            total_filtered = resp["total_filtered"]
+            total_pages = math.ceil(total_filtered / params.get("limit"))
+            logger.debug(
+                _(
+                    f"API {api_url} contains {total_filtered} data in {total_pages} page(s)"
                 )
+            )
 
-                for p in range(total_pages):
-                    offset_params = list(params)
-                    offset_params.append(("offset", p))
-                    page_list.append(self._url(kind, offset_params))
-                return page_list
+            page_list = (self._url(kind,  {**params, **{"offset": p}}) for p in range(total_pages))
+            return page_list
         else:
             logger.info(f"No data available from from {self._config.name}")
             return None

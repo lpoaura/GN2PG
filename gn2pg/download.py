@@ -79,16 +79,12 @@ class DownloadGn:
         # Store start download TimeStamp to populate increment log  after download end.
 
         increment_ts = datetime.now()
-        params = []
+        params = {"limit": self._config.max_page_length}
         logger.debug(
             _(f"Getting items from controler {self._api_instance.controler}")
         )
-        params.append(("limit", self._config.max_page_length))
         # logger.info(self._config._query_strings)
-        if self._config.query_strings:
-            params = list(
-                set(params + list(self._config.query_strings.items()))
-            )
+        params.update(self._config.query_strings)
         logger.info(f"QueryStrings  {params}")
         pages = self._api_instance._page_list(kind="data", params=params)
         self._backend.download_log(
@@ -134,7 +130,7 @@ class DownloadGn:
         # Get last update from increment log.
         increment_ts = datetime.now()
 
-        params = [("action", a) for a in ["I", "U"]]
+        params = {"action": actions}
 
         if since is None:
             since = (
@@ -144,17 +140,9 @@ class DownloadGn:
                 else self._backend.download_get(self._api_instance.controler)
             )
 
-        params.extend(
-            [
-                ("limit", self._config.max_page_length),
-                ("filter_d_up_derniere_action", since),
-            ]
-        )
-
-        if self._config.query_strings:
-            params = list(
-                set(params + list(self._config.query_strings.items()))
-            )
+        params["limit"] = self._config.max_page_length
+        params["filter_d_up_derniere_action"] = since
+        params.update(self._config.query_strings)
         logger.info(f"QueryStrings  {params}")
 
         logger.info(
@@ -193,11 +181,11 @@ class DownloadGn:
 
         deleted_pages = self._api_instance._page_list(
             kind="log",
-            params=[
-                ("filter_d_up_meta_last_action_date", since),
-                ("limit", self._config.max_page_length),
-                ("last_action", "D"),
-            ],
+            params={
+                "filter_d_up_meta_last_action_date": since,
+                "limit": self._config.max_page_length,
+                "last_action": "D"
+            }
         )
 
         if deleted_pages:
