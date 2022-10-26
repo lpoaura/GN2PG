@@ -6,18 +6,22 @@ from gn2pg.check_conf import Gn2PgConf
 from gn2pg.env import ENVDIR
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def toml_conf(pytestconfig):
     user = pytestconfig.getoption("user")
     password = pytestconfig.getoption("password")
     url = pytestconfig.getoption("url")
+    db_user = pytestconfig.getoption("db_user")
+    db_password = pytestconfig.getoption("db_password")
+    db_port = int(pytestconfig.getoption("db_port"))
+    db_name = pytestconfig.getoption("db_name")
     toml_str = f"""
     [db]
     db_host = "localhost"
-    db_port = 5432
-    db_user = "<dbUser>"
-    db_password = "<dbPassword>"
-    db_name = "<dbName>"
+    db_port = {db_port}
+    db_user = "{db_user}"
+    db_password = "{db_password}"
+    db_name = "{db_name}"
     db_schema_import = "gn2pg_import"
         # Additional connection options (optional)
         [db.db_querystring]
@@ -54,7 +58,7 @@ def toml_conf(pytestconfig):
     return toml_str
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def gn2pg_conf_file(toml_conf):
     with tempfile.NamedTemporaryFile(
         dir=ENVDIR, suffix=".toml", delete=True, mode="w"
@@ -65,12 +69,12 @@ def gn2pg_conf_file(toml_conf):
         yield name
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def gn2pg_conf(gn2pg_conf_file):
     return Gn2PgConf(file=gn2pg_conf_file)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def gn2pg_conf_one_source(gn2pg_conf):
     cfg_source_list = gn2pg_conf.source_list
     return list(cfg_source_list.values())[0]

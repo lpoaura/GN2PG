@@ -31,6 +31,15 @@ from . import _, __version__
 # logger = logging.getLogger("transfer_gn.store_postgresql")
 logger = logging.getLogger("transfer_gn.store_postgresql")
 
+def db_url(config):
+    return {
+        "drivername": "postgresql+psycopg2",
+        "username": config.db_user,
+        "password": config.db_password,
+        "host": config.db_host,
+        "port": config.db_port,
+        "database": config.db_name,
+    }
 
 class StorePostgresqlException(Exception):
     """An exception occurred while handling download or store."""
@@ -144,14 +153,7 @@ class PostgresqlUtils:
 
     def __init__(self, config) -> NoReturn:
         self._config = config
-        self._db_url = {
-            "drivername": "postgresql+psycopg2",
-            "username": self._config.db_user,
-            "password": self._config.db_password,
-            "host": self._config.db_host,
-            "port": self._config.db_port,
-            "database": self._config.db_name,
-        }
+        self._db_url = db_url(self._config)
         if self._config.db_querystring:
             self._db_url["query"] = self._config.db_querystring
 
@@ -389,14 +391,7 @@ class StorePostgresql:
 
     def __init__(self, config):
         self._config = config
-        self._db_url = {
-            "drivername": "postgresql+psycopg2",
-            "username": self._config.db_user,
-            "password": self._config.db_password,
-            "host": self._config.db_host,
-            "port": self._config.db_port,
-            "database": self._config.db_name,
-        }
+        self._db_url = db_url(self._config)
         if self._config.db_querystring:
             self._db_url["query"] = self._config.db_querystring
 
