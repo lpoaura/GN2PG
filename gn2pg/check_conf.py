@@ -8,9 +8,9 @@ from typing import Any, Dict
 from schema import Optional, Schema
 from toml import load
 
-from . import _, __version__
-from .env import ENVDIR
-from .utils import coalesce_in_dict, simplify
+from gn2pg import _, __version__
+from gn2pg.env import ENVDIR
+from gn2pg.utils import coalesce_in_dict, simplify
 
 logger = logging.getLogger("transfer_gn.check_conf")
 

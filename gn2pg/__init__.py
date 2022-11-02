@@ -9,7 +9,7 @@ from pathlib import Path
 import coloredlogs
 from pkg_resources import DistributionNotFound, get_distribution
 
-from . import metadata
+from gn2pg import metadata
 
 try:
     dist_name = "gn2pg_client"

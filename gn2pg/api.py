@@ -21,7 +21,7 @@ from urllib.parse import urlencode
 
 import requests
 
-from . import _, __version__
+from gn2pg import _, __version__
 
 logger = logging.getLogger("transfer_gn.geonature_api")
 

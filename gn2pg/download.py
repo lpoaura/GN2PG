@@ -13,8 +13,8 @@ Properties
 import logging
 from datetime import datetime
 
-from . import _, __version__
-from .api import DataAPI, DatasetsAPI
+from gn2pg import _, __version__
+from gn2pg.api import DataAPI, DatasetsAPI
 
 logger = logging.getLogger("transfer_gn.download_gn")
 

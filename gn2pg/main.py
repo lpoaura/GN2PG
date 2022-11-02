@@ -10,12 +10,12 @@ from logging.handlers import TimedRotatingFileHandler
 
 from toml import TomlDecodeError
 
-from . import _, __version__, metadata
-from .check_conf import Gn2PgConf
-from .env import ENVDIR, LOGDIR
-from .helpers import edit, full_download, init, update
-from .store_postgresql import PostgresqlUtils
-from .utils import BColors
+from gn2pg import _, __version__, metadata
+from gn2pg.check_conf import Gn2PgConf
+from gn2pg.env import ENVDIR, LOGDIR
+from gn2pg.helpers import edit, full_download, init, update
+from gn2pg.store_postgresql import PostgresqlUtils
+from gn2pg.utils import BColors
 
 logger = logging.getLogger(__name__)
 

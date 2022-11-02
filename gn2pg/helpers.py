@@ -12,11 +12,11 @@ from subprocess import call
 
 import pkg_resources
 
-from . import _
-from .download import Data
-from .env import ENVDIR
-from .store_postgresql import StorePostgresql
-from .utils import BColors
+from gn2pg import _
+from gn2pg.download import Data
+from gn2pg.env import ENVDIR
+from gn2pg.store_postgresql import StorePostgresql
+from gn2pg.utils import BColors
 
 logger = logging.getLogger(__name__)
 

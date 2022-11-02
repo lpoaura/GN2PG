@@ -26,7 +26,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
 from sqlalchemy.sql import and_
 
-from . import _, __version__
+from gn2pg import _, __version__
 
 # logger = logging.getLogger("transfer_gn.store_postgresql")
 logger = logging.getLogger("transfer_gn.store_postgresql")
