@@ -10,14 +10,13 @@ Properties
 -
 
 """
-from typing import Callable
-
-from functools import partial
 import logging
 from datetime import datetime
+from functools import partial
 from multiprocessing import Queue
 from multiprocessing.pool import ThreadPool
 from threading import Thread
+from typing import Callable
 
 from . import _, __version__
 from .api import DataAPI, DatasetsAPI
@@ -74,7 +73,9 @@ class DownloadGn:
     # ---------------
     # Generic methods
     # ---------------
-    def launch_treads(self, nb_threads: int, func: Callable, pages: list, store=True):
+    def launch_treads(
+        self, nb_threads: int, func: Callable, pages: list, store=True
+    ) -> None:
         """
         Launch 1 + nb_threads threads to execute a function func on a list of pages
 
@@ -83,11 +84,12 @@ class DownloadGn:
             func (Callable): function that each thread will call
             pages (list): list of pages
             store (bool): if True, display Storing in logger
-        
+
         Returns:
             None
         """
-        def report(queue):
+
+        def report(queue) -> None:
             """
             From a Queue, get the progress, increase it and log it
             """
@@ -96,26 +98,44 @@ class DownloadGn:
                 response = queue.get()
                 if response == "DONE":
                     break
-                progress += response['len_items']
-                perc_progress = round(progress/response['total_len']*100,2)
+                progress += response["len_items"]
+                perc_progress = round(
+                    progress / response["total_len"] * 100, 2
+                )
                 if response.get("total_len", 0) > 0:
                     msg = "Storing" if store else "Deleting"
-                    logger.info("%s %d datas (%d/%d %.2f %%) from %s %s", msg, response['len_items'], progress, response['total_len'], perc_progress, self._config.name, self._api_instance.controler)
+                    logger.info(
+                        "%s %d datas (%d/%d %.2f %%) from %s %s",
+                        msg,
+                        response["len_items"],
+                        progress,
+                        response["total_len"],
+                        perc_progress,
+                        self._config.name,
+                        self._api_instance.controler,
+                    )
 
         # The Queue enables the report thread to get the progress from other threads
         q = Queue()
         # Initialize and start the report thread
         thread = Thread(target=report, args=[q])
         thread.start()
-        # Start the worker threads 
+        # Start the worker threads
         with ThreadPool(nb_threads) as thread:
             thread.map(partial(func, queue=q), pages)
         # Will stop the report thread
         q.put(("DONE"))
 
-    def download(self, page, queue):
+    def download(self, page: str, queue: Queue) -> None:
         """
         Download a page and store the progress in the provided queue
+
+        Args:
+            page (str): url to download
+            queue (Queue): gather the progress
+
+        Returns:
+            None
         """
         response = self.process_progress(page=page)
 
@@ -124,13 +144,16 @@ class DownloadGn:
         )
         queue.put(response)
 
-    def delete(self, page, queue):
+    def delete(self, page: str, queue: Queue) -> None:
         """
         Delete (or not) data in DB from a page download
 
         Args:
             page (str): url to download
-            progress (int): 
+            queue (Queue): gather the progress
+
+        Returns:
+            None
         """
         response = self.process_progress(page=page)
 
@@ -144,7 +167,16 @@ class DownloadGn:
                 f"No new deleted data from {self._config.name} {self._api_instance.controler}"
             )
 
-    def process_progress(self, page):
+    def process_progress(self, page: str) -> dict:
+        """
+        Compute the progress of the task
+
+        Args:
+            page (str): url to download
+
+        Returns:
+            dict (dict): dict containing items, len_items, total_len
+        """
         resp = self._api_instance.get_page(page)
         items = resp["items"]
         len_items = len(items)
@@ -177,16 +209,16 @@ class DownloadGn:
             self._api_instance.http_status,
         )
 
-        self.launch_treads(nb_threads=self._config.nb_threads, func=self.download, pages=pages)
+        self.launch_treads(
+            nb_threads=self._config.nb_threads, func=self.download, pages=pages
+        )
 
         # Log download timestamp to download.
         self._backend.increment_log(
             controler=self._api_instance.controler, last_ts=increment_ts
         )
 
-    def update(
-        self, since: str = None, actions: list = ["I", "U"]
-    ) -> None:
+    def update(self, since: str = None, actions: list = ["I", "U"]) -> None:
         """[summary]
 
         Args:
@@ -228,7 +260,11 @@ class DownloadGn:
         )
 
         if upsert_pages is not None:
-            self.launch_treads(nb_threads=self._config.nb_threads, func=self.download, pages=upsert_pages)
+            self.launch_treads(
+                nb_threads=self._config.nb_threads,
+                func=self.download,
+                pages=upsert_pages,
+            )
 
         # Delete data deleted from source
         logger.info(
@@ -247,7 +283,11 @@ class DownloadGn:
         )
 
         if deleted_pages:
-            self.launch_treads(nb_threads=self._config.nb_threads, func=self.delete, pages=deleted_pages)
+            self.launch_treads(
+                nb_threads=self._config.nb_threads,
+                func=self.delete,
+                pages=deleted_pages,
+            )
 
         self._backend.increment_log(
             controler=self._api_instance.controler, last_ts=increment_ts
