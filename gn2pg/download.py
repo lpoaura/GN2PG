@@ -119,9 +119,7 @@ class DownloadGn:
             controler=self._api_instance.controler, last_ts=increment_ts
         )
 
-    def update(
-        self, since: str = None, actions: list = ["I", "U"]
-    ) -> None:
+    def update(self, since: str = None, actions: list = ["I", "U"]) -> None:
         """[summary]
 
         Args:
