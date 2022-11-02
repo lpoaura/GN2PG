@@ -61,6 +61,7 @@ _ConfSchema = Schema(
             Optional("retry_delay"): int,
             Optional("unavailable_delay"): int,
             Optional("lru_maxsize"): int,
+            Optional("nb_threads"): int,
         },
     }
 )
@@ -131,6 +132,9 @@ class Gn2PgSourceConf:
                 )  # type: int
                 self._lru_maxsize = coalesce_in_dict(
                     tuning, "lru_maxsize", 32
+                )  # type: int
+                self._nb_threads = coalesce_in_dict(
+                    tuning, "nb_threads", 1
                 )  # type: int
 
         except Exception:  # pragma: no cover
@@ -356,6 +360,15 @@ class Gn2PgSourceConf:
             int: Database import schema
         """
         return self._lru_maxsize
+
+    @property
+    def nb_threads(self) -> int:
+        """Get the number of computing threads
+
+        Returns:
+            int: The number of computing threads
+        """
+        return self._nb_threads
 
 
 class Gn2PgConf:
