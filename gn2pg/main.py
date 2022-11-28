@@ -7,7 +7,6 @@ import logging
 import logging.config
 import sys
 from logging.handlers import TimedRotatingFileHandler
-from typing import NoReturn
 
 from toml import TomlDecodeError
 
@@ -87,7 +86,7 @@ def arguments(args):
     return parser.parse_args(args)
 
 
-def main(args) -> NoReturn:
+def main(args) -> None:
     """Main entry point allowing external calls
 
     Args:
@@ -172,7 +171,7 @@ def main(args) -> NoReturn:
     cfg = list(cfg_source_list.values())[0]
     logger.info(
         f"config file have {len(cfg_source_list)} source(s) wich are : "
-        f"{', '.join([src for src in cfg_source_list.keys()])}"
+        f"{', '.join(cfg_source_list.keys())}"
     )
 
     manage_pg = PostgresqlUtils(cfg)

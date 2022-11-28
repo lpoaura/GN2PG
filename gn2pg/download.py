@@ -12,7 +12,11 @@ Properties
 """
 import logging
 from datetime import datetime
-from typing import NoReturn
+from functools import partial
+from multiprocessing import Queue
+from multiprocessing.pool import ThreadPool
+from threading import Thread
+from typing import Callable
 
 from . import _, __version__
 from .api import DataAPI, DatasetsAPI
@@ -34,7 +38,7 @@ class DownloadGn:
 
     def __init__(
         self, config, api_instance, backend, max_retry=None, max_requests=None
-    ) -> NoReturn:
+    ) -> None:
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
@@ -69,8 +73,120 @@ class DownloadGn:
     # ---------------
     # Generic methods
     # ---------------
+    def launch_treads(
+        self, nb_threads: int, func: Callable, pages: list, store=True
+    ) -> None:
+        """
+        Launch 1 + nb_threads threads to execute a function func on a list of pages
 
-    def store(self) -> NoReturn:
+        Args:
+            nb_threads (int): number of threads to compute the function on the pages
+            func (Callable): function that each thread will call
+            pages (list): list of pages
+            store (bool): if True, display Storing in logger
+
+        Returns:
+            None
+        """
+
+        def report(queue) -> None:
+            """
+            From a Queue, get the progress, increase it and log it
+            """
+            progress = 0
+            while True:
+                response = queue.get()
+                if response == "DONE":
+                    break
+                progress += response["len_items"]
+                perc_progress = round(
+                    progress / response["total_len"] * 100, 2
+                )
+                if response.get("total_len", 0) > 0:
+                    msg = "Storing" if store else "Deleting"
+                    logger.info(
+                        "%s %d datas (%d/%d %.2f %%) from %s %s",
+                        msg,
+                        response["len_items"],
+                        progress,
+                        response["total_len"],
+                        perc_progress,
+                        self._config.name,
+                        self._api_instance.controler,
+                    )
+
+        # The Queue enables the report thread to get the progress from other threads
+        q = Queue()
+        # Initialize and start the report thread
+        thread = Thread(target=report, args=[q])
+        thread.start()
+        # Start the worker threads
+        with ThreadPool(nb_threads) as thread:
+            thread.map(partial(func, queue=q), pages)
+        # Will stop the report thread
+        q.put(("DONE"))
+
+    def download(self, page: str, queue: Queue) -> None:
+        """
+        Download a page and store the progress in the provided queue
+
+        Args:
+            page (str): url to download
+            queue (Queue): gather the progress
+
+        Returns:
+            None
+        """
+        response = self.process_progress(page=page)
+
+        self._backend.store_data(
+            self._api_instance.controler, response["items"]
+        )
+        queue.put(response)
+
+    def delete(self, page: str, queue: Queue) -> None:
+        """
+        Delete (or not) data in DB from a page download
+
+        Args:
+            page (str): url to download
+            queue (Queue): gather the progress
+
+        Returns:
+            None
+        """
+        response = self.process_progress(page=page)
+
+        if response.get("total_len") > 0:
+            self._backend.store_data(
+                self._backend.delete_data(response.get("items"))
+            )
+            queue.put(response)
+        else:
+            logger.info(
+                f"No new deleted data from {self._config.name} {self._api_instance.controler}"
+            )
+
+    def process_progress(self, page: str) -> dict:
+        """
+        Compute the progress of the task
+
+        Args:
+            page (str): url to download
+
+        Returns:
+            dict (dict): dict containing items, len_items, total_len
+        """
+        resp = self._api_instance.get_page(page)
+        items = resp["items"]
+        len_items = len(items)
+        return {
+            "items": items,
+            "len_items": len_items,
+            "total_len": resp["total_filtered"],
+        }
+
+    def store(self) -> None:
         """Store data into Database
 
         Returns:
@@ -79,16 +195,12 @@ class DownloadGn:
         # Store start download TimeStamp to populate increment log  after download end.
 
         increment_ts = datetime.now()
-        params = []
+        params = {"limit": self._config.max_page_length}
         logger.debug(
             _(f"Getting items from controler {self._api_instance.controler}")
         )
-        params.append(("limit", self._config.max_page_length))
         # logger.info(self._config._query_strings)
-        if self._config.query_strings:
-            params = list(
-                set(params + list(self._config.query_strings.items()))
-            )
+        params.update(self._config.query_strings)
         logger.info(f"QueryStrings  {params}")
         pages = self._api_instance._page_list(kind="data", params=params)
         self._backend.download_log(
@@ -96,29 +208,17 @@ class DownloadGn:
             self._api_instance.transfer_errors,
             self._api_instance.http_status,
         )
-        progress = 0
-        for p in pages:
-            resp = self._api_instance.get_page(p)
-            items = resp["items"]
-            len_items = len(items)
-            total_len = resp["total_filtered"]
-            progress = progress + len_items
-            logger.info(
-                f"Storing {len_items} datas ({progress}/{total_len} "
-                f"{round((progress/total_len)*100,2)}%)"
-                f"from {self._config.name} {self._api_instance.controler}"
-            )
-            self._backend.store_data(
-                self._api_instance.controler, resp["items"]
-            )
+
+        self.launch_treads(
+            nb_threads=self._config.nb_threads, func=self.download, pages=pages
+        )
+
         # Log download timestamp to download.
         self._backend.increment_log(
             controler=self._api_instance.controler, last_ts=increment_ts
         )
 
-    def update(
-        self, since: str = None, actions: list = ["I", "U"]
-    ) -> NoReturn:
+    def update(self, since: str = None, actions: list = ["I", "U"]) -> None:
         """[summary]
 
         Args:
@@ -134,7 +234,7 @@ class DownloadGn:
         # Get last update from increment log.
         increment_ts = datetime.now()
 
-        params = [("action", a) for a in ["I", "U"]]
+        params = {"action": actions}
 
         if since is None:
             since = (
@@ -144,17 +244,9 @@ class DownloadGn:
                 else self._backend.download_get(self._api_instance.controler)
             )
 
-        params.extend(
-            [
-                ("limit", self._config.max_page_length),
-                ("filter_d_up_derniere_action", since),
-            ]
-        )
-
-        if self._config.query_strings:
-            params = list(
-                set(params + list(self._config.query_strings.items()))
-            )
+        params["limit"] = self._config.max_page_length
+        params["filter_d_up_derniere_action"] = since
+        params.update(self._config.query_strings)
         logger.info(f"QueryStrings  {params}")
 
         logger.info(
@@ -168,21 +260,11 @@ class DownloadGn:
         )
 
         if upsert_pages is not None:
-            progress = 0
-            for u_page in upsert_pages:
-                u_resp = self._api_instance.get_page(u_page)
-                u_items = u_resp["items"]
-                u_len_items = len(u_items)
-                u_total_len = u_resp["total_filtered"]
-                progress = progress + u_len_items
-                logger.info(
-                    f"Storing {u_len_items} datas ({progress}/{u_total_len} "
-                    f"{round((progress/u_total_len)*100,2)}%)"
-                    f"from {self._config.name} {self._api_instance.controler}"
-                )
-                self._backend.store_data(
-                    self._api_instance.controler, u_resp["items"]
-                )
+            self.launch_treads(
+                nb_threads=self._config.nb_threads,
+                func=self.download,
+                pages=upsert_pages,
+            )
 
         # Delete data deleted from source
         logger.info(
@@ -193,32 +275,19 @@ class DownloadGn:
 
         deleted_pages = self._api_instance._page_list(
             kind="log",
-            params=[
-                ("filter_d_up_meta_last_action_date", since),
-                ("limit", self._config.max_page_length),
-                ("last_action", "D"),
-            ],
+            params={
+                "filter_d_up_meta_last_action_date": since,
+                "limit": self._config.max_page_length,
+                "last_action": "D",
+            },
         )
 
         if deleted_pages:
-            for d_page in deleted_pages:
-                progress = 0
-                d_resp = self._api_instance.get_page(d_page)
-                d_items = d_resp["items"]
-                d_len_items = len(d_items)
-                total_len = d_resp["total_filtered"]
-                progress = progress + d_len_items
-                if total_len > 0:
-                    logger.info(
-                        f"Deleting {d_len_items} datas ({progress}/{total_len} "
-                        f"{round((progress/total_len)*100,2)}%)"
-                        f"from {self._config.name} {self._api_instance.controler}"
-                    )
-                    self._backend.delete_data(d_resp["items"])
-                else:
-                    logger.info(
-                        f"No new deleted data from {self._config.name} {self._api_instance.controler}"
-                    )
+            self.launch_treads(
+                nb_threads=self._config.nb_threads,
+                func=self.delete,
+                pages=deleted_pages,
+            )
 
         self._backend.increment_log(
             controler=self._api_instance.controler, last_ts=increment_ts

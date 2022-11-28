@@ -38,6 +38,7 @@ psycopg2-binary = "^2.8.6"
 coloredlogs = "^15.0"
 schema = "^0.7.3"
 toml = "^0.10.2"
+SQLAlchemy-Utils = "0.38.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.1"

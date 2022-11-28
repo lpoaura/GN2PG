@@ -5,7 +5,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, NoReturn, Optional
+from typing import Any, Optional
 
 import pkg_resources
 from sqlalchemy import (
@@ -32,6 +32,17 @@ from . import _, __version__
 logger = logging.getLogger("transfer_gn.store_postgresql")
 
 
+def db_url(config):
+    return {
+        "drivername": "postgresql+psycopg2",
+        "username": config.db_user,
+        "password": config.db_password,
+        "host": config.db_host,
+        "port": config.db_port,
+        "database": config.db_name,
+    }
+
+
 class StorePostgresqlException(Exception):
     """An exception occurred while handling download or store."""
 
@@ -41,7 +52,7 @@ class DataItem:
 
     def __init__(
         self, source: str, metadata: MetaData, conn: Any, elem: dict
-    ) -> NoReturn:
+    ) -> None:
         """Item elements
 
         Args:
@@ -142,16 +153,9 @@ class DataItem:
 class PostgresqlUtils:
     """Provides create and delete Postgresql database method."""
 
-    def __init__(self, config) -> NoReturn:
+    def __init__(self, config) -> None:
         self._config = config
-        self._db_url = {
-            "drivername": "postgresql+psycopg2",
-            "username": self._config.db_user,
-            "password": self._config.db_password,
-            "host": self._config.db_host,
-            "port": self._config.db_port,
-            "database": self._config.db_name,
-        }
+        self._db_url = db_url(self._config)
         if self._config.db_querystring:
             self._db_url["query"] = self._config.db_querystring
 
@@ -159,7 +163,7 @@ class PostgresqlUtils:
     # Internal methods
     # ----------------
 
-    def _create_table(self, name, *cols) -> NoReturn:
+    def _create_table(self, name, *cols) -> None:
         """Check if table exists, and create it if not
 
         Parameters
@@ -180,7 +184,7 @@ class PostgresqlUtils:
         else:
             logger.info("Table %s already exists => Keeping it", name)
 
-    def _create_download_log(self) -> NoReturn:
+    def _create_download_log(self) -> None:
         """Create download_log table if it does not exist."""
         self._create_table(
             "download_log",
@@ -197,7 +201,7 @@ class PostgresqlUtils:
             Column("comment", String),
         )
 
-    def _create_increment_log(self) -> NoReturn:
+    def _create_increment_log(self) -> None:
         """Create increment_log table if it does not exist."""
         self._create_table(
             "increment_log",
@@ -211,7 +215,7 @@ class PostgresqlUtils:
             ),
         )
 
-    def _create_error_log(self) -> NoReturn:
+    def _create_error_log(self) -> None:
         """Create error_log table if table does not exist."""
         self._create_table(
             "error_log",
@@ -225,7 +229,7 @@ class PostgresqlUtils:
             Column("error", String),
         )
 
-    def _create_datasets_json(self) -> NoReturn:
+    def _create_datasets_json(self) -> None:
         """Create entities_json table if it does not exist."""
         self._create_table(
             "datasets_json",
@@ -235,7 +239,7 @@ class PostgresqlUtils:
             PrimaryKeyConstraint("uuid", "source", name="meta_json_pk"),
         )
 
-    def _create_data_json(self) -> NoReturn:
+    def _create_data_json(self) -> None:
         """Create observations_json table if it does not exist."""
         self._create_table(
             "data_json",
@@ -256,7 +260,7 @@ class PostgresqlUtils:
             ),
         )
 
-    def create_json_tables(self) -> NoReturn:
+    def create_json_tables(self) -> None:
         """Create all internal and jsonb tables."""
         logger.info(
             f"Connecting to {self._config.db_name} database, to finalize creation"
@@ -340,7 +344,7 @@ class PostgresqlUtils:
 
         return result
 
-    def custom_script(self, script: str = "to_gnsynthese") -> NoReturn:
+    def custom_script(self, script: str = "to_gnsynthese") -> None:
         """EXecute custom script on DB.
         eg.:  triggers to populate local tables like GeoNature synthese
 
@@ -389,14 +393,7 @@ class StorePostgresql:
 
     def __init__(self, config):
         self._config = config
-        self._db_url = {
-            "drivername": "postgresql+psycopg2",
-            "username": self._config.db_user,
-            "password": self._config.db_password,
-            "host": self._config.db_host,
-            "port": self._config.db_port,
-            "database": self._config.db_name,
-        }
+        self._db_url = db_url(self._config)
         if self._config.db_querystring:
             self._db_url["query"] = self._config.db_querystring
 
@@ -603,7 +600,7 @@ class StorePostgresql:
 
         return None
 
-    def increment_log(self, controler: str, last_ts: datetime) -> NoReturn:
+    def increment_log(self, controler: str, last_ts: datetime) -> None:
         """Store last increment timestamp to database.
 
         Args:
@@ -611,7 +608,7 @@ class StorePostgresql:
             last_ts (datetime): last increment timestamp
 
         Returns:
-            NoReturn: ...
+            None: ...
         """
         # Store to database, if enabled
         metadata = self._metadata.tables[

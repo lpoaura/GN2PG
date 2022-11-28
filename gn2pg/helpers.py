@@ -92,7 +92,6 @@ def full_download(cfg_ctrl):
     logger = logging.getLogger("transfer_gn")
     logger.info(cfg_ctrl)
     cfg_source_list = cfg_ctrl.source_list
-    cfg = list(cfg_source_list.values())[0]
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
@@ -148,7 +147,6 @@ def update(cfg_ctrl):
     logger = logging.getLogger("transfer_gn")
     logger.info(cfg_ctrl)
     cfg_source_list = cfg_ctrl.source_list
-    cfg = list(cfg_source_list.values())[0]
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:

@@ -61,6 +61,7 @@ _ConfSchema = Schema(
             Optional("retry_delay"): int,
             Optional("unavailable_delay"): int,
             Optional("lru_maxsize"): int,
+            Optional("nb_threads"): int,
         },
     }
 )
@@ -131,6 +132,9 @@ class Gn2PgSourceConf:
                 )  # type: int
                 self._lru_maxsize = coalesce_in_dict(
                     tuning, "lru_maxsize", 32
+                )  # type: int
+                self._nb_threads = coalesce_in_dict(
+                    tuning, "nb_threads", 1
                 )  # type: int
 
         except Exception:  # pragma: no cover
@@ -357,6 +361,15 @@ class Gn2PgSourceConf:
         """
         return self._lru_maxsize
 
+    @property
+    def nb_threads(self) -> int:
+        """Get the number of computing threads
+
+        Returns:
+            int: The number of computing threads
+        """
+        return self._nb_threads
+
 
 class Gn2PgConf:
     """Read config file and expose list of sources configuration"""
@@ -391,7 +404,7 @@ class Gn2PgConf:
                 f"Source \"{source['name']}\" identifier will be \"{source_name}\""
             )
 
-            if source_name in [s for s in self._source_list.keys()]:
+            if source_name in self._source_list.keys():
                 logger.critical(
                     (
                         f"Source #{i + 1} named \"{source['name']}\" (->{source_name}) "
