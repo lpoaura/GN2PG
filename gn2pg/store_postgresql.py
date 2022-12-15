@@ -265,7 +265,7 @@ class PostgresqlUtils:
         logger.info(
             f"Connecting to {self._config.db_name} database, to finalize creation"
         )
-        self._db = create_engine(URL(**self._db_url), echo=False)
+        self._db = create_engine(URL.create(**self._db_url), echo=False)
         conn = self._db.connect()
         # Create extensions
         try:
@@ -327,7 +327,7 @@ class PostgresqlUtils:
         logger.info(_("Counting datas in database for all sources"))
         # Connect and set path to include VN import schema
         logger.info(_("Connecting to database %s"), self._config.db_name)
-        self._db = create_engine(URL(**self._db_url), echo=False)
+        self._db = create_engine(URL.create(**self._db_url), echo=False)
         conn = self._db.connect()
         dbschema = self._config.db_schema_import
         self._metadata = MetaData(schema=dbschema)
@@ -352,7 +352,7 @@ class PostgresqlUtils:
             script (str, optional): custom script path. Defaults to "to_gnsynthese".
         """
         logger.info(_(f"Start to execute {script} script"))
-        self._db = create_engine(URL(**self._db_url), echo=False)
+        self._db = create_engine(URL.create(**self._db_url), echo=False)
         conn = self._db.connect()
         dbschema = self._config.db_schema_import
         if script == "to_gnsynthese":
@@ -402,7 +402,7 @@ class StorePostgresql:
         logger.info(f"Connecting to database {self._config.db_name}")
 
         # Connect and set path to include VN import schema
-        self._db = create_engine(URL(**self._db_url), echo=False)
+        self._db = create_engine(URL.create(**self._db_url), echo=False)
         self._conn = self._db.connect()
 
         # Get dbtable definition
