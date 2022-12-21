@@ -15,6 +15,7 @@ def toml_conf(pytestconfig):
     db_password = pytestconfig.getoption("db_password")
     db_port = int(pytestconfig.getoption("db_port"))
     db_name = pytestconfig.getoption("db_name")
+    export_id = pytestconfig.getoption("export_id")
     toml_str = f"""
     [db]
     db_host = "localhost"
@@ -42,7 +43,7 @@ def toml_conf(pytestconfig):
     # GeoNature source URL
     url = "{url}"
     # GeoNature source Export id
-    export_id = 1
+    export_id = {export_id}
     # Data type (used to distinct datas and to conditionning triggers)
     data_type = "synthese_with_metadata"
 
