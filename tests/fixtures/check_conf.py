@@ -16,6 +16,7 @@ def toml_conf(pytestconfig):
     db_port = int(pytestconfig.getoption("db_port"))
     db_name = pytestconfig.getoption("db_name")
     export_id = pytestconfig.getoption("export_id")
+    nb_threads = pytestconfig.getoption("nb_threads")
     toml_str = f"""
     [db]
     db_host = "localhost"
@@ -54,6 +55,8 @@ def toml_conf(pytestconfig):
     # - 0 means unlimited
     # - >0 limit number of API requests
     max_requests = 0
+    # Number of computing threads
+    nb_threads = {nb_threads}
     """
 
     return toml_str

@@ -7,6 +7,7 @@ def pytest_addoption(parser):
     parser.addoption("--db-port", action="store", default=5432)
     parser.addoption("--db-name", action="store", default="testgn2pg_test")
     parser.addoption("--export-id", action="store", default=1)
+    parser.addoption("--nb-threads", action="store", default=1)
 
 
 pytest_plugins = [
