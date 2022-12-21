@@ -9,6 +9,6 @@ class TestDownload:
 
         assert now.strftime("%d/%m/%Y %H") == increment.strftime("%d/%m/%Y %H")
         assert (
-            "items have been stored in db from data of source"
-            in caplog.records[-1].message
+            "items have been stored in db from data of source" in caplog.text
         )
+        assert "100.00 %" in caplog.text
