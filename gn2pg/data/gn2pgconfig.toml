@@ -61,3 +61,5 @@ retry_delay = 5
 unavailable_delay = 600
 # LRU cache size for common requests (taxo_groups...)
 lru_maxsize = 32
+# Number of computing threads
+nb_threads = 1
