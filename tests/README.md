@@ -30,6 +30,6 @@ Explanations:
 If the previous parameters of the postgreSQL container are used, the pytest
 command should be:
 
-`pytest --user=<my_user> --password=<my_password> --url=<my_url> --db-user=dbuser --db-password=dbpass --dbport=5434 tests`
+`pytest --user=<my_user> --password=<my_password> --url=<my_url> --db-user=dbuser --db-password=dbpass --db-port=5434 tests`
 
 
