@@ -1,4 +1,4 @@
-FROM python:3.8-slim-buster as base
+FROM python:3.10-slim-buster as base
 LABEL maintainer="@lpofredc"
 
 # Keeps Python from generating .pyc files in the container
