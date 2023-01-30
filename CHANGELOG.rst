@@ -11,7 +11,7 @@ version 1.4.0
 * Update base image version in Docker
 * Update dependencies
 
-With the financial support of `OFB <https://www.ofb.gouv.fr>`_.
+With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
 
 version 1.3.0
 +++++++++++++
