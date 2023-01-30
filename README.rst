@@ -221,19 +221,28 @@ Team
 
 * `@lpofredc <https://github.com/lpofredc/>`_ (`LPO Auvergne-Rhône-Alpes <https://github.com/lpoaura/>`_), main developer
 
-
 .. image:: https://raw.githubusercontent.com/lpoaura/biodivsport-widget/master/images/LPO_AuRA_l250px.png
     :align: center
     :height: 100px
     :alt: Logo LPOAuRA
 
-.. _GeoNature: https://geonature.fr/
+* @ophdlv (Natural Solution), contributor
+* @mvergez (Natural Solution), contributor
+* @andriacap (Natural Solution), contributor
+* @Adrien-Pajot (Natural Solution), contributor
+
+.. _GeoNature: https://geonature.fr
 
 ------------
 
-With the financial support of the `DREAL Auvergne-Rhône-Alpes <http://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/>`_.
+With the financial support of the `DREAL Auvergne-Rhône-Alpes <http://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/>`_ and the `Office français de la biodiversité <https://www.ofb.gouv.fr/>`_.
 
 .. image:: https://data.lpo-aura.org/web/images/blocmarque_pref_region_auvergne_rhone_alpes_rvb_web.png
     :align: center
     :height: 100px
     :alt: Logo DREAL AuRA
+
+.. image:: https://www.ofb.gouv.fr/sites/default/files/logo-ofb.png
+    :align: center
+    :height: 100px
+    :alt: Logo OFB
