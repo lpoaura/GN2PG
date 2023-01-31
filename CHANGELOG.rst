@@ -1,11 +1,17 @@
 CHANGELOG
 =========
 
-version 1.3.1
+version 1.4.0
 +++++++++++++
 
-* Fix missing custom query strings on updates.
+* Optimization and code factorization (#27 / #29)
+* Add automatic tests (#29)
+* Improve performances with parallelization of API calls with multithreading (#27 / #30)
+* Fix missing custom query strings on updates
+* Update base image version in Docker
+* Update dependencies
 
+With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
 
 version 1.3.0
 +++++++++++++
@@ -25,12 +31,12 @@ version 1.2.0
 version 1.1.2
 +++++++++++++
 
-* Fix null value in `gn_synthese.synthese.the_geom_local` caused by null srid value while getting srid from first data in `gn_synthese.synthese`.
+* Fix null value in ``gn_synthese.synthese.the_geom_local`` caused by null SRID value while getting SRID from first data in ``gn_synthese.synthese``.
 
 version 1.1.1
 +++++++++++++
 
-* Fix delete trigger on synthese standard data (`synthese_with_metadata` type missing).
+* Fix delete trigger on synthese standard data (``synthese_with_metadata`` type missing).
 
 version 1.1.0
 +++++++++++++
