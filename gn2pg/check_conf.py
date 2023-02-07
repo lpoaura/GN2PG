@@ -3,6 +3,7 @@
 """TOML validation tools"""
 
 import logging
+from dataclasses import dataclass, field
 from typing import Any, Dict
 
 from schema import Optional, Schema
@@ -67,6 +68,17 @@ _ConfSchema = Schema(
 )
 
 
+@dataclass
+class Db:
+    host: str
+    user: str
+    password: str
+    name: str
+    port: str = 5432
+    schema_import: str = "gn2pg_import"
+    querystring: dict = field(default_factory=dict)
+
+
 class Gn2PgSourceConf:
     """Source conf generator"""
 
@@ -102,17 +114,17 @@ class Gn2PgSourceConf:
                 else config["source"][source]["enable"]
             )  # type: bool
             # Database config
-            self._db_host = config["db"]["db_host"]  # type: str
-            self._db_port = config["db"]["db_port"]  # type: int
-            self._db_user = config["db"]["db_user"]  # type: str
-            self._db_password = config["db"]["db_password"]  # type: str
-            self._db_name = config["db"]["db_name"]  # type: str
-            self._db_schema_import = config["db"][
-                "db_schema_import"
-            ]  # type: str
-            self._db_querystring = coalesce_in_dict(
-                config["db"], "db_querystring", {}
-            )  # type: dict
+            self._db = Db(
+                host=config["db"]["db_host"],
+                port=config["db"]["db_port"],
+                user=config["db"]["db_user"],
+                password=config["db"]["db_password"],
+                name=config["db"]["db_name"],
+                schema_import=config["db"]["db_schema_import"],
+                querystring=coalesce_in_dict(
+                    config["db"], "db_querystring", {}
+                ),
+            )  # type: Db
             if "tuning" in config:
                 tuning = config["tuning"]
                 self._max_page_length = coalesce_in_dict(
@@ -140,7 +152,6 @@ class Gn2PgSourceConf:
         except Exception:  # pragma: no cover
             logger.exception(_(f"Error creating {source} configuration"))
             raise
-        return None
 
     @property
     def source(self) -> str:
@@ -215,9 +226,10 @@ class Gn2PgSourceConf:
         return self._export_id
 
     @property
-    def data_type(self) -> int:
-        """Return data type (eg. "synthese" or any other type you want), used trigger with conditions, if "synthese",
-        then insert data into "gn_synthese.synthese" table
+    def data_type(self) -> str:
+        """Return data type (eg. "synthese" or any other type you want),
+        used trigger with conditions, if "synthese", then insert data
+        into "gn_synthese.synthese" table
 
         Returns:
             str: Data type
@@ -249,7 +261,7 @@ class Gn2PgSourceConf:
         Returns:
             str: Database host
         """
-        return self._db_host
+        return self._db.host
 
     @property
     def db_port(self) -> int:
@@ -258,7 +270,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Database port
         """
-        return self._db_port
+        return self._db.port
 
     @property
     def db_querystring(self) -> dict:
@@ -267,9 +279,9 @@ class Gn2PgSourceConf:
         Returns:
             dict: Database connection querystrings
         """
-        if "application_name" not in self._db_querystring:
-            self._db_querystring["application_name"] = "gn2pg_cli"
-        return self._db_querystring
+        if "application_name" not in self._db.querystring:
+            self._db.querystring["application_name"] = "gn2pg_cli"
+        return self._db.querystring
 
     @property
     def db_user(self) -> str:
@@ -278,7 +290,7 @@ class Gn2PgSourceConf:
         Returns:
             str: Database user
         """
-        return self._db_user
+        return self._db.user
 
     @property
     def db_password(self) -> str:
@@ -287,7 +299,7 @@ class Gn2PgSourceConf:
         Returns:
             str: Database user password
         """
-        return self._db_password
+        return self._db.password
 
     @property
     def db_name(self) -> str:
@@ -296,7 +308,7 @@ class Gn2PgSourceConf:
         Returns:
             str: Database name
         """
-        return self._db_name
+        return self._db.name
 
     @property
     def db_schema_import(self) -> str:
@@ -305,7 +317,7 @@ class Gn2PgSourceConf:
         Returns:
             str: Database import schema
         """
-        return self._db_schema_import
+        return self._db.schema_import
 
     @property
     def max_page_length(self) -> int:

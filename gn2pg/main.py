@@ -94,14 +94,14 @@ def main(args) -> None:
     """
     logger = logging.getLogger("transfer_gn")
 
-    epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.project}{BColors.ENDC}{BColors.ENDC} \
+    epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.PROJECT}{BColors.ENDC}{BColors.ENDC} \
 {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
-{BColors.BOLD}LICENSE{BColors.ENDC}: {metadata.license}
-{BColors.BOLD}AUTHORS{BColors.ENDC}: {metadata.authors_string}
-{BColors.BOLD}COPYRIGHT{BColors.ENDC}: {metadata.copyright}
+{BColors.BOLD}LICENSE{BColors.ENDC}: {metadata.LICENSE}
+{BColors.BOLD}AUTHORS{BColors.ENDC}: {metadata.AUTHORS_STRING}
+{BColors.BOLD}COPYRIGHT{BColors.ENDC}: {metadata.COPYRIGHT}
 
-{BColors.BOLD}URL{BColors.ENDC}: {metadata.url}
-{BColors.BOLD}DOCS{BColors.ENDC}: {metadata.docs}
+{BColors.BOLD}URL{BColors.ENDC}: {metadata.URL}
+{BColors.BOLD}DOCS{BColors.ENDC}: {metadata.DOCS}
 """
     print(epilog)
 

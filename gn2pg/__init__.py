@@ -12,16 +12,16 @@ from pkg_resources import DistributionNotFound, get_distribution
 from gn2pg import metadata
 
 try:
-    dist_name = "gn2pg_client"
-    __version__ = get_distribution(dist_name).version
+    DIST_NAME = "gn2pg_client"
+    __version__ = get_distribution(DIST_NAME).version
 except DistributionNotFound:  # pragma: no cover
-    __version__ = metadata.version
+    __version__ = metadata.VERSION
 finally:
     del get_distribution, DistributionNotFound
 
-__author__ = metadata.authors_string
-__license__ = metadata.license
-__copyright__ = metadata.copyright
+__author__ = metadata.AUTHORS_STRING
+__license__ = metadata.LICENSE
+__copyright__ = metadata.COPYRIGHT
 
 coloredlogs.DEFAULT_FIELD_STYLES["module"] = {"color": "blue"}
 
