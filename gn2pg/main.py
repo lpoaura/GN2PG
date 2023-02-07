@@ -98,7 +98,6 @@ def main(args) -> None:
 {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
 {BColors.BOLD}LICENSE{BColors.ENDC}: {metadata.LICENSE}
 {BColors.BOLD}AUTHORS{BColors.ENDC}: {metadata.AUTHORS_STRING}
-{BColors.BOLD}COPYRIGHT{BColors.ENDC}: {metadata.COPYRIGHT}
 
 {BColors.BOLD}URL{BColors.ENDC}: {metadata.URL}
 {BColors.BOLD}DOCS{BColors.ENDC}: {metadata.DOCS}

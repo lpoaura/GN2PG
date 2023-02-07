@@ -21,7 +21,6 @@ finally:
 
 __author__ = metadata.AUTHORS_STRING
 __license__ = metadata.LICENSE
-__copyright__ = metadata.COPYRIGHT
 
 coloredlogs.DEFAULT_FIELD_STYLES["module"] = {"color": "blue"}
 

@@ -10,10 +10,15 @@ PROJECT = "GeoNature 2 PostgreSQL Client application"
 PROJECT_NO_SPACES = PROJECT.replace(" ", "")
 VERSION = "1.3.1"
 DESCRIPTION = "Import tool from GeoNature to a PostgreSQL database through Export module API"
-AUTHORS = ["@lpofredc (LPOAuRA)"]
+AUTHORS = [
+    "@lpofredc (LPOAuRA)",
+    "@ophdlv (@NaturalSolutions)",
+    "@mvergez (@NaturalSolutions)",
+    "@Adrien-Pajot (@NaturalSolutions)",
+    "@camillemonchicourt (@PnEcrins)",
+]
 AUTHORS_STRING = ", ".join(AUTHORS)
 EMAILS = ["frederic.cloitre@lpo.fr"]
 LICENSE = "AGPL-3.0"
-COPYRIGHT = "2022 " + AUTHORS_STRING
 URL = "https://github.com/lpoaura/GN2PG"
 DOCS = "https://gn2pg.readthedocs.io/en/latest/"
