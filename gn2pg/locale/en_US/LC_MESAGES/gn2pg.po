@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2023-02-07 17:59+0100\n"
+"POT-Creation-Date: 2023-02-07 18:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,6 +14,30 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
+
+#: gn2pg/api.py:96
+msgid "Modules API status code is %s for url %s"
+msgstr ""
+
+#: gn2pg/api.py:111
+msgid "Get GeoNature modules failed with status code %s, cause: %s"
+msgstr ""
+
+#: gn2pg/api.py:119
+msgid "Find export module failed, %s"
+msgstr ""
+
+#: gn2pg/api.py:186
+msgid "Defining page_list from %s with status code %s"
+msgstr ""
+
+#: gn2pg/api.py:196
+msgid "API %s contains %s data in %s page(s)"
+msgstr ""
+
+#: gn2pg/api.py:208
+msgid "No data available from from %s"
+msgstr ""
 
 #: gn2pg/check_conf.py:173
 msgid "Error creating %s configuration"
@@ -132,4 +156,32 @@ msgstr ""
 
 #: gn2pg/main.py:183
 msgid "Execute custom script %s on db"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:283
+msgid "Counting datas in database for all sources"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:285
+msgid "Connecting to database %s"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:310
+msgid "Start to execute %s script"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:319
+msgid "You choosed to use internal to_gnsynthese.sql script in schema %s"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:326
+msgid "file %s exists, continue"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:329
+msgid "file %s DO NOT EXISTS, exit"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:342
+msgid "script %s successfully applied"
 msgstr ""

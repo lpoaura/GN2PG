@@ -116,15 +116,15 @@ class DownloadGn:
                     )
 
         # The Queue enables the report thread to get the progress from other threads
-        q = Queue()
+        queue = Queue()
         # Initialize and start the report thread
-        thread = Thread(target=report, args=[q])
+        thread = Thread(target=report, args=[queue])
         thread.start()
         # Start the worker threads
         with ThreadPool(nb_threads) as thread:
-            thread.map(partial(func, queue=q), pages)
+            thread.map(partial(func, queue=queue), pages)
         # Will stop the report thread
-        q.put(("DONE"))
+        queue.put(("DONE"))
 
     def download(self, page: str, queue: Queue) -> None:
         """
@@ -201,7 +201,7 @@ class DownloadGn:
         )
         # logger.info(self._config._query_strings)
         params.update(self._config.query_strings)
-        logger.info(f"QueryStrings  {params}")
+        logger.info(_("QueryStrings %s"), params)
         pages = self._api_instance._page_list(kind="data", params=params)
         self._backend.download_log(
             self._api_instance.controler,
@@ -247,7 +247,7 @@ class DownloadGn:
         params["limit"] = self._config.max_page_length
         params["filter_d_up_derniere_action"] = since
         params.update(self._config.query_strings)
-        logger.info(f"QueryStrings  {params}")
+        logger.info(_("QueryStrings %s"), params)
 
         logger.info(
             _("Getting new or update data from source %s since %s"),

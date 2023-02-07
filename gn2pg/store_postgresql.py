@@ -32,13 +32,14 @@ logger = logging.getLogger(__name__)
 
 
 def db_url(config):
+    """db connection settings"""
     return {
         "drivername": "postgresql+psycopg2",
-        "username": config.db_user,
-        "password": config.db_password,
-        "host": config.db_host,
-        "port": config.db_port,
-        "database": config.db_name,
+        "username": config.db.user,
+        "password": config.db.password,
+        "host": config.db.host,
+        "port": config.db.port,
+        "database": config.db.name,
     }
 
 
@@ -111,8 +112,12 @@ class PostgresqlUtils:
     def __init__(self, config) -> None:
         self._config = config
         self._db_url = db_url(self._config)
-        if self._config.db_querystring:
-            self._db_url["query"] = self._config.db_querystring
+        if self._config.db.querystring:
+            self._db_url["query"] = self._config.db.querystring
+        self._db = create_engine(URL.create(**self._db_url), echo=False)
+        self._db_schema = self._config.db.schema_import
+        self._metadata = MetaData(schema=self._db_schema)
+        self._metadata.reflect(self._db)
 
     # ----------------
     # Internal methods
@@ -131,8 +136,9 @@ class PostgresqlUtils:
         """
         # Store to database, if enabled
         if (
-            self._config.db_schema_import + "." + name
-        ) not in self._metadata.tables:
+            f"{self._config.db.schema_import}.{name}"
+            not in self._metadata.tables
+        ):
             logger.info("Table %s not found => Creating it", name)
             table = Table(name, self._metadata, *cols)
             table.create(self._db)
@@ -218,9 +224,10 @@ class PostgresqlUtils:
     def create_json_tables(self) -> None:
         """Create all internal and jsonb tables."""
         logger.info(
-            f"Connecting to {self._config.db_name} database, to finalize creation"
+            _("Connecting to %s database, to finalize creation"),
+            self._config.db.name,
         )
-        self._db = create_engine(URL.create(**self._db_url), echo=False)
+
         with self._db.connect() as conn:
             # Create extensions
             try:
@@ -229,36 +236,36 @@ class PostgresqlUtils:
                     'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
                     'CREATE EXTENSION IF NOT EXISTS "postgis";',
                 )
-                for q in ext_queries:
-                    logger.debug(f"Execute: {q}")
-                    conn.execute(text(q))
+                for query in ext_queries:
+                    logger.debug(_("Execute: %s"), query)
+                    conn.execute(text(query))
                 logger.info("PostgreSQL extensions successfully created")
-            except Exception as e:
-                logger.critical(f"PostgreSQL extensions create failed : {e}")
+            except Exception as error:
+                logger.critical(str(error))
             # Create import schema
             try:
                 query = f"""
-                CREATE SCHEMA IF NOT EXISTS {self._config.db_schema_import}
-                AUTHORIZATION {self._config.db_user};
+                CREATE SCHEMA IF NOT EXISTS {self._config.db.schema_import}
+                AUTHORIZATION {self._config.db.user};
                 """
-                logger.debug(f"Execute: {query}")
+                logger.debug(_("Execute: %s"), query)
                 conn.execute(text(query))
                 conn.commit()
                 logger.info(
                     (
-                        f"Schema {self._config.db_schema_import} "
-                        f"owned by {self._config.db_user} successfully created"
+                        _("Schema %s owned by %s successfully created"),
+                        self._config.db.schema_import,
+                        self._config.db.user,
                     )
                 )
-            except Exception as e:
+            except Exception as error:
                 logger.critical(
-                    f"Failed to create {self._config.db_schema_import} schema"
+                    _("Failed to create %s schema"),
+                    self._config.db.schema_import,
                 )
-                logger.critical(f"{e}")
+                logger.critical(str(error))
             # Set path to include VN import schema
-            dbschema = self._config.db_schema_import
-            self._metadata = MetaData(schema=dbschema)
-            self._metadata.reflect(self._db)
+
             # Check if tables exist or else create them
             self._create_download_log()
             self._create_increment_log()
@@ -281,21 +288,16 @@ class PostgresqlUtils:
         # Store to database, if enabled
         logger.info(_("Counting datas in database for all sources"))
         # Connect and set path to include VN import schema
-        logger.info(_("Connecting to database %s"), self._config.db_name)
-        self._db = create_engine(URL.create(**self._db_url), echo=False)
-        conn = self._db.connect()
-        dbschema = self._config.db_schema_import
-        self._metadata = MetaData(schema=dbschema)
-        # self._metadata.reflect(self._db)
-        text = """
-            SELECT source, COUNT(uuid)
-                FROM {}.data_json
-                GROUP BY source;
-            """.format(
-            dbschema
-        )
+        logger.info(_("Connecting to database %s"), self._config.db.name)
+        with self._db.connect() as conn:
+            text = f"""
+                SELECT source, COUNT(uuid)
+                    FROM {self._config.db.schema_import}.data_json
+                    GROUP BY source;
+                """
 
-        result = conn.execute(text).fetchall()
+            result = conn.execute(text).fetchall()
+            conn.close()
 
         return result
 
@@ -307,9 +309,7 @@ class PostgresqlUtils:
             script (str, optional): custom script path. Defaults to "to_gnsynthese".
         """
         logger.info(_("Start to execute %s script"), script)
-        self._db = create_engine(URL.create(**self._db_url), echo=False)
         conn = self._db.connect()
-        dbschema = self._config.db_schema_import
         if script == "to_gnsynthese":
             file = pkg_resources.resource_filename(
                 __name__, "data/to_gnsynthese.sql"
@@ -318,7 +318,7 @@ class PostgresqlUtils:
                 _(
                     "You choosed to use internal to_gnsynthese.sql script in schema %s"
                 ),
-                self._config.db_schema_import,
+                self._db_schema,
             )
         else:
             if Path(script).is_file():
@@ -327,20 +327,17 @@ class PostgresqlUtils:
             else:
                 logger.critical(_("file %s DO NOT EXISTS, exit"), script)
                 exit
-        with open(file) as filecontent:
-            sqlscript = filecontent.read()
-            sqlscript = sqlscript.replace(
-                "gn2pg_import", self._config.db_schema_import
-            )
-
-        self._metadata = MetaData(schema=dbschema)
-        # self._metadata.reflect(self._db)
+        with open(file) as file_content:
+            sql_script = file_content.read()
+            sql_script = sql_script.replace("gn2pg_import", self._db_schema)
         try:
             # logger.debug(sqlscript)
-            conn.execute(text(sqlscript))
+            with self._db.connect() as conn:
+                conn.execute(text(sql_script))
+                conn.close()
             logger.info(_("script %s successfully applied"), script)
-        except Exception as e:
-            logger.critical(str(e))
+        except Exception as error:
+            logger.critical(str(error))
             logger.critical("failed to apply script %s", script)
 
 
@@ -350,19 +347,14 @@ class StorePostgresql:
     def __init__(self, config):
         self._config = config
         self._db_url = db_url(self._config)
-        if self._config.db_querystring:
-            self._db_url["query"] = self._config.db_querystring
-
-        dbschema = self._config.db_schema_import
-        self._metadata = MetaData(schema=dbschema)
-        logger.info(f"Connecting to database {self._config.db_name}")
-
-        # Connect and set path to include VN import schema
+        if self._config.db.querystring:
+            self._db_url["query"] = self._config.db.querystring
         self._db = create_engine(URL.create(**self._db_url), echo=False)
-        self._conn = self._db.connect()
+        self._db_schema = self._config.db.schema_import
+        self._metadata = MetaData(schema=self._db_schema)
+        self._metadata.reflect(self._db)
 
-        # Get dbtable definition
-        self._metadata.reflect(bind=self._db, schema=dbschema)
+        self._conn = self._db.connect()
 
         # Map Import tables in a single dict for easy reference
         self._table_defs = {
@@ -371,16 +363,14 @@ class StorePostgresql:
         }
 
         self._table_defs["data"]["metadata"] = self._metadata.tables[
-            dbschema + ".data_json"
+            self._db_schema + ".data_json"
         ]
         self._table_defs["meta"]["metadata"] = self._metadata.tables[
-            dbschema + ".datasets_json"
+            self._db_schema + ".datasets_json"
         ]
 
-        return None
-
     def __enter__(self):
-        logger.debug("Entry into StorePostgresql")
+        logger.debug(_("Entry into StorePostgresql"))
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -411,7 +401,7 @@ class StorePostgresql:
             controler (str): Destionation table
             elem (dict): json data as dict
             id_key_name (str, optional): Data id in source database. Defaults to "id_synthese".
-            uuid_key_name (str, optional): Universal unique identifier of the data. Defaults to "id_perm_sinp".
+            uuid_key_name (str, optional): data UUID. Defaults to "id_perm_sinp".
         """
         metadata = self._table_defs[controler]["metadata"]
         logger.debug(elem[id_key_name])
@@ -460,21 +450,29 @@ class StorePostgresql:
         ne = 0
         for elem in items:
             try:
-                i = i + 1
+                i += 1
                 # Convert to json
                 self.store_1_data(controler, elem, id_key_name, uuid_key_name)
 
             except exc.StatementError as error:
-                # assert isinstance(error.orig, ForeignKeyViolation)  # proves the original exception
-                # raise StorePostgresqlException from error
-                ne = ne + 1
+                ne += 1
                 self.error_log(controler, elem, str(error))
                 logger.critical(
-                    f"One error occured for data from source {self._config.std_name} whith "
-                    f"{id_key_name} = {elem[id_key_name]}"
+                    _(
+                        "One error occurred for data from source %s with %s = %s"
+                    ),
+                    self._config.std_name,
+                    id_key_name,
+                    elem[id_key_name],
                 )
         logger.info(
-            f"{i} items have been stored in db from {controler} of source {self._config.std_name} ({ne} error occured)"
+            _(
+                "%s items have been stored in db from %s of source %s (%s error occurred)"
+            ),
+            i,
+            controler,
+            self._config.std_name,
+            ne,
         )
         return len(items)
 
@@ -502,7 +500,10 @@ class StorePostgresql:
         # Store to database, if enabled
         for item in items:
             logger.debug(
-                f"Deleting item with id {item[id_key_name]} from source {self._config.name} (controler {controler})"
+                _("Deleting item with id %s from source %s (controler %s)"),
+                item[id_key_name],
+                self._config.name,
+                controler,
             )
             nd = self._conn.execute(
                 self._table_defs["data"]["metadata"]
@@ -543,7 +544,7 @@ class StorePostgresql:
         """
         # Store to database, if enabled
         metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "download_log"
+            self._config.db.schema_import + "." + "download_log"
         ]
         stmt = metadata.insert().values(
             source=self._config.std_name,
@@ -568,7 +569,7 @@ class StorePostgresql:
         """
         # Store to database, if enabled
         metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "increment_log"
+            self._config.db.schema_import + "." + "increment_log"
         ]
 
         insert_stmt = insert(metadata).values(
@@ -592,7 +593,7 @@ class StorePostgresql:
         """
         row = None
         metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "download_log"
+            self._config.db.schema_import + "." + "download_log"
         ]
         stmt = (
             select([metadata.c.download_ts])
@@ -620,7 +621,7 @@ class StorePostgresql:
         """
         row = None
         metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "increment_log"
+            self._config.db.schema_import + "." + "increment_log"
         ]
         stmt = select([metadata.c.last_ts]).where(
             and_(
@@ -655,7 +656,7 @@ class StorePostgresql:
         """
 
         metadata = self._metadata.tables[
-            self._config.db_schema_import + "." + "error_log"
+            self._config.db.schema_import + "." + "error_log"
         ]
         insert_stmt = insert(metadata).values(
             source=self._config.std_name,

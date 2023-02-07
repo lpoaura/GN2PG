@@ -136,47 +136,47 @@ def main(args) -> None:
     else:
         logger.setLevel(logging.INFO)
 
-    logger.info("%s, version %s", sys.argv[0], __version__)
+    logger.info(_("%s, version %s"), sys.argv[0], __version__)
     logger.debug("Args: %s", args)
     logger.info("Arguments: %s", sys.argv[1:])
 
     # If required, first create YAML file
     if args.init:
-        logger.info("Creating TOML configuration file")
+        logger.info(_("Creating TOML configuration file"))
         init(args.file)
         return None
 
     # Edit yaml config file
     if args.edit:
-        logger.info("Editing TOML configuration file")
+        logger.info(_("Editing TOML configuration file"))
         edit(args.file)
         return None
 
     # Get configuration from file
     if not (ENVDIR / args.file).is_file():
         logger.critical(
-            "Configuration file %s does not exist", str(ENVDIR / args.file)
+            _("Configuration file %s does not exist"), str(ENVDIR / args.file)
         )
         return None
-    logger.info("Getting configuration data from %s", args.file)
+    logger.info(_("Getting configuration data from %s"), args.file)
     try:
         cfg_ctrl = Gn2PgConf(args.file)
     except TomlDecodeError:
         logger.critical(
-            f"Incorrect content in TOML configuration {args.file}",
+            _("Incorrect content in TOML configuration %s"), args.file
         )
         sys.exit(0)
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
     logger.info(
-        f"config file have {len(cfg_source_list)} source(s) wich are : "
-        f"{', '.join(cfg_source_list.keys())}"
+        _("config file have {len(cfg_source_list)} source(s) wich are : %s"),
+        ", ".join(cfg_source_list.keys()),
     )
 
     manage_pg = PostgresqlUtils(cfg)
 
     if args.json_tables_create:
-        logger.info("Create, if not exists, json tables")
+        logger.info(_("Create, if not exists, json tables"))
         manage_pg.create_json_tables()
 
     if args.custom_script:
@@ -184,11 +184,11 @@ def main(args) -> None:
         manage_pg.custom_script(args.custom_script)
 
     if args.full:
-        logger.info("Perform full action")
+        logger.info(_("Perform full action"))
         full_download(cfg_ctrl)
 
     if args.update:
-        logger.info("Perform update action")
+        logger.info(_("Perform update action"))
         update(cfg_ctrl)
 
 

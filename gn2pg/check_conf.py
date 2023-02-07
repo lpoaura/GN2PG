@@ -275,69 +275,13 @@ class Gn2PgSourceConf:
         return self._source.query_strings
 
     @property
-    def db_host(self) -> str:
-        """Return database host
+    def db(self) -> Db:
+        """Return database settings
 
-        Returns:
-            str: Database host
+        :return: _description_
+        :rtype: Db
         """
-        return self._db.host
-
-    @property
-    def db_port(self) -> int:
-        """Return database port
-
-        Returns:
-            int: Database port
-        """
-        return self._db.port
-
-    @property
-    def db_querystring(self) -> dict:
-        """Return additional database connection string parameters (eg: ssl_mode)
-
-        Returns:
-            dict: Database connection querystrings
-        """
-        if "application_name" not in self._db.querystring:
-            self._db.querystring["application_name"] = "gn2pg_cli"
-        return self._db.querystring
-
-    @property
-    def db_user(self) -> str:
-        """Return database user
-
-        Returns:
-            str: Database user
-        """
-        return self._db.user
-
-    @property
-    def db_password(self) -> str:
-        """Return database user password
-
-        Returns:
-            str: Database user password
-        """
-        return self._db.password
-
-    @property
-    def db_name(self) -> str:
-        """Return database name
-
-        Returns:
-            str: Database name
-        """
-        return self._db.name
-
-    @property
-    def db_schema_import(self) -> str:
-        """Return database import schema
-
-        Returns:
-            str: Database import schema
-        """
-        return self._db.schema_import
+        return self._db
 
     @property
     def max_page_length(self) -> int:
@@ -435,7 +379,7 @@ class Gn2PgConf:
         for source in self._config["source"]:
             source_name = simplify(source["name"])
             logger.info(
-                'Source "%s" identifier will be "%s"',
+                _('Source "%s" identifier will be "%s"'),
                 source["name"],
                 source_name,
             )

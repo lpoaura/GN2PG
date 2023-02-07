@@ -48,7 +48,7 @@ class BaseAPI:
         self._transfer_errors = 0
         self._http_status = 0
         self._ctrl = controler
-        logger.debug("controler is %s", self._ctrl)
+        logger.debug(_("controler is %s"), self._ctrl)
         self._api_url = (
             config.url + "/" * (not config.url.endswith("/")) + "api/"
         )
@@ -219,14 +219,14 @@ class BaseAPI:
         """
 
         try:
-            logger.info(f"Download page {page_url}")
+            logger.info(_("Download page %s"), page_url)
             session = self._session
             pr = session.get(url=page_url)
             presp = pr.json()
             return presp
         except APIException as e:
-            logger.critical(f"Download data from {page_url} failed")
-            logger.critical(f"{str(e)}")
+            logger.critical(_("Download data from %s failed"), page_url)
+            logger.critical(str(e))
             return None
 
 

@@ -34,22 +34,22 @@ def init(file: str) -> None:
     toml_dst = str(ENVDIR / file)
     if Path(toml_dst).is_file():
         ENVDIR.mkdir(exist_ok=True)
-        logger.info(f"Conf directory {str(ENVDIR)} created")
-        logger.warning(f"{toml_dst} file already exists")
+        logger.info(_("Conf directory %s created"), str(ENVDIR))
+        logger.warning(_("%s file already exists"), toml_dst)
         overwrite = input(
             f"{BColors.HEADER}Would you like to overwrite file {toml_dst}{BColors.ENDC} "
             f"([{BColors.BOLD}y{BColors.ENDC}]es/[{BColors.BOLD}n{BColors.ENDC}]o) ? "
         )
         if overwrite.lower() == "n":
-            logger.warning(f"File {toml_dst} will be preserved")
-            exit()
+            logger.warning(_("File %s will be preserved"), toml_dst)
+            sys.exit(0)
         else:
-            logger.warning(f"file {toml_dst} will be overwritten")
+            logger.warning(_("file %s will be overwritten"), toml_dst)
     logger.info(
-        f"Creating TOML configuration file {toml_dst}, from {toml_src}"
+        _("Creating TOML configuration file %s, from %s"), toml_dst, toml_src
     )
     shutil.copyfile(toml_src, toml_dst)
-    logger.info(f"Please edit {toml_dst} before running the script")
+    logger.info(_("Please edit %s before running the script"), toml_dst)
     sys.exit(0)
 
 
@@ -97,8 +97,6 @@ def full_download(cfg_ctrl):
         else:
             logger.info(_("Source %s is disabled"), source)
 
-    return None
-
 
 def update_1source(ctrl, cfg):
     """[summary]
@@ -107,8 +105,8 @@ def update_1source(ctrl, cfg):
         ctrl ([type]): [description]
         cfg ([type]): [description]
     """
-    logger.debug(_("CFG source %s"), cfg.name)
-    logger.debug(f"CTRL {ctrl}")
+    logger.debug(_("config source name %s"), cfg.name)
+    logger.debug(_("controler %s"), ctrl)
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
         logger.debug(
