@@ -92,7 +92,7 @@ def main(args) -> None:
     Args:
       args ([str]): command line parameter list
     """
-    logger = logging.getLogger("transfer_gn")
+    logger = logging.getLogger(__name__)
 
     epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.PROJECT}{BColors.ENDC}{BColors.ENDC} \
 {BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
@@ -180,7 +180,7 @@ def main(args) -> None:
         manage_pg.create_json_tables()
 
     if args.custom_script:
-        logger.info(_(f"Execute custom script {args.custom_script} on db"))
+        logger.info(_("Execute custom script %s on db"), args.custom_script)
         manage_pg.custom_script(args.custom_script)
 
     if args.full:

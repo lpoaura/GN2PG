@@ -23,7 +23,7 @@ import requests
 
 from gn2pg import _, __version__
 
-logger = logging.getLogger("transfer_gn.geonature_api")
+logger = logging.getLogger(__name__)
 
 
 class APIException(Exception):
@@ -35,7 +35,8 @@ class HTTPError(APIException):
 
 
 class BaseAPI:
-    """Top class, not for direct use. Provides internal and template methods to use GeoNature API."""
+    """Top class, not for direct use.
+    Provides internal and template methods to use GeoNature API."""
 
     def __init__(self, config, controler, max_retry=None, max_requests=None):
         self._config = config
@@ -47,7 +48,7 @@ class BaseAPI:
         self._transfer_errors = 0
         self._http_status = 0
         self._ctrl = controler
-        logger.debug(f"controler is {self._ctrl}")
+        logger.debug("controler is %s", self._ctrl)
         self._api_url = (
             config.url + "/" * (not config.url.endswith("/")) + "api/"
         )
@@ -69,30 +70,35 @@ class BaseAPI:
         try:
             if login.status_code == 200:
                 logger.info(
-                    f"Successfully logged in into GeoNature named {self._config.name}"
+                    "Successfully logged in into GeoNature named %s",
+                    self._config.name,
                 )
             else:
                 logger.critical(
                     (
-                        f"Log in GeoNature named {self._config.name} failed with status code"
-                        f"{login.status_code}, cause: {json.loads(login.content)['msg']}"
+                        "Log in GeoNature named %s failed with status code %s, cause: %s",
+                        self._config.name,
+                        login.status_code,
+                        json.loads(login.content)["msg"],
                     )
                 )
 
-        except Exception as e:
-            logger.critical(f"Session failed ({e})")
-            raise HTTPError(login.status_code)
+        except Exception as error:
+            logger.critical("Session failed (%s)", error)
+            raise HTTPError(login.status_code) from error
 
         #  Find exports api path
         try:
-            m = self._session.get(self._api_url + "gn_commons/modules")
-            logger.info(
-                _(
-                    f"Modules API status code is {m.status_code} for url {m.url}"
-                )
+            modules_list = self._session.get(
+                self._api_url + "gn_commons/modules"
             )
-            if m.status_code == 200:
-                modules = json.loads(m.content)
+            logger.info(
+                _("Modules API status code is %s for url %s"),
+                modules_list.status_code,
+                modules_list.url,
+            )
+            if modules_list.status_code == 200:
+                modules = json.loads(modules_list.content)
                 for item in modules:
                     if item["module_code"] == "EXPORTS":
                         self._export_api_path = item["module_path"]
@@ -102,14 +108,16 @@ class BaseAPI:
                         break
             else:
                 logger.critical(
-                    (
-                        f"Get GeoNature modules failed with status code {m.status_code}, "
-                        f"cause: {json.loads(m.content)['msg']}"
-                    )
+                    _(
+                        "Get GeoNature modules failed with status code %s, cause: %s"
+                    ),
+                    modules_list.status_code,
+                    json.loads(modules_list.content)["msg"],
                 )
-        except Exception as e:
-            logger.critical(f"Find export module failed, {e}")
-            raise HTTPError(login.status_code)
+
+        except Exception as error:
+            logger.critical(_("Find export module failed, %s"), error)
+            raise HTTPError(login.status_code) from error
 
     @property
     def version(self) -> str:
@@ -147,7 +155,7 @@ class BaseAPI:
         else:
             return None
         if params is not None:
-            logger.debug(f"params {params}")
+            logger.debug("params %s", params)
             url = url + "?" + urlencode(params)
         return url
 
@@ -173,18 +181,22 @@ class BaseAPI:
 
         api_url = self._url(kind, params)
 
-        r = session.get(url=api_url, params={**params, **{"limit": 1}})
+        response = session.get(url=api_url, params={**params, **{"limit": 1}})
         logger.debug(
-            f"Defining page_list from {api_url} with status code {r.status_code}"
+            _("Defining page_list from %s with status code %s"),
+            api_url,
+            response.status_code,
         )
-        if r.status_code == 200:
-            resp = r.json()
+
+        if response.status_code == 200:
+            resp = response.json()
             total_filtered = resp["total_filtered"]
             total_pages = math.ceil(total_filtered / params.get("limit"))
             logger.debug(
-                _(
-                    f"API {api_url} contains {total_filtered} data in {total_pages} page(s)"
-                )
+                _("API %s contains %s data in %s page(s)"),
+                api_url,
+                total_filtered,
+                total_pages,
             )
 
             page_list = (
@@ -193,7 +205,7 @@ class BaseAPI:
             )
             return page_list
         else:
-            logger.info(f"No data available from from {self._config.name}")
+            logger.info(_("No data available from from %s"), self._config.name)
             return None
 
     def get_page(self, page_url: str) -> Optional[dict]:

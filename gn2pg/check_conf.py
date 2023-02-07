@@ -13,7 +13,7 @@ from gn2pg import _, __version__
 from gn2pg.env import ENVDIR
 from gn2pg.utils import coalesce_in_dict, simplify
 
-logger = logging.getLogger("transfer_gn.check_conf")
+logger = logging.getLogger(__name__)
 
 
 class Gn2PgConfException(Exception):
@@ -70,6 +70,8 @@ _ConfSchema = Schema(
 
 @dataclass
 class Db:
+    """Database connection settings"""
+
     host: str
     user: str
     password: str
@@ -79,40 +81,66 @@ class Db:
     querystring: dict = field(default_factory=dict)
 
 
+@dataclass
+class Source:
+    """Source connection settings"""
+
+    name: str
+    user_name: str
+    user_password: str
+    url: str
+    export_id: int
+    data_type: str
+    id_application: int = 3
+    enable: bool = True
+    last_action_date: str = None
+    query_strings: dict = field(default_factory=dict)
+
+
+@dataclass
+class Tuning:
+    """Tuning settings"""
+
+    max_page_length: int = 1000
+    max_retry: int = 5
+    max_requests: int = 0
+    retry_delay: int = 5
+    unavailable_delay: int = 600
+    lru_maxsize: int = 32
+    nb_threads: int = 1
+
+
 class Gn2PgSourceConf:
     """Source conf generator"""
 
     def __init__(self, source: str, config: _ConfType) -> None:
-        self._source = source
+        self._selected_source = source
         try:
             # Source configs
-            self._name = config["source"][source]["name"]  # type: str
-            self._user_name = config["source"][source][
-                "user_name"
-            ]  # type: str
-            self._user_password = config["source"][source][
-                "user_password"
-            ]  # type: str
-            self._url = config["source"][source]["url"]  # type: str
-            self._id_application = coalesce_in_dict(
-                config["source"][source], "id_application", 3
-            )  # type: int
-            self._data_type = coalesce_in_dict(
-                config["source"][source],
-                "data_type",
-                "synthese_with_cd_nomenclature",
-            )  # type: str
-            self._query_strings = coalesce_in_dict(
-                config["source"][source], "query_strings", {}
+            self._source = Source(
+                name=config["source"][source]["name"],
+                user_name=config["source"][source]["user_name"],
+                user_password=config["source"][source]["user_password"],
+                url=config["source"][source]["url"],
+                id_application=coalesce_in_dict(
+                    config["source"][source], "id_application", 3
+                ),
+                data_type=coalesce_in_dict(
+                    config["source"][source],
+                    "data_type",
+                    "synthese_with_cd_nomenclature",
+                ),
+                query_strings=coalesce_in_dict(
+                    config["source"][source], "query_strings", {}
+                ),
+                export_id=config["source"][source]["export_id"],
+                enable=(
+                    True
+                    if "enable" not in config["source"][source]
+                    else config["source"][source]["enable"]
+                ),
             )
-            self._export_id = config["source"][source][
-                "export_id"
-            ]  # type: int
-            self._enable = (
-                True
-                if "enable" not in config["source"][source]
-                else config["source"][source]["enable"]
-            )  # type: bool
+
             # Database config
             self._db = Db(
                 host=config["db"]["db_host"],
@@ -127,30 +155,22 @@ class Gn2PgSourceConf:
             )  # type: Db
             if "tuning" in config:
                 tuning = config["tuning"]
-                self._max_page_length = coalesce_in_dict(
-                    tuning, "max_page_length", 1000
-                )  # type: int
-                self._max_retry = coalesce_in_dict(
-                    tuning, "max_retry", 5
-                )  # type: int
-                self._max_requests = coalesce_in_dict(
-                    tuning, "max_requests", 0
-                )  # type: int
-                self._retry_delay = coalesce_in_dict(
-                    tuning, "retry_delay", 5
-                )  # type: int
-                self._unavailable_delay = coalesce_in_dict(
-                    tuning, "unavailable_delay", 600
-                )  # type: int
-                self._lru_maxsize = coalesce_in_dict(
-                    tuning, "lru_maxsize", 32
-                )  # type: int
-                self._nb_threads = coalesce_in_dict(
-                    tuning, "nb_threads", 1
-                )  # type: int
+                self._tuning = Tuning(
+                    max_page_length=coalesce_in_dict(
+                        tuning, "max_page_length", 1000
+                    ),
+                    max_retry=coalesce_in_dict(tuning, "max_retry", 5),
+                    max_requests=coalesce_in_dict(tuning, "max_requests", 0),
+                    retry_delay=coalesce_in_dict(tuning, "retry_delay", 5),
+                    unavailable_delay=coalesce_in_dict(
+                        tuning, "unavailable_delay", 600
+                    ),
+                    lru_maxsize=coalesce_in_dict(tuning, "lru_maxsize", 32),
+                    nb_threads=coalesce_in_dict(tuning, "nb_threads", 1),
+                )
 
         except Exception:  # pragma: no cover
-            logger.exception(_(f"Error creating {source} configuration"))
+            logger.exception(_("Error creating %s configuration"), source)
             raise
 
     @property
@@ -160,7 +180,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Return source list position
         """
-        return self._source
+        return self._selected_source
 
     @property
     def name(self) -> str:
@@ -169,7 +189,7 @@ class Gn2PgSourceConf:
         Returns:
             str: Source name
         """
-        return self._name
+        return self._source.name
 
     @property
     def std_name(self) -> str:
@@ -178,7 +198,7 @@ class Gn2PgSourceConf:
         Returns:
             str: standardized Source name
         """
-        return simplify(self._name)
+        return simplify(self._source.name)
 
     @property
     def user_name(self) -> str:
@@ -187,7 +207,7 @@ class Gn2PgSourceConf:
         Returns:
             str: GeoNature user username
         """
-        return self._user_name
+        return self._source.user_name
 
     @property
     def user_password(self) -> str:
@@ -196,7 +216,7 @@ class Gn2PgSourceConf:
         Returns:
             str: GeoNature User password
         """
-        return self._user_password
+        return self._source.user_password
 
     @property
     def url(self) -> str:
@@ -205,7 +225,7 @@ class Gn2PgSourceConf:
         Returns:
             str: GeoNature URL (https://...)
         """
-        return self._url
+        return self._source.url
 
     @property
     def id_application(self) -> int:
@@ -214,7 +234,7 @@ class Gn2PgSourceConf:
         Returns:
             str: GeoNature id_application, default is 3
         """
-        return self._id_application
+        return self._source.id_application
 
     @property
     def export_id(self) -> int:
@@ -223,7 +243,7 @@ class Gn2PgSourceConf:
         Returns:
             int: GeoNature export_id
         """
-        return self._export_id
+        return self._source.export_id
 
     @property
     def data_type(self) -> str:
@@ -234,7 +254,7 @@ class Gn2PgSourceConf:
         Returns:
             str: Data type
         """
-        return self._data_type.lower()
+        return self._source.data_type.lower()
 
     @property
     def enable(self) -> bool:
@@ -243,7 +263,7 @@ class Gn2PgSourceConf:
         Returns:
             bool: True if source is enabled
         """
-        return self._enable
+        return self._source.enable
 
     @property
     def query_strings(self) -> dict:
@@ -252,7 +272,7 @@ class Gn2PgSourceConf:
         Returns:
             dict: Querystrings dictionnary
         """
-        return self._query_strings
+        return self._source.query_strings
 
     @property
     def db_host(self) -> str:
@@ -326,7 +346,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Page size
         """
-        return self._max_page_length
+        return self._tuning.max_page_length
 
     @property
     def max_retry(self) -> int:
@@ -335,7 +355,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Database import schema
         """
-        return self._max_retry
+        return self._tuning.max_retry
 
     @property
     def max_requests(self) -> int:
@@ -344,7 +364,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Database import schema
         """
-        return self._max_requests
+        return self._tuning.max_requests
 
     @property
     def retry_delay(self) -> int:
@@ -353,7 +373,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Database import schema
         """
-        return self._retry_delay
+        return self._tuning.retry_delay
 
     @property
     def unavailable_delay(self) -> int:
@@ -362,7 +382,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Database import schema
         """
-        return self._unavailable_delay
+        return self._tuning.unavailable_delay
 
     @property
     def lru_maxsize(self) -> int:
@@ -371,7 +391,7 @@ class Gn2PgSourceConf:
         Returns:
             int: Database import schema
         """
-        return self._lru_maxsize
+        return self._tuning.lru_maxsize
 
     @property
     def nb_threads(self) -> int:
@@ -380,7 +400,7 @@ class Gn2PgSourceConf:
         Returns:
             int: The number of computing threads
         """
-        return self._nb_threads
+        return self._tuning.nb_threads
 
 
 class Gn2PgConf:
@@ -393,18 +413,20 @@ class Gn2PgConf:
             file (str): [description]
         """
 
-        p = ENVDIR / file
-        if not p.is_file():
-            logger.critical(_(f"File {file} does not exist"))
+        path = ENVDIR / file
+        if not path.is_file():
+            logger.critical(_("File %s does not exist"), file)
             raise MissingConfigurationFile
 
         try:
-            logger.info(_(f"Loading TOML configuration {file}"))
-            self._config = load(p)
+            logger.info(_("Loading TOML configuration %s"), file)
+            self._config = load(path)
             _ConfSchema.validate(self._config)
-        except Exception as e:
+        except Exception as error:
             logger.critical(
-                f"Incorrect content in YAML configuration {file} : {e}"
+                _("Incorrect content in YAML configuration %s : %s"),
+                file,
+                error,
             )
             raise
 
@@ -413,21 +435,30 @@ class Gn2PgConf:
         for source in self._config["source"]:
             source_name = simplify(source["name"])
             logger.info(
-                f"Source \"{source['name']}\" identifier will be \"{source_name}\""
+                'Source "%s" identifier will be "%s"',
+                source["name"],
+                source_name,
             )
 
-            if source_name in self._source_list.keys():
+            if source_name in self._source_list:
                 logger.critical(
                     (
-                        f"Source #{i + 1} named \"{source['name']}\" (->{source_name}) "
-                        f"already used by another source"
+                        _(
+                            'Source #%s named "%s" (->%s) '
+                            "already used by another source"
+                        ),
+                        i + 1,
+                        source["name"],
+                        source_name,
                     )
                 )
             self._source_list[source_name] = Gn2PgSourceConf(i, self._config)
             logger.debug(
-                f"Settings for {source_name} are : {self._source_list[source_name].__dict__}"
+                _("Settings for %s are : %s"),
+                source_name,
+                self._source_list[source_name].__dict__,
             )
-            i = i + 1
+            i += 1
 
     @property
     def version(self) -> str:

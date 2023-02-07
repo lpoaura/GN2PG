@@ -28,8 +28,7 @@ from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
 
-# logger = logging.getLogger("transfer_gn.store_postgresql")
-logger = logging.getLogger("transfer_gn.store_postgresql")
+logger = logging.getLogger(__name__)
 
 
 def db_url(config):
@@ -104,50 +103,6 @@ class DataItem:
             str: Observation
         """
         return self._elem
-
-
-# def store_1_observation(item: DataItem) -> None:
-#     """Process and store a single observation.
-
-#     - find insert or update date
-#     - store json in Postgresql
-
-#     Args:
-#         item (dict): ObservationItem, Observation item containing all parameters.
-
-#     Returns:
-#         None
-#     """
-#     # Insert simple observations,
-#     # each row contains uniq_id, update timestamp and full json body
-#     elem = item.elem
-#     uniq_id = elem["ID_perm_SINP"]
-#     logger.debug(
-#         f"Storing observation {uniq_id} to database",
-#     )
-#     # Find last update timestamp
-#     if "Date_modification" in elem:
-#         update_date = elem["Date_modification"]
-#     else:
-#         update_date = elem["Date_creation"]
-
-#     # Store in Postgresql
-#     metadata = item.metadata
-#     source = item.source
-#     insert_stmt = insert(metadata).values(
-#         uuid=uniq_id,
-#         source=source,
-#         update_ts=update_date,
-#         item=elem,
-#     )
-#     do_update_stmt = insert_stmt.on_conflict_do_update(
-#         constraint=metadata.primary_key,
-#         set_=dict(update_ts=update_date, item=elem),
-#         where=(metadata.c.update_ts < update_date),
-#     )
-
-#     item.conn.execute(do_update_stmt)
-#     return None
 
 
 class PostgresqlUtils:
@@ -266,54 +221,54 @@ class PostgresqlUtils:
             f"Connecting to {self._config.db_name} database, to finalize creation"
         )
         self._db = create_engine(URL.create(**self._db_url), echo=False)
-        conn = self._db.connect()
-        # Create extensions
-        try:
-            ext_queries = (
-                "CREATE EXTENSION IF NOT EXISTS pgcrypto;",
-                'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
-                "CREATE EXTENSION IF NOT EXISTS postgis;",
-            )
-            for q in ext_queries:
-                logger.debug(f"Execute: {q}")
-                conn.execute(q)
-            logger.info("PostgreSQL extensions successfully created")
-        except Exception as e:
-            logger.critical(f"PostgreSQL extensions create failed : {e}")
-        # Create import schema
-        try:
-            query = f"""
-            CREATE SCHEMA IF NOT EXISTS {self._config.db_schema_import}
-            AUTHORIZATION {self._config.db_user};
-            """
-            logger.debug(f"Execute: {query}")
-            conn.execute(query)
-            logger.info(
-                (
-                    f"Schema {self._config.db_schema_import} "
-                    f"owned by {self._config.db_user} successfully created"
+        with self._db.connect() as conn:
+            # Create extensions
+            try:
+                ext_queries = (
+                    'CREATE EXTENSION IF NOT EXISTS "pgcrypto";',
+                    'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
+                    'CREATE EXTENSION IF NOT EXISTS "postgis";',
                 )
-            )
-        except Exception as e:
-            logger.critical(
-                f"Failed to create {self._config.db_schema_import} schema"
-            )
-            logger.critical(f"{e}")
+                for q in ext_queries:
+                    logger.debug(f"Execute: {q}")
+                    conn.execute(text(q))
+                logger.info("PostgreSQL extensions successfully created")
+            except Exception as e:
+                logger.critical(f"PostgreSQL extensions create failed : {e}")
+            # Create import schema
+            try:
+                query = f"""
+                CREATE SCHEMA IF NOT EXISTS {self._config.db_schema_import}
+                AUTHORIZATION {self._config.db_user};
+                """
+                logger.debug(f"Execute: {query}")
+                conn.execute(text(query))
+                conn.commit()
+                logger.info(
+                    (
+                        f"Schema {self._config.db_schema_import} "
+                        f"owned by {self._config.db_user} successfully created"
+                    )
+                )
+            except Exception as e:
+                logger.critical(
+                    f"Failed to create {self._config.db_schema_import} schema"
+                )
+                logger.critical(f"{e}")
+            # Set path to include VN import schema
+            dbschema = self._config.db_schema_import
+            self._metadata = MetaData(schema=dbschema)
+            self._metadata.reflect(self._db)
+            # Check if tables exist or else create them
+            self._create_download_log()
+            self._create_increment_log()
+            self._create_error_log()
+            self._create_datasets_json()
+            self._create_data_json()
 
-        # Set path to include VN import schema
-        dbschema = self._config.db_schema_import
-        self._metadata = MetaData(schema=dbschema)
-        self._metadata.reflect(self._db)
+            conn.close()
 
-        # Check if tables exist or else create them
-        self._create_download_log()
-        self._create_increment_log()
-        self._create_error_log()
-        self._create_datasets_json()
-        self._create_data_json()
-
-        conn.close()
-        self._db.dispose()
+            self._db.dispose()
 
     def count_json_data(self):
         """Count observations stored in json table, by source and type.
@@ -351,7 +306,7 @@ class PostgresqlUtils:
         Args:
             script (str, optional): custom script path. Defaults to "to_gnsynthese".
         """
-        logger.info(_(f"Start to execute {script} script"))
+        logger.info(_("Start to execute %s script"), script)
         self._db = create_engine(URL.create(**self._db_url), echo=False)
         conn = self._db.connect()
         dbschema = self._config.db_schema_import
@@ -361,15 +316,16 @@ class PostgresqlUtils:
             )
             logger.info(
                 _(
-                    f"You choosed to use internal to_gnsynthese.sql script in schema {self._config.db_schema_import}"
-                )
+                    "You choosed to use internal to_gnsynthese.sql script in schema %s"
+                ),
+                self._config.db_schema_import,
             )
         else:
             if Path(script).is_file():
-                logger.info(_(f"file {script} exists, continue"))
+                logger.info(_("file %s exists, continue"), script)
                 file = Path(script)
             else:
-                logger.critical(_(f"file {script} DO NOT EXISTS, exit"))
+                logger.critical(_("file %s DO NOT EXISTS, exit"), script)
                 exit
         with open(file) as filecontent:
             sqlscript = filecontent.read()
@@ -382,10 +338,10 @@ class PostgresqlUtils:
         try:
             # logger.debug(sqlscript)
             conn.execute(text(sqlscript))
-            logger.info(_(f"script {script} successfully applied"))
+            logger.info(_("script %s successfully applied"), script)
         except Exception as e:
-            logger.critical(f"{str(e)}")
-            logger.critical(f"failed to apply script {script}")
+            logger.critical(str(e))
+            logger.critical("failed to apply script %s", script)
 
 
 class StorePostgresql:

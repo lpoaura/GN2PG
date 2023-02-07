@@ -24,7 +24,7 @@ __license__ = metadata.LICENSE
 
 coloredlogs.DEFAULT_FIELD_STYLES["module"] = {"color": "blue"}
 
-logger = logging.getLogger("transfer_gn")
+logger = logging.getLogger(__name__)
 
 coloredlogs.install(
     level="DEBUG",

@@ -21,7 +21,7 @@ from typing import Callable
 from gn2pg import _, __version__
 from gn2pg.api import DataAPI, DatasetsAPI
 
-logger = logging.getLogger("transfer_gn.download_gn")
+logger = logging.getLogger(__name__)
 
 
 class DownloadGnException(Exception):
@@ -197,7 +197,7 @@ class DownloadGn:
         increment_ts = datetime.now()
         params = {"limit": self._config.max_page_length}
         logger.debug(
-            _(f"Getting items from controler {self._api_instance.controler}")
+            _("Getting items from controler %s"), self._api_instance.controler
         )
         # logger.info(self._config._query_strings)
         params.update(self._config.query_strings)
@@ -229,7 +229,7 @@ class DownloadGn:
         """
         # Update new or modified data from API
         logger.debug(
-            _(f"Updating items from controler {self._api_instance.controler}")
+            _("Updating items from controler %s"), self._api_instance.controler
         )
         # Get last update from increment log.
         increment_ts = datetime.now()
@@ -250,9 +250,9 @@ class DownloadGn:
         logger.info(f"QueryStrings  {params}")
 
         logger.info(
-            _(
-                f"Getting new or update data from source {self._config.source} since {since}"
-            )
+            _("Getting new or update data from source %s since %s"),
+            self._config.source,
+            since,
         )
 
         upsert_pages = self._api_instance._page_list(
@@ -268,9 +268,9 @@ class DownloadGn:
 
         # Delete data deleted from source
         logger.info(
-            _(
-                f"Preparing data delete from source {self._config.name} since {since}"
-            )
+            _("Preparing data delete from source %s since %s"),
+            self._config.name,
+            since,
         )
 
         deleted_pages = self._api_instance._page_list(
