@@ -1,0 +1,58 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Check and tests
+
+on:
+  push:
+    # branches: [ $default-branch ]
+    branches: [ 'dev' ]
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+  check-syntax-lints-type:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+
+    steps:
+    #-----------------------------------------------
+    #  -----  checkout repo and set-up python  -----
+    #-----------------------------------------------    
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run image
+      uses: abatilo/actions-poetry@v2
+    #------------------------------------
+    #  -----  Install dependencies  -----
+    #------------------------------------
+    - name: Install dependencies
+      run: |
+        poetry install
+    #------------------------------
+    #--------  run isort  ---------
+    #------------------------------
+    - name: Format check with isort
+      run: poetry run isort --check gn2pg --profile black
+    #------------------------------
+    #--------  run black  ---------
+    #------------------------------
+    - name: Format check with black
+      run: poetry run black --check gn2pg
+    #--------------------------------
+    #--------  run linters  ---------
+    #--------------------------------
+    - name: Run linters
+      run: poetry run pylint gn2pg
+    #-----------------------------
+    #--------  run build  ---------
+    #-----------------------------
+    - name: Test build
+      run: poetry build
