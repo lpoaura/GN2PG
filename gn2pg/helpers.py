@@ -20,6 +20,8 @@ from gn2pg.utils import BColors
 
 logger = logging.getLogger(__name__)
 
+sh_col = BColors()
+
 
 def init(file: str) -> None:
     """Init config file from template
@@ -28,26 +30,26 @@ def init(file: str) -> None:
         file (str): [description]
     """
 
-    toml_src = pkg_resources.resource_filename(
-        __name__, "data/gn2pgconfig.toml"
-    )
+    toml_src = pkg_resources.resource_filename(__name__, "data/gn2pgconfig.toml")
     toml_dst = str(ENVDIR / file)
     if Path(toml_dst).is_file():
         ENVDIR.mkdir(exist_ok=True)
         logger.info(_("Conf directory %s created"), str(ENVDIR))
         logger.warning(_("%s file already exists"), toml_dst)
         overwrite = input(
-            f"{BColors.HEADER}Would you like to overwrite file {toml_dst}{BColors.ENDC} "
-            f"([{BColors.BOLD}y{BColors.ENDC}]es/[{BColors.BOLD}n{BColors.ENDC}]o) ? "
+            _(
+                f"{sh_col.color('header')}Would you like to overwrite file "
+                f"{toml_dst}{sh_col.color('endc')} "
+                f"([{sh_col.color('bold')}y{sh_col.color('endc')}]es"
+                f"/[{sh_col.color('bold')}n{sh_col.color('endc')}]o) ? "
+            )
         )
         if overwrite.lower() == "n":
             logger.warning(_("File %s will be preserved"), toml_dst)
             sys.exit(0)
         else:
             logger.warning(_("file %s will be overwritten"), toml_dst)
-    logger.info(
-        _("Creating TOML configuration file %s, from %s"), toml_dst, toml_src
-    )
+    logger.info(_("Creating TOML configuration file %s, from %s"), toml_dst, toml_src)
     shutil.copyfile(toml_src, toml_dst)
     logger.info(_("Please edit %s before running the script"), toml_dst)
     sys.exit(0)
@@ -92,7 +94,6 @@ def full_download(cfg_ctrl):
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
             logger.info(_("Starting full download for source %s"), source)
-            # full_download_1(Datasets, cfg)
             full_download_1source(Data, cfg)
         else:
             logger.info(_("Source %s is disabled"), source)

@@ -63,7 +63,7 @@ pytest = "^7.2.1"
 
 [tool.isort]
 include_trailing_comma = true
-line_length = 79
+line_length = 99
 multi_line_output = 3
 profile = "black"
 
@@ -87,9 +87,16 @@ exclude = '''
 )
 '''
 include = '\.pyi?$'
-line-length = 79
+line-length = 99
 target-version = ['py37']
 
+[tool.pylint.'MESSAGES CONTROL']
+max-line-length = 99
+disable = """
+    too-many-arguments,
+    too-many-instance-attributes,
+    too-few-public-methods
+"""
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

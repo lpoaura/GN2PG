@@ -19,6 +19,8 @@ from gn2pg.utils import BColors
 
 logger = logging.getLogger(__name__)
 
+sh_col = BColors()
+
 
 def arguments(args):
     """Define and parse command arguments.
@@ -36,7 +38,7 @@ def arguments(args):
         "--version",
         help=_("Print version number"),
         action="version",
-        version="%(prog)s {version}".format(version=__version__),
+        version=f"%(prog)s v{__version__}",
     )
     out_group = parser.add_mutually_exclusive_group()
     out_group.add_argument(
@@ -45,9 +47,7 @@ def arguments(args):
         help=_("Increase output verbosity"),
         action="store_true",
     )
-    out_group.add_argument(
-        "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
-    )
+    out_group.add_argument("-q", "--quiet", help=_("Reduce output verbosity"), action="store_true")
     parser.add_argument(
         "--init",
         help=_("Initialize the TOML configuration file"),
@@ -73,9 +73,7 @@ def arguments(args):
         ),
     )
     download_group = parser.add_mutually_exclusive_group()
-    download_group.add_argument(
-        "--full", help=_("Perform a full download"), action="store_true"
-    )
+    download_group.add_argument("--full", help=_("Perform a full download"), action="store_true")
     download_group.add_argument(
         "--update",
         help=_("Perform an incremental download"),
@@ -92,15 +90,16 @@ def main(args) -> None:
     Args:
       args ([str]): command line parameter list
     """
-    logger = logging.getLogger(__name__)
+    epilog = f"""\
+{sh_col.color('okblue')}{sh_col.color('bold')}{metadata.PROJECT} \
+{sh_col.color('endc')}{sh_col.color('endc')} \
+{sh_col.color('bold')}{sh_col.color('header')}{__version__} \
+{sh_col.color('endc')}{sh_col.color('endc')}
+{sh_col.color('bold')}LICENSE{sh_col.color('endc')}: {metadata.LICENSE}
+{sh_col.color('bold')}AUTHORS{sh_col.color('endc')}: {metadata.AUTHORS_STRING}
 
-    epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.PROJECT}{BColors.ENDC}{BColors.ENDC} \
-{BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
-{BColors.BOLD}LICENSE{BColors.ENDC}: {metadata.LICENSE}
-{BColors.BOLD}AUTHORS{BColors.ENDC}: {metadata.AUTHORS_STRING}
-
-{BColors.BOLD}URL{BColors.ENDC}: {metadata.URL}
-{BColors.BOLD}DOCS{BColors.ENDC}: {metadata.DOCS}
+{sh_col.color('bold')}URL{sh_col.color('endc')}: {metadata.URL}
+{sh_col.color('bold')}DOCS{sh_col.color('endc')}: {metadata.DOCS}
 """
     print(epilog)
 
@@ -108,7 +107,7 @@ def main(args) -> None:
     LOGDIR.mkdir(parents=True, exist_ok=True)
 
     # create file handler which logs even debug messages
-    fh = TimedRotatingFileHandler(
+    filehandler = TimedRotatingFileHandler(
         str(LOGDIR / (__name__ + ".log")),
         when="midnight",
         interval=1,
@@ -120,10 +119,10 @@ def main(args) -> None:
     formatter = logging.Formatter(
         "%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s"
     )
-    fh.setFormatter(formatter)
+    filehandler.setFormatter(formatter)
     # ch.setFormatter(formatter)
     # add the handlers to the logger
-    logger.addHandler(fh)
+    logger.addHandler(filehandler)
     # logger.addHandler(ch)
 
     # Get command line arguments
@@ -154,17 +153,13 @@ def main(args) -> None:
 
     # Get configuration from file
     if not (ENVDIR / args.file).is_file():
-        logger.critical(
-            _("Configuration file %s does not exist"), str(ENVDIR / args.file)
-        )
+        logger.critical(_("Configuration file %s does not exist"), str(ENVDIR / args.file))
         return None
     logger.info(_("Getting configuration data from %s"), args.file)
     try:
         cfg_ctrl = Gn2PgConf(args.file)
     except TomlDecodeError:
-        logger.critical(
-            _("Incorrect content in TOML configuration %s"), args.file
-        )
+        logger.critical(_("Incorrect content in TOML configuration %s"), args.file)
         sys.exit(0)
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
@@ -190,6 +185,7 @@ def main(args) -> None:
     if args.update:
         logger.info(_("Perform update action"))
         update(cfg_ctrl)
+    return None
 
 
 def run():

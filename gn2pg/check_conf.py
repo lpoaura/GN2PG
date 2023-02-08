@@ -122,17 +122,13 @@ class Gn2PgSourceConf:
                 user_name=config["source"][source]["user_name"],
                 user_password=config["source"][source]["user_password"],
                 url=config["source"][source]["url"],
-                id_application=coalesce_in_dict(
-                    config["source"][source], "id_application", 3
-                ),
+                id_application=coalesce_in_dict(config["source"][source], "id_application", 3),
                 data_type=coalesce_in_dict(
                     config["source"][source],
                     "data_type",
                     "synthese_with_cd_nomenclature",
                 ),
-                query_strings=coalesce_in_dict(
-                    config["source"][source], "query_strings", {}
-                ),
+                query_strings=coalesce_in_dict(config["source"][source], "query_strings", {}),
                 export_id=config["source"][source]["export_id"],
                 enable=(
                     True
@@ -149,22 +145,16 @@ class Gn2PgSourceConf:
                 password=config["db"]["db_password"],
                 name=config["db"]["db_name"],
                 schema_import=config["db"]["db_schema_import"],
-                querystring=coalesce_in_dict(
-                    config["db"], "db_querystring", {}
-                ),
+                querystring=coalesce_in_dict(config["db"], "db_querystring", {}),
             )  # type: Db
             if "tuning" in config:
                 tuning = config["tuning"]
                 self._tuning = Tuning(
-                    max_page_length=coalesce_in_dict(
-                        tuning, "max_page_length", 1000
-                    ),
+                    max_page_length=coalesce_in_dict(tuning, "max_page_length", 1000),
                     max_retry=coalesce_in_dict(tuning, "max_retry", 5),
                     max_requests=coalesce_in_dict(tuning, "max_requests", 0),
                     retry_delay=coalesce_in_dict(tuning, "retry_delay", 5),
-                    unavailable_delay=coalesce_in_dict(
-                        tuning, "unavailable_delay", 600
-                    ),
+                    unavailable_delay=coalesce_in_dict(tuning, "unavailable_delay", 600),
                     lru_maxsize=coalesce_in_dict(tuning, "lru_maxsize", 32),
                     nb_threads=coalesce_in_dict(tuning, "nb_threads", 1),
                 )
@@ -275,7 +265,7 @@ class Gn2PgSourceConf:
         return self._source.query_strings
 
     @property
-    def db(self) -> Db:
+    def database(self) -> Db:
         """Return database settings
 
         :return: _description_
@@ -387,10 +377,7 @@ class Gn2PgConf:
             if source_name in self._source_list:
                 logger.critical(
                     (
-                        _(
-                            'Source #%s named "%s" (->%s) '
-                            "already used by another source"
-                        ),
+                        _('Source #%s named "%s" (->%s) already used by another source'),
                         i + 1,
                         source["name"],
                         source_name,

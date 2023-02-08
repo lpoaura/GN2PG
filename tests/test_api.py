@@ -22,7 +22,7 @@ class TestApi:
         total_filtered = resp["total_filtered"]
         total_pages = math.ceil(total_filtered / params.get("limit"))
 
-        page_gen = base_api._page_list(params=params)
+        page_gen = base_api.page_list(params=params)
 
         page_list = list(page_gen)
         assert len(page_list) == total_pages

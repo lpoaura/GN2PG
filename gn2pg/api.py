@@ -49,9 +49,7 @@ class BaseAPI:
         self._http_status = 0
         self._ctrl = controler
         logger.debug(_("controler is %s"), self._ctrl)
-        self._api_url = (
-            config.url + "/" * (not config.url.endswith("/")) + "api/"
-        )
+        self._api_url = config.url + "/" * (not config.url.endswith("/")) + "api/"
 
         # init session
         self._session = requests.Session()
@@ -89,9 +87,7 @@ class BaseAPI:
 
         #  Find exports api path
         try:
-            modules_list = self._session.get(
-                self._api_url + "gn_commons/modules"
-            )
+            modules_list = self._session.get(self._api_url + "gn_commons/modules")
             logger.info(
                 _("Modules API status code is %s for url %s"),
                 modules_list.status_code,
@@ -102,15 +98,11 @@ class BaseAPI:
                 for item in modules:
                     if item["module_code"] == "EXPORTS":
                         self._export_api_path = item["module_path"]
-                        logger.debug(
-                            f"Export api path is {self._export_api_path}"
-                        )
+                        logger.debug(_("Export api path is %s"), self._export_api_path)
                         break
             else:
                 logger.critical(
-                    _(
-                        "Get GeoNature modules failed with status code %s, cause: %s"
-                    ),
+                    _("Get GeoNature modules failed with status code %s, cause: %s"),
                     modules_list.status_code,
                     json.loads(modules_list.content)["msg"],
                 )
@@ -159,7 +151,7 @@ class BaseAPI:
             url = url + "?" + urlencode(params)
         return url
 
-    def _page_list(
+    def page_list(
         self,
         params: dict,
         kind: str = "data",
@@ -199,14 +191,10 @@ class BaseAPI:
                 total_pages,
             )
 
-            page_list = (
-                self._url(kind, {**params, **{"offset": p}})
-                for p in range(total_pages)
-            )
+            page_list = (self._url(kind, {**params, **{"offset": p}}) for p in range(total_pages))
             return page_list
-        else:
-            logger.info(_("No data available from from %s"), self._config.name)
-            return None
+        logger.info(_("No data available from from %s"), self._config.name)
+        return None
 
     def get_page(self, page_url: str) -> Optional[dict]:
         """Get data from one API page
@@ -221,20 +209,17 @@ class BaseAPI:
         try:
             logger.info(_("Download page %s"), page_url)
             session = self._session
-            pr = session.get(url=page_url)
-            presp = pr.json()
-            return presp
-        except APIException as e:
+            page_request = session.get(url=page_url)
+            resp = page_request.json()
+            return resp
+        except APIException as error:
             logger.critical(_("Download data from %s failed"), page_url)
-            logger.critical(str(e))
+            logger.critical(str(error))
             return None
 
 
 class DataAPI(BaseAPI):
+    """Data API"""
+
     def __init__(self, config, max_retry=None, max_requests=None):
         super().__init__(config, "data", max_retry, max_requests)
-
-
-class DatasetsAPI(BaseAPI):
-    def __init__(self, config, max_retry=None, max_requests=None):
-        super().__init__(config, "datasets", max_retry, max_requests)
