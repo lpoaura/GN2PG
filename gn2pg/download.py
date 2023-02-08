@@ -19,9 +19,9 @@ from threading import Thread
 from typing import Callable
 
 from gn2pg import _, __version__
-from gn2pg.api import DataAPI, DatasetsAPI
+from gn2pg.api import DataAPI
 
-logger = logging.getLogger("transfer_gn.download_gn")
+logger = logging.getLogger(__name__)
 
 
 class DownloadGnException(Exception):
@@ -36,9 +36,7 @@ class DownloadGn:
     """Top class, not for direct use.
     Provides internal and template methods."""
 
-    def __init__(
-        self, config, api_instance, backend, max_retry=None, max_requests=None
-    ) -> None:
+    def __init__(self, config, api_instance, backend, max_retry=None, max_requests=None) -> None:
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
@@ -73,9 +71,7 @@ class DownloadGn:
     # ---------------
     # Generic methods
     # ---------------
-    def launch_treads(
-        self, nb_threads: int, func: Callable, pages: list, store=True
-    ) -> None:
+    def launch_treads(self, nb_threads: int, func: Callable, pages: list, store=True) -> None:
         """
         Launch 1 + nb_threads threads to execute a function func on a list of pages
 
@@ -99,9 +95,7 @@ class DownloadGn:
                 if response == "DONE":
                     break
                 progress += response["len_items"]
-                perc_progress = round(
-                    progress / response["total_len"] * 100, 2
-                )
+                perc_progress = round(progress / response["total_len"] * 100, 2)
                 if response.get("total_len", 0) > 0:
                     msg = "Storing" if store else "Deleting"
                     logger.info(
@@ -116,15 +110,15 @@ class DownloadGn:
                     )
 
         # The Queue enables the report thread to get the progress from other threads
-        q = Queue()
+        queue = Queue()
         # Initialize and start the report thread
-        thread = Thread(target=report, args=[q])
+        thread = Thread(target=report, args=[queue])
         thread.start()
         # Start the worker threads
         with ThreadPool(nb_threads) as thread:
-            thread.map(partial(func, queue=q), pages)
+            thread.map(partial(func, queue=queue), pages)
         # Will stop the report thread
-        q.put(("DONE"))
+        queue.put(("DONE"))
 
     def download(self, page: str, queue: Queue) -> None:
         """
@@ -139,9 +133,7 @@ class DownloadGn:
         """
         response = self.process_progress(page=page)
 
-        self._backend.store_data(
-            self._api_instance.controler, response["items"]
-        )
+        self._backend.store_data(self._api_instance.controler, response["items"])
         queue.put(response)
 
     def delete(self, page: str, queue: Queue) -> None:
@@ -158,13 +150,13 @@ class DownloadGn:
         response = self.process_progress(page=page)
 
         if response.get("total_len") > 0:
-            self._backend.store_data(
-                self._backend.delete_data(response.get("items"))
-            )
+            self._backend.store_data(self._backend.delete_data(response.get("items")))
             queue.put(response)
         else:
             logger.info(
-                f"No new deleted data from {self._config.name} {self._api_instance.controler}"
+                _("No new deleted data from %s %s"),
+                self._config.name,
+                self._api_instance.controler,
             )
 
     def process_progress(self, page: str) -> dict:
@@ -196,29 +188,23 @@ class DownloadGn:
 
         increment_ts = datetime.now()
         params = {"limit": self._config.max_page_length}
-        logger.debug(
-            _(f"Getting items from controler {self._api_instance.controler}")
-        )
+        logger.debug(_("Getting items from controler %s"), self._api_instance.controler)
         # logger.info(self._config._query_strings)
         params.update(self._config.query_strings)
-        logger.info(f"QueryStrings  {params}")
-        pages = self._api_instance._page_list(kind="data", params=params)
+        logger.info(_("QueryStrings %s"), params)
+        pages = self._api_instance.page_list(kind="data", params=params)
         self._backend.download_log(
             self._api_instance.controler,
             self._api_instance.transfer_errors,
             self._api_instance.http_status,
         )
 
-        self.launch_treads(
-            nb_threads=self._config.nb_threads, func=self.download, pages=pages
-        )
+        self.launch_treads(nb_threads=self._config.nb_threads, func=self.download, pages=pages)
 
         # Log download timestamp to download.
-        self._backend.increment_log(
-            controler=self._api_instance.controler, last_ts=increment_ts
-        )
+        self._backend.increment_log(controler=self._api_instance.controler, last_ts=increment_ts)
 
-    def update(self, since: str = None, actions: list = ["I", "U"]) -> None:
+    def update(self, since: str = None, actions: list = None) -> None:
         """[summary]
 
         Args:
@@ -228,36 +214,33 @@ class DownloadGn:
             [type]: [description]
         """
         # Update new or modified data from API
-        logger.debug(
-            _(f"Updating items from controler {self._api_instance.controler}")
-        )
+        logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
         # Get last update from increment log.
         increment_ts = datetime.now()
 
+        if actions is None:
+            actions = ["I", "U"]
         params = {"action": actions}
 
         if since is None:
             since = (
                 self._backend.increment_get(self._api_instance.controler)
-                if self._backend.increment_get(self._api_instance.controler)
-                is not None
+                if self._backend.increment_get(self._api_instance.controler) is not None
                 else self._backend.download_get(self._api_instance.controler)
             )
 
         params["limit"] = self._config.max_page_length
         params["filter_d_up_derniere_action"] = since
         params.update(self._config.query_strings)
-        logger.info(f"QueryStrings  {params}")
+        logger.info(_("QueryStrings %s"), params)
 
         logger.info(
-            _(
-                f"Getting new or update data from source {self._config.source} since {since}"
-            )
+            _("Getting new or update data from source %s since %s"),
+            self._config.source,
+            since,
         )
 
-        upsert_pages = self._api_instance._page_list(
-            kind="data", params=params
-        )
+        upsert_pages = self._api_instance.page_list(kind="data", params=params)
 
         if upsert_pages is not None:
             self.launch_treads(
@@ -268,12 +251,12 @@ class DownloadGn:
 
         # Delete data deleted from source
         logger.info(
-            _(
-                f"Preparing data delete from source {self._config.name} since {since}"
-            )
+            _("Preparing data delete from source %s since %s"),
+            self._config.name,
+            since,
         )
 
-        deleted_pages = self._api_instance._page_list(
+        deleted_pages = self._api_instance.page_list(
             kind="log",
             params={
                 "filter_d_up_meta_last_action_date": since,
@@ -289,11 +272,7 @@ class DownloadGn:
                 pages=deleted_pages,
             )
 
-        self._backend.increment_log(
-            controler=self._api_instance.controler, last_ts=increment_ts
-        )
-
-        return None
+        self._backend.increment_log(controler=self._api_instance.controler, last_ts=increment_ts)
 
 
 class Data(DownloadGn):
@@ -305,22 +284,4 @@ class Data(DownloadGn):
     """
 
     def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(
-            config, DataAPI(config), backend, max_retry, max_requests
-        )
-        return None
-
-
-class Datasets(DownloadGn):
-    """Implement store from places controler.
-
-    Methods
-    - store               - Download and store to json
-
-    """
-
-    def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(
-            config, DatasetsAPI(config), backend, max_retry, max_requests
-        )
-        return None
+        super().__init__(config, DataAPI(config), backend, max_retry, max_requests)

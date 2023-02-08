@@ -27,7 +27,6 @@ FROM base as final
 
 RUN groupadd -r -g 1000 xfer && useradd --no-log-init -r -g 1000 -d /home/xfer -m -u 1000 xfer && \
     chown -R xfer /home/xfer
-#    echo "export PATH=$PATH:~/.local/bin" >> ~/.profile
 
 COPY --from=builder /app/dist/*.whl /tmp/
 
@@ -35,9 +34,7 @@ RUN pip install /tmp/*.whl
 
 USER xfer
 RUN mkdir /home/xfer/.gn2pg
-# VOLUME /home/xfer/.gn2pg
 
-#COPY docker-entrypoint.sh /entrypoint.sh
-#ENTRYPOINT ["/bin/sh", "entrypoint.sh"]
+VOLUME [ "/home/xfer/.gn2pg" ]
 
 ENTRYPOINT ["gn2pg_cli"]

@@ -1,0 +1,187 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2023-02-07 18:04+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+#: gn2pg/api.py:96
+msgid "Modules API status code is %s for url %s"
+msgstr ""
+
+#: gn2pg/api.py:111
+msgid "Get GeoNature modules failed with status code %s, cause: %s"
+msgstr ""
+
+#: gn2pg/api.py:119
+msgid "Find export module failed, %s"
+msgstr ""
+
+#: gn2pg/api.py:186
+msgid "Defining page_list from %s with status code %s"
+msgstr ""
+
+#: gn2pg/api.py:196
+msgid "API %s contains %s data in %s page(s)"
+msgstr ""
+
+#: gn2pg/api.py:208
+msgid "No data available from from %s"
+msgstr ""
+
+#: gn2pg/check_conf.py:173
+msgid "Error creating %s configuration"
+msgstr ""
+
+#: gn2pg/check_conf.py:418
+msgid "File %s does not exist"
+msgstr "Le fichier %s n'existe pas"
+
+#: gn2pg/check_conf.py:422
+msgid "Loading TOML configuration %s"
+msgstr "Chargement de la configuration TOML %s"
+
+#: gn2pg/check_conf.py:427
+msgid "Incorrect content in YAML configuration %s : %s"
+msgstr "Contenu incorrect dans la configuration YAML %s : %s"
+
+#: gn2pg/check_conf.py:446
+msgid "Source #%s named \"%s\" (->%s) already used by another source"
+msgstr ""
+
+#: gn2pg/check_conf.py:457
+msgid "Settings for %s are : %s"
+msgstr ""
+
+#: gn2pg/download.py:200
+msgid "Getting items from controler %s"
+msgstr ""
+
+#: gn2pg/download.py:232
+msgid "Updating items from controler %s"
+msgstr ""
+
+#: gn2pg/download.py:253
+msgid "Getting new or update data from source %s since %s"
+msgstr ""
+
+#: gn2pg/download.py:271
+msgid "Preparing data delete from source %s since %s"
+msgstr ""
+
+#: gn2pg/helpers.py:73
+msgid "%s => Starting download using controler %s"
+msgstr ""
+
+#: gn2pg/helpers.py:79
+msgid "%s => Ending download using controler %s"
+msgstr ""
+
+#: gn2pg/helpers.py:91 gn2pg/helpers.py:135
+msgid "Defining full download jobs"
+msgstr ""
+
+#: gn2pg/helpers.py:94
+msgid "Starting full download for source %s"
+msgstr ""
+
+#: gn2pg/helpers.py:98 gn2pg/helpers.py:141
+msgid "Source %s is disabled"
+msgstr ""
+
+#: gn2pg/helpers.py:110
+msgid "CFG source %s"
+msgstr ""
+
+#: gn2pg/helpers.py:115
+msgid "%s => Starting updating using controler %s"
+msgstr ""
+
+#: gn2pg/helpers.py:121
+msgid "%s => Ending updating using controler %s"
+msgstr ""
+
+#: gn2pg/helpers.py:138
+msgid "Starting update download for source %s"
+msgstr ""
+
+#: gn2pg/main.py:37
+msgid "Print version number"
+msgstr ""
+
+#: gn2pg/main.py:45
+msgid "Increase output verbosity"
+msgstr ""
+
+#: gn2pg/main.py:49
+msgid "Reduce output verbosity"
+msgstr ""
+
+#: gn2pg/main.py:53
+msgid "Initialize the TOML configuration file"
+msgstr ""
+
+#: gn2pg/main.py:58
+msgid "Edit the TOML configuration file in default editor"
+msgstr ""
+
+#: gn2pg/main.py:63
+msgid "Create or recreate json tables"
+msgstr ""
+
+#: gn2pg/main.py:70
+msgid ""
+"Execute custom SQL script in DB, default is \"to_gnsynthese\".\n"
+"        You can also use your own script by using absolute file path instead "
+"of \"to_gnsynthese\""
+msgstr ""
+
+#: gn2pg/main.py:77
+msgid "Perform a full download"
+msgstr ""
+
+#: gn2pg/main.py:81
+msgid "Perform an incremental download"
+msgstr ""
+
+#: gn2pg/main.py:183
+msgid "Execute custom script %s on db"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:283
+msgid "Counting datas in database for all sources"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:285
+msgid "Connecting to database %s"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:310
+msgid "Start to execute %s script"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:319
+msgid "You choosed to use internal to_gnsynthese.sql script in schema %s"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:326
+msgid "file %s exists, continue"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:329
+msgid "file %s DO NOT EXISTS, exit"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:342
+msgid "script %s successfully applied"
+msgstr ""

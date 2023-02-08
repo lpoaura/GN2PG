@@ -20,6 +20,8 @@ from gn2pg.utils import BColors
 
 logger = logging.getLogger(__name__)
 
+sh_col = BColors()
+
 
 def init(file: str) -> None:
     """Init config file from template
@@ -28,29 +30,28 @@ def init(file: str) -> None:
         file (str): [description]
     """
 
-    logger = logging.getLogger("transfer_gn")
-    toml_src = pkg_resources.resource_filename(
-        __name__, "data/gn2pgconfig.toml"
-    )
+    toml_src = pkg_resources.resource_filename(__name__, "data/gn2pgconfig.toml")
     toml_dst = str(ENVDIR / file)
     if Path(toml_dst).is_file():
         ENVDIR.mkdir(exist_ok=True)
-        logger.info(f"Conf directory {str(ENVDIR)} created")
-        logger.warning(f"{toml_dst} file already exists")
+        logger.info(_("Conf directory %s created"), str(ENVDIR))
+        logger.warning(_("%s file already exists"), toml_dst)
         overwrite = input(
-            f"{BColors.HEADER}Would you like to overwrite file {toml_dst}{BColors.ENDC} "
-            f"([{BColors.BOLD}y{BColors.ENDC}]es/[{BColors.BOLD}n{BColors.ENDC}]o) ? "
+            _(
+                f"{sh_col.color('header')}Would you like to overwrite file "
+                f"{toml_dst}{sh_col.color('endc')} "
+                f"([{sh_col.color('bold')}y{sh_col.color('endc')}]es"
+                f"/[{sh_col.color('bold')}n{sh_col.color('endc')}]o) ? "
+            )
         )
         if overwrite.lower() == "n":
-            logger.warning(f"File {toml_dst} will be preserved")
-            exit()
+            logger.warning(_("File %s will be preserved"), toml_dst)
+            sys.exit(0)
         else:
-            logger.warning(f"file {toml_dst} will be overwritten")
-    logger.info(
-        f"Creating TOML configuration file {toml_dst}, from {toml_src}"
-    )
+            logger.warning(_("file %s will be overwritten"), toml_dst)
+    logger.info(_("Creating TOML configuration file %s, from %s"), toml_dst, toml_src)
     shutil.copyfile(toml_src, toml_dst)
-    logger.info(f"Please edit {toml_dst} before running the script")
+    logger.info(_("Please edit %s before running the script"), toml_dst)
     sys.exit(0)
 
 
@@ -66,42 +67,36 @@ def edit(file: str) -> None:
 
 def full_download_1source(ctrl, cfg):
     """Downloads from a single controler."""
-    # TODO: Insert start ts in increment_log
 
-    logger = logging.getLogger("transfer_gn")
-    # logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
     logger.debug(cfg)
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
         logger.debug(
-            _(
-                f"{cfg.source} => Starting download using controler {downloader.name}"
-            )
+            _("%s => Starting download using controler %s"),
+            cfg.source,
+            downloader.name,
         )
         downloader.store()
         logger.info(
-            _(
-                f"{cfg.source} => Ending download using controler {downloader.name}"
-            )
+            _("%s => Ending download using controler %s"),
+            cfg.source,
+            downloader.name,
         )
 
 
 def full_download(cfg_ctrl):
     """Performs a full download of all sites and controlers,
     based on configuration file."""
-    logger = logging.getLogger("transfer_gn")
+
     logger.info(cfg_ctrl)
     cfg_source_list = cfg_ctrl.source_list
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
-            logger.info(_(f"Starting full download for source {source}"))
-            # full_download_1(Datasets, cfg)
+            logger.info(_("Starting full download for source %s"), source)
             full_download_1source(Data, cfg)
         else:
-            logger.info(_(f"Source {source} is disabled"))
-
-    return None
+            logger.info(_("Source %s is disabled"), source)
 
 
 def update_1source(ctrl, cfg):
@@ -111,30 +106,20 @@ def update_1source(ctrl, cfg):
         ctrl ([type]): [description]
         cfg ([type]): [description]
     """
-    # TODO: get since TS from increment_log table
-
-    # TODO: querying upserted data from API
-    # TODO: download and store each data
-    # TODO: querying deleted data from API
-    # TODO: delete deleted data from db
-
-    logger = logging.getLogger("transfer_gn")
-    # logger.debug(_(f"Enter full_download_1: {ctrl.__name__}"))
-    logger.debug(f"CFG source {cfg.name}")
-    logger.debug(f"CTRL {ctrl}")
+    logger.debug(_("config source name %s"), cfg.name)
+    logger.debug(_("controler %s"), ctrl)
     with StorePostgresql(cfg) as store_pg:
-        # last_ts = store_pg.increment_get()
         downloader = ctrl(cfg, store_pg)
         logger.debug(
-            _(
-                f"{cfg.source} => Starting updating using controler {downloader.name}"
-            )
+            _("%s => Starting updating using controler %s"),
+            cfg.source,
+            downloader.name,
         )
         downloader.update()
         logger.info(
-            _(
-                f"{cfg.source} => Ending updating using controler {downloader.name}"
-            )
+            _("%s => Ending updating using controler %s"),
+            cfg.source,
+            downloader.name,
         )
 
 
@@ -144,14 +129,12 @@ def update(cfg_ctrl):
     Args:
         cfg_ctrl ([type]): [description]
     """
-    logger = logging.getLogger("transfer_gn")
     logger.info(cfg_ctrl)
     cfg_source_list = cfg_ctrl.source_list
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
-            logger.info(_(f"Starting update download for source {source}"))
-            # full_download_1(Datasets, cfg)
+            logger.info(_("Starting update download for source %s"), source)
             update_1source(Data, cfg)
         else:
-            logger.info(_(f"Source {source} is disabled"))
+            logger.info(_("Source %s is disabled"), source)

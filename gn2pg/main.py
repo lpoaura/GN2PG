@@ -19,6 +19,8 @@ from gn2pg.utils import BColors
 
 logger = logging.getLogger(__name__)
 
+sh_col = BColors()
+
 
 def arguments(args):
     """Define and parse command arguments.
@@ -36,7 +38,7 @@ def arguments(args):
         "--version",
         help=_("Print version number"),
         action="version",
-        version="%(prog)s {version}".format(version=__version__),
+        version=f"%(prog)s v{__version__}",
     )
     out_group = parser.add_mutually_exclusive_group()
     out_group.add_argument(
@@ -45,9 +47,7 @@ def arguments(args):
         help=_("Increase output verbosity"),
         action="store_true",
     )
-    out_group.add_argument(
-        "-q", "--quiet", help=_("Reduce output verbosity"), action="store_true"
-    )
+    out_group.add_argument("-q", "--quiet", help=_("Reduce output verbosity"), action="store_true")
     parser.add_argument(
         "--init",
         help=_("Initialize the TOML configuration file"),
@@ -73,9 +73,7 @@ def arguments(args):
         ),
     )
     download_group = parser.add_mutually_exclusive_group()
-    download_group.add_argument(
-        "--full", help=_("Perform a full download"), action="store_true"
-    )
+    download_group.add_argument("--full", help=_("Perform a full download"), action="store_true")
     download_group.add_argument(
         "--update",
         help=_("Perform an incremental download"),
@@ -92,16 +90,16 @@ def main(args) -> None:
     Args:
       args ([str]): command line parameter list
     """
-    logger = logging.getLogger("transfer_gn")
+    epilog = f"""\
+{sh_col.color('okblue')}{sh_col.color('bold')}{metadata.PROJECT} \
+{sh_col.color('endc')}{sh_col.color('endc')} \
+{sh_col.color('bold')}{sh_col.color('header')}{__version__} \
+{sh_col.color('endc')}{sh_col.color('endc')}
+{sh_col.color('bold')}LICENSE{sh_col.color('endc')}: {metadata.LICENSE}
+{sh_col.color('bold')}AUTHORS{sh_col.color('endc')}: {metadata.AUTHORS_STRING}
 
-    epilog = f"""{BColors.OKBLUE}{BColors.BOLD}{metadata.project}{BColors.ENDC}{BColors.ENDC} \
-{BColors.BOLD}{BColors.HEADER}{__version__}{BColors.ENDC}{BColors.ENDC}
-{BColors.BOLD}LICENSE{BColors.ENDC}: {metadata.license}
-{BColors.BOLD}AUTHORS{BColors.ENDC}: {metadata.authors_string}
-{BColors.BOLD}COPYRIGHT{BColors.ENDC}: {metadata.copyright}
-
-{BColors.BOLD}URL{BColors.ENDC}: {metadata.url}
-{BColors.BOLD}DOCS{BColors.ENDC}: {metadata.docs}
+{sh_col.color('bold')}URL{sh_col.color('endc')}: {metadata.URL}
+{sh_col.color('bold')}DOCS{sh_col.color('endc')}: {metadata.DOCS}
 """
     print(epilog)
 
@@ -109,7 +107,7 @@ def main(args) -> None:
     LOGDIR.mkdir(parents=True, exist_ok=True)
 
     # create file handler which logs even debug messages
-    fh = TimedRotatingFileHandler(
+    filehandler = TimedRotatingFileHandler(
         str(LOGDIR / (__name__ + ".log")),
         when="midnight",
         interval=1,
@@ -121,10 +119,10 @@ def main(args) -> None:
     formatter = logging.Formatter(
         "%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s"
     )
-    fh.setFormatter(formatter)
+    filehandler.setFormatter(formatter)
     # ch.setFormatter(formatter)
     # add the handlers to the logger
-    logger.addHandler(fh)
+    logger.addHandler(filehandler)
     # logger.addHandler(ch)
 
     # Get command line arguments
@@ -137,60 +135,57 @@ def main(args) -> None:
     else:
         logger.setLevel(logging.INFO)
 
-    logger.info("%s, version %s", sys.argv[0], __version__)
+    logger.info(_("%s, version %s"), sys.argv[0], __version__)
     logger.debug("Args: %s", args)
     logger.info("Arguments: %s", sys.argv[1:])
 
     # If required, first create YAML file
     if args.init:
-        logger.info("Creating TOML configuration file")
+        logger.info(_("Creating TOML configuration file"))
         init(args.file)
         return None
 
     # Edit yaml config file
     if args.edit:
-        logger.info("Editing TOML configuration file")
+        logger.info(_("Editing TOML configuration file"))
         edit(args.file)
         return None
 
     # Get configuration from file
     if not (ENVDIR / args.file).is_file():
-        logger.critical(
-            "Configuration file %s does not exist", str(ENVDIR / args.file)
-        )
+        logger.critical(_("Configuration file %s does not exist"), str(ENVDIR / args.file))
         return None
-    logger.info("Getting configuration data from %s", args.file)
+    logger.info(_("Getting configuration data from %s"), args.file)
     try:
         cfg_ctrl = Gn2PgConf(args.file)
     except TomlDecodeError:
-        logger.critical(
-            f"Incorrect content in TOML configuration {args.file}",
-        )
+        logger.critical(_("Incorrect content in TOML configuration %s"), args.file)
         sys.exit(0)
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
     logger.info(
-        f"config file have {len(cfg_source_list)} source(s) wich are : "
-        f"{', '.join(cfg_source_list.keys())}"
+        _("config file have {len(cfg_source_list)} source(s) wich are : %s"),
+        ", ".join(cfg_source_list.keys()),
     )
 
     manage_pg = PostgresqlUtils(cfg)
 
     if args.json_tables_create:
-        logger.info("Create, if not exists, json tables")
+        logger.info(_("Create, if not exists, json tables"))
         manage_pg.create_json_tables()
 
     if args.custom_script:
-        logger.info(_(f"Execute custom script {args.custom_script} on db"))
+        logger.info(_("Execute custom script %s on db"), args.custom_script)
         manage_pg.custom_script(args.custom_script)
 
     if args.full:
-        logger.info("Perform full action")
+        logger.info(_("Perform full action"))
         full_download(cfg_ctrl)
 
     if args.update:
-        logger.info("Perform update action")
+        logger.info(_("Perform update action"))
         update(cfg_ctrl)
+    return None
 
 
 def run():
