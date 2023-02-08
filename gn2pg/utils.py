@@ -8,15 +8,23 @@ from typing import Any
 class BColors:
     """Colors used for cli"""
 
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKCYAN = "\033[96m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
+    def __init__(self):
+        self.colors = {
+            "header": "[95m",
+            "okblue": "[94m",
+            "okcyan": "[96m",
+            "okgreen": "[92m",
+            "warning": "[93m",
+            "fail": "[91m",
+            "endc": "[0m",
+            "bold": "[1m",
+            "underline": "[4m",
+        }
+
+    def color(self, color: str):
+        """bash shell color code"""
+        color_code = self.colors[color] if color in self.colors else color
+        return f"\033{color_code}"
 
 
 transtable = str.maketrans(
@@ -53,5 +61,4 @@ def coalesce_in_dict(source: dict, key: str, default: Any) -> Any:
     """
     if key in source:
         return source[key]
-    else:
-        return default
+    return default

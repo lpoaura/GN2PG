@@ -13,8 +13,6 @@ graft tests
 global-exclude *.pyc
 
 # Setup-related things
-include pavement.py
-include requirements-dev.txt
+include pyproject.toml
 include requirements.txt
-include setup.py
 include tox.ini

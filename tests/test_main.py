@@ -33,6 +33,6 @@ class TestMain(object):
             main(["GeoNature 2 PostgreSQL Client application", versionarg])
         out, err = capsys.readouterr()
         # Should pr"int out version.
-        assert all(elm in out for elm in [metadata.project, metadata.version])
+        assert all(elm in out for elm in [metadata.PROJECT, metadata.VERSION])
         # Should exit with zero return code.
         assert exc_info.value.code == 0
