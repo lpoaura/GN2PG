@@ -16,7 +16,7 @@ Exceptions:
 import json
 import logging
 import math
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urlencode
 
 import requests
@@ -38,7 +38,13 @@ class BaseAPI:
     """Top class, not for direct use.
     Provides internal and template methods to use GeoNature API."""
 
-    def __init__(self, config, controler, max_retry=None, max_requests=None):
+    def __init__(
+        self,
+        config,
+        controler,
+        max_retry: Optional[int] = None,
+        max_requests: Optional[int] = None,
+    ):
         self._config = config
         if max_retry is None:
             max_retry = config.max_retry
@@ -127,11 +133,11 @@ class BaseAPI:
         return self._http_status
 
     @property
-    def controler(self) -> str:
+    def controler(self) -> Optional[str]:
         """Return the controler name."""
         return self._ctrl
 
-    def _url(self, kind: str = "data", params: dict = None) -> str:
+    def _url(self, kind: str = "data", params: Optional[dict] = None) -> Optional[str]:
         """Generate export API URL with QueryStrings if params.
 
         Args:
@@ -155,7 +161,7 @@ class BaseAPI:
         self,
         params: dict,
         kind: str = "data",
-    ) -> Optional[list]:
+    ) -> Optional[List[str]]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
 
         Args:
@@ -221,5 +227,5 @@ class BaseAPI:
 class DataAPI(BaseAPI):
     """Data API"""
 
-    def __init__(self, config, max_retry=None, max_requests=None):
+    def __init__(self, config, max_retry: int = None, max_requests: int = None):
         super().__init__(config, "data", max_retry, max_requests)

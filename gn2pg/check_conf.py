@@ -5,6 +5,7 @@
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
+from typing import Optional as TypeOptional
 
 from schema import Optional, Schema
 from toml import load
@@ -76,7 +77,7 @@ class Db:
     user: str
     password: str
     name: str
-    port: str = 5432
+    port: int = 5432
     schema_import: str = "gn2pg_import"
     querystring: dict = field(default_factory=dict)
 
@@ -93,7 +94,7 @@ class Source:
     data_type: str
     id_application: int = 3
     enable: bool = True
-    last_action_date: str = None
+    last_action_date: TypeOptional[str] = None
     query_strings: dict = field(default_factory=dict)
 
 
@@ -113,7 +114,7 @@ class Tuning:
 class Gn2PgSourceConf:
     """Source conf generator"""
 
-    def __init__(self, source: str, config: _ConfType) -> None:
+    def __init__(self, source: int, config: _ConfType) -> None:
         self._selected_source = source
         try:
             # Source configs
@@ -164,7 +165,7 @@ class Gn2PgSourceConf:
             raise
 
     @property
-    def source(self) -> str:
+    def source(self) -> int:
         """Return source list position, used to identify source configuration in config file.
 
         Returns:
