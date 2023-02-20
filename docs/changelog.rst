@@ -1,6 +1,24 @@
 CHANGELOG
 =========
 
+
+version 1.4.1-dev
++++++++++++++++++
+
+
+
+version 1.4.0
++++++++++++++
+
+* Optimization and code factorization (#27 / #29)
+* Add automatic tests (#29)
+* Improve performances with parallelization of API calls with multithreading (#27 / #30)
+* Fix missing custom query strings on updates
+* Update base image version in Docker
+* Update dependencies
+
+With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
+
 version 1.3.0
 +++++++++++++
 

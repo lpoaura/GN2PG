@@ -36,6 +36,14 @@ gn2pg.env module
    :undoc-members:
    :show-inheritance:
 
+gn2pg.helpers module
+--------------------
+
+.. automodule:: gn2pg.helpers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 gn2pg.main module
 -----------------
 
