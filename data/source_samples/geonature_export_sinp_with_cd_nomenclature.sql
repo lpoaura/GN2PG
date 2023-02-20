@@ -69,7 +69,7 @@ SELECT DISTINCT s.id_synthese,
                 n16.cd_nomenclature                              AS floutage_dee,
                 n17.cd_nomenclature                              AS statut_source,
                 n18.cd_nomenclature                              AS type_info_geo,
-                n19.cd_nomenclature                              AS methode_determination
+                n19.cd_nomenclature                              AS methode_determination,
                 n20.cd_nomenclature                              AS statut_validation
 FROM gn_synthese.synthese s
          LEFT JOIN gn_synthese.cor_area_synthese cas ON s.id_synthese = cas.id_synthese
