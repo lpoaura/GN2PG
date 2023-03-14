@@ -50,6 +50,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+pytest-logs.txt
 
 # Translations
 *.mo
@@ -131,3 +132,4 @@ dmypy.json
 #IDE
 .vscode
 .idea
+
