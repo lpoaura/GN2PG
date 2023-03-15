@@ -12,11 +12,11 @@ def pytest_addoption(parser):
     parser.addoption("--export-id", action="store", default=1)
     parser.addoption("--nb-threads", action="store", default=1)
 
+
 pytest_plugins = [
     "tests.fixtures.api",
     "tests.fixtures.check_conf",
     "tests.fixtures.db",
     "tests.fixtures.download",
     "tests.fixtures.store_postgresql",
-    "tests.fixtures.models"
 ]
