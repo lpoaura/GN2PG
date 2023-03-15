@@ -10,8 +10,10 @@ class ReadOnlyView(ModelView):
 class DownloadView(ReadOnlyView):
     column_list = ("source", "controler", "download_ts", "error_count", "http_status")
 
+
 class IncrementView(ReadOnlyView):
     column_list = ("source", "controler", "last_ts")
 
+
 class ErrorView(ReadOnlyView):
-    column_list = ("source","id_data", "controler", "last_ts", "item", "error")
+    column_list = ("source", "id_data", "controler", "last_ts", "item", "error")

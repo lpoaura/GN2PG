@@ -27,7 +27,7 @@ class AppConfig:
     DB_PORT: int
     DB_USER: str
     DB_PASSWORD: str
-    URL_APPLICATION: str = "/GN2PG"
+    APPLICATION_ROOT: str = "/gn2pg"
 
     """
     Map environment variables to class fields according to these rules:
