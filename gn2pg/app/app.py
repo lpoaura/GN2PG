@@ -9,7 +9,7 @@ from gn2pg.app.models import DownloadLog, ErrorLog, IncrementLog
 
 
 def create_app(config=Config):
-    app = Flask(__name__)
+    app = Flask(__name__,static_url_path=config.APPLICATION_ROOT)
     app.config.from_object(config)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_host=1)
     db.init_app(app)

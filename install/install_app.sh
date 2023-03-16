@@ -42,6 +42,7 @@ export GUNICORN_WORKERS_TO_SET=$GUNICORN_WORKERS
 export GUNICORN_PORT_TO_SET=$GUNICORN_PORT
 export GUNICORN_TIMEOUT_TO_SET=$GUNICORN_TIMEOUT
 export APPLICATION_ROOT_TO_SET=$APPLICATION_ROOT
+export SERVER_NAME_TO_SET=$SERVER_NAME
 write_log "Configuration systemd"
 # Configuration systemd
 cd $DIR_CONFIG
@@ -56,8 +57,21 @@ envsubst '${USER}' < log_rotate | sudo tee /etc/logrotate.d/gn2pg
 
 # Configuration apache
 envsubst '${APPLICATION_ROOT_TO_SET} ${GUNICORN_PORT_TO_SET}' < gn2pg_apache.conf | sudo tee /etc/apache2/conf-available/gn2pg.conf || exit 1
+
+echo "Souhaitez vous crééer un nouveau virtualhost avec un domaine que vous avez choisi ou vous avez déjà un nom de domaine existant ? "
+read -p "Appuyer sur 'N' ou 'n' pour ne pas ajouter de virtualHost. Appuyer sur 'Y' ou 'y' pour continuer et ajouter un nouveau virtualhost avec le SERVER_NAME : '$SERVER_NAME' , choisi en config " choice
+
+if [ "$choice" = 'y' ] || [ "$choice" = 'Y' ]; then
+    echo "Creation du fichier /etc/apache2/site-available/gn2pg.conf "
+    envsubst '${SERVER_NAME_TO_SET}' < gn2pg_virtualhost.conf | sudo tee /etc/apache2/site-available/gn2pg.conf || exit 1
+fi
+
 sudo a2enmod proxy || exit 1
 sudo a2enmod proxy_http || exit 1
 # you may need to restart apache2 if proxy & proxy_http was not already enabled
 
-echo "Vous pouvez maintenant démarrer gn2pg avec la commande : sudo systemctl start gn2pg"
+
+echo "Vous pouvez maintenant : "
+echo "- démarrer gn2pg avec la commande : sudo systemctl start gn2pg"
+echo "- activer les conf avec la commande : sudo a2enconf gn2pg"
+echo "- activer les conf virtualhost avec la commande : sudo a2ensite gn2pg (si vous avez choisi d'ajouter cette config)"
