@@ -21,6 +21,7 @@ def create_app(config=Config):
         index_view=AdminIndexView(
             name="Home", endpoint="gn2pg", url=url_base, template="index.html"
         ),
+        template_mode="bootstrap4",
     )
     admin.add_view(DownloadView(DownloadLog, db.session))
     admin.add_view(IncrementView(IncrementLog, db.session))
