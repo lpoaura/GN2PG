@@ -1,0 +1,95 @@
+Dashboard
+=========
+
+Presentaiton
+############
+
+This is the documentation to install dashboard for the gn2pg_cli. 
+This dashboard allow the user to get readonly view for the table generate with 
+``gn2pg_cli --json-tables-create <myconfigfile>``
+
+Here are some pictures of dashboarg gn2pg :
+
+.. image:: ./_static/home_gn2pg_dashboard.png
+    :align: center
+    :alt: Dashboard_Home
+
+
+.. image:: ./_static/src_gn2pg_dashboard.png
+    :align: center
+    :alt: Dashboard_gn2pg_downloag_log
+
+
+Installation
+############
+
+
+If you want to install the dashboard , follow those instructions :
+
+1. Config settings.ini
+~~~~~~~~~~~~~~~~~~~~~~
+
+First you must have follow all steps of documentation to use ``gn2pg_cli``
+in the documentation file at the root of gn2pg ``README.rst``.
+Indeed the dashboard uses information given in your ``~/.gn2pg/config.toml``
+
+* File ``~/.gn2pg/config.toml``
+  
+        .. code-block:: TOML
+
+            # GN2PG configuration file
+
+            # Local db configuration
+            [db]
+            db_host = "localhost"
+            db_port = 5432
+            db_user = "<dbUser>"
+            db_password = "<dbPassword>"
+            db_name = "<dbName>"
+            db_schema_import = "schema"
+
+After that you have to fill create and fill the file : ``setting.ini`` based on the example file ``settings.ini.sample``
+You will find this file at : ``install/settings.ini.sample``
+
+* File ``install/settings.ini.sample``
+
+        .. code-block:: TOML
+
+                GN2PG_CONFIG_NAME=gn2pgconfig
+                APPLICATION_ROOT=/gn2pg
+                SERVER_NAME=localhost
+                SECRET_KEY=default-secret-key-to-change-with-strong-one
+                GUNICORN_WORKERS=4
+                GUNICORN_TIMEOUT=30
+                GUNICORN_PORT=5001
+
+
+
+2.a Installation for production
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Go to into the ``install`` folder and then execute script  :
+
+1. ``./01_set_config_htaccess.sh``
+   
+This script allow you to create user and password to protect the access to dashboard url
+
+2. ``./02_install_app.sh``
+
+This script add necessary package and create ``/etc/systemd/system/gn2pg.service`` and apache files 
+either with new virtualhost ``etc/apache2/sites-available/gn2pg.conf`` or only config ``/etc/apache2/conf-available/gn2pg.conf``
+
+2.b Installation for development
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Execute those line from the root of folder gn2pg. 
+
+.. code-block:: bash
+
+    source /venv/bin/activate
+    poetry install --only dashboard
+    cd gn2pg
+    flask run
+
+
+Finally and go to the url according to your ``settings.ini`` (default : ``http://127.0.0.1:5001/gn2pg``)

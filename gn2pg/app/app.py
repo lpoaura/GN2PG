@@ -3,13 +3,13 @@ from flask_admin import Admin, AdminIndexView
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from gn2pg.app.admin_views import DownloadView, ErrorView, IncrementView
-from gn2pg.app.config import Config
+from gn2pg.app.config import FlaskConfig
 from gn2pg.app.database import db
 from gn2pg.app.models import DownloadLog, ErrorLog, IncrementLog
 
 
-def create_app(config=Config):
-    app = Flask(__name__,static_url_path=config.APPLICATION_ROOT)
+def create_app(config=FlaskConfig):
+    app = Flask(__name__, static_url_path=config.APPLICATION_ROOT)
     app.config.from_object(config)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_host=1)
     db.init_app(app)

@@ -1,7 +1,3 @@
-from tests.fixtures.app import *
-from tests.fixtures.app import  _session,app
-
-
 def pytest_addoption(parser):
     parser.addoption("--user", action="store", default="default user")
     parser.addoption("--password", action="store", default="default password")
@@ -19,6 +15,5 @@ pytest_plugins = [
     "tests.fixtures.check_conf",
     "tests.fixtures.db",
     "tests.fixtures.download",
-    "tests.fixtures.store_postgresql",
-    "tests.fixtures.models"
+    "tests.fixtures.store_postgresql"
 ]
