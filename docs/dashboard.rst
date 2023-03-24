@@ -1,7 +1,7 @@
 Dashboard
 =========
 
-Presentaiton
+Presentation
 ############
 
 This is the documentation to install dashboard for the gn2pg_cli. 
@@ -24,7 +24,7 @@ Installation
 ############
 
 
-If you want to install the dashboard , follow those instructions :
+If you want to install the dashboard , follow these instructions:
 
 1. Config settings.ini
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -48,7 +48,7 @@ Indeed the dashboard uses information given in your ``~/.gn2pg/config.toml``
             db_name = "<dbName>"
             db_schema_import = "schema"
 
-After that you have to fill create and fill the file : ``setting.ini`` based on the example file ``settings.ini.sample``
+After that you have to create and fill the file : ``setting.ini`` based on the example file ``settings.ini.sample``
 You will find this file at : ``install/settings.ini.sample``
 
 * File ``install/settings.ini.sample``
@@ -68,7 +68,7 @@ You will find this file at : ``install/settings.ini.sample``
 2.a Installation for production
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Go to into the ``install`` folder and then execute script  :
+Go into the ``install`` folder and then execute script:
 
 1. ``./01_set_config_htaccess.sh``
    
@@ -82,7 +82,7 @@ either with new virtualhost ``etc/apache2/sites-available/gn2pg.conf`` or only c
 2.b Installation for development
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Execute those line from the root of folder gn2pg. 
+Execute these lines from the root of folder gn2pg. 
 
 .. code-block:: bash
 
@@ -92,4 +92,4 @@ Execute those line from the root of folder gn2pg.
     flask run
 
 
-Finally and go to the url according to your ``settings.ini`` (default : ``http://127.0.0.1:5001/gn2pg``)
+Finally go to the url according to your ``settings.ini`` (default : ``http://127.0.0.1:5001/gn2pg``)

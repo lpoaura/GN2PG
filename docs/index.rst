@@ -34,6 +34,7 @@ Contents
    process
    modules
    changelog
+   dashboard
 
 
 .. only:: html
