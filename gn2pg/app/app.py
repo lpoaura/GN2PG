@@ -6,6 +6,7 @@ from gn2pg.app.admin_views import DownloadView, ErrorView, IncrementView
 from gn2pg.app.config import FlaskConfig
 from gn2pg.app.database import db
 from gn2pg.app.models import DownloadLog, ErrorLog, IncrementLog
+from gn2pg.app.env import _
 
 
 def create_app(config=FlaskConfig):
@@ -19,7 +20,7 @@ def create_app(config=FlaskConfig):
         app,
         name="GN2PG",
         index_view=AdminIndexView(
-            name="Home", endpoint="gn2pg", url=url_base, template="index.html"
+            name=_("Home"), endpoint="gn2pg", url=url_base, template="index.html"
         ),
         template_mode="bootstrap4",
     )
