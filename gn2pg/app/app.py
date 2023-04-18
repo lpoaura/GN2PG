@@ -24,9 +24,9 @@ def create_app(config=FlaskConfig):
         ),
         template_mode="bootstrap4",
     )
-    admin.add_view(DownloadView(DownloadLog, db.session))
-    admin.add_view(IncrementView(IncrementLog, db.session))
-    admin.add_view(ErrorView(ErrorLog, db.session))
+    admin.add_view(DownloadView(DownloadLog, db.session, name=_('Full downloads')))
+    admin.add_view(IncrementView(IncrementLog, db.session, name=_('Incremental downloads')))
+    admin.add_view(ErrorView(ErrorLog, db.session, name=_('Error logs')))
 
     return app
 

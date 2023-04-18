@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2023-02-07 21:56+0100\n"
+"POT-Creation-Date: 2023-04-18 22:47+0200\n"
 "PO-Revision-Date: 2023-02-07 21:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -16,13 +16,17 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.0.1\n"
 
-#: gn2pg/api.py:51
+#: gn2pg/api.py:57
 msgid "controler is %s"
 msgstr "Le controlleur est %s"
 
-#: gn2pg/api.py:96
+#: gn2pg/api.py:98
 msgid "Modules API status code is %s for url %s"
 msgstr "Le code d'état de l'API des modules est %s pour l'url %s"
+
+#: gn2pg/api.py:107
+msgid "Export api path is %s"
+msgstr ""
 
 #: gn2pg/api.py:111
 msgid "Get GeoNature modules failed with status code %s, cause: %s"
@@ -30,32 +34,40 @@ msgstr ""
 "La récupération des modules GeoNature a échoué avec le code d'état %s, "
 "cause : %s"
 
-#: gn2pg/api.py:119
+#: gn2pg/api.py:117
 msgid "Find export module failed, %s"
 msgstr "La recherche du module d'exportation a échoué, %s"
 
-#: gn2pg/api.py:186
+#: gn2pg/api.py:184
 msgid "Defining page_list from %s with status code %s"
 msgstr "Définition de la page_list à partir de %s avec le code d'état %s"
 
-#: gn2pg/api.py:196
+#: gn2pg/api.py:194
 msgid "API %s contains %s data in %s page(s)"
 msgstr "API %s contient %s données dans %s page(s)"
 
-#: gn2pg/api.py:208
+#: gn2pg/api.py:202
 #, fuzzy
 msgid "No data available from from %s"
 msgstr "Aucune donnée disponible à partir de %s"
 
-#: gn2pg/api.py:222
+#: gn2pg/api.py:216
 msgid "Download page %s"
 msgstr "Téléchargement de la page %s"
 
-#: gn2pg/api.py:228
+#: gn2pg/api.py:222
 msgid "Download data from %s failed"
 msgstr "Le téléchargement des données depuis %s a échoué"
 
-#: gn2pg/check_conf.py:173
+#: gn2pg/app/app.py:23
+msgid "Home"
+msgstr "Accueil"
+
+#: gn2pg/app/config.py:28
+msgid "%s file doesn't exist. Check the filename at the path %s"
+msgstr "Le fichier %s n'existe pas. Vérifier le nom du fichier du chemin %s"
+
+#: gn2pg/check_conf.py:164
 msgid "Error creating %s configuration"
 msgstr "Erreur durant la création de la configuration %s"
 
@@ -79,28 +91,32 @@ msgstr "L'identifiant de la source  \"%s\" sera \"%s\""
 msgid "Source #%s named \"%s\" (->%s) already used by another source"
 msgstr "Le nom de source #%s nommée \"%s\" (->%s) est déjà utilisé"
 
-#: gn2pg/check_conf.py:392
+#: gn2pg/check_conf.py:389
 msgid "Settings for %s are : %s"
 msgstr "Les paramètres de %s sont : %s"
 
-#: gn2pg/download.py:200
+#: gn2pg/download.py:157
+#, fuzzy
+msgid "No new deleted data from %s %s"
+msgstr "Pas de nouvelles données supprimées depuis %s %s"
+
+#: gn2pg/download.py:191
 msgid "Getting items from controler %s"
 msgstr "Récupération des éléments du contrôleur %s"
 
-#: gn2pg/download.py:204 gn2pg/download.py:250
+#: gn2pg/download.py:194 gn2pg/download.py:235
 msgid "QueryStrings %s"
 msgstr "Chaînes de requête %s"
 
-#: gn2pg/download.py:232
+#: gn2pg/download.py:217
 msgid "Updating items from controler %s"
 msgstr "Mise à jour des éléments du contrôleur %s"
 
-#: gn2pg/download.py:253
+#: gn2pg/download.py:238
 msgid "Getting new or update data from source %s since %s"
-msgstr ""
-"Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
+msgstr "Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
 
-#: gn2pg/download.py:271
+#: gn2pg/download.py:254
 msgid "Preparing data delete from source %s since %s"
 msgstr "Préparation de la suppression des données de la source %s depuis %s"
 
@@ -112,72 +128,72 @@ msgstr "Dossier de configuration %s créée"
 msgid "%s file already exists"
 msgstr "Le fichier %s existe déjà"
 
-#: gn2pg/helpers.py:44
+#: gn2pg/helpers.py:48
 msgid "File %s will be preserved"
 msgstr "Le fichier %s sera conservé"
 
-#: gn2pg/helpers.py:47
+#: gn2pg/helpers.py:51
 msgid "file %s will be overwritten"
 msgstr "Le fichier %s sera remplacé"
 
-#: gn2pg/helpers.py:49
+#: gn2pg/helpers.py:52
 #, fuzzy
 msgid "Creating TOML configuration file %s, from %s"
 msgstr "Chargement de la configuration TOML %s"
 
-#: gn2pg/helpers.py:52
+#: gn2pg/helpers.py:54
 msgid "Please edit %s before running the script"
 msgstr "Veuillez éditer %s avant d'éxécuter une autre action"
 
-#: gn2pg/helpers.py:73
+#: gn2pg/helpers.py:75
 msgid "%s => Starting download using controler %s"
 msgstr "%s => Démarrage du téléchargement à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:79
+#: gn2pg/helpers.py:81
 msgid "%s => Ending download using controler %s"
 msgstr "%s => Fin du téléchargement en utilisant le contrôleur %s"
 
-#: gn2pg/helpers.py:91 gn2pg/helpers.py:133
+#: gn2pg/helpers.py:93 gn2pg/helpers.py:134
 msgid "Defining full download jobs"
 msgstr "Définition des tâches de téléchargement complet"
 
-#: gn2pg/helpers.py:94
+#: gn2pg/helpers.py:96
 msgid "Starting full download for source %s"
 msgstr "Démarrage du téléchargement complet de la source %s"
 
-#: gn2pg/helpers.py:98 gn2pg/helpers.py:139
+#: gn2pg/helpers.py:99 gn2pg/helpers.py:140
 msgid "Source %s is disabled"
 msgstr "La source %s est désactivée"
 
-#: gn2pg/helpers.py:108
+#: gn2pg/helpers.py:109
 msgid "config source name %s"
 msgstr "Le nom de la source de configuration est %s"
 
-#: gn2pg/helpers.py:109
+#: gn2pg/helpers.py:110
 msgid "controler %s"
 msgstr "Controlleur %s"
 
-#: gn2pg/helpers.py:113
+#: gn2pg/helpers.py:114
 msgid "%s => Starting updating using controler %s"
 msgstr "%s => Démarrage de la mise à jour à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:119
+#: gn2pg/helpers.py:120
 msgid "%s => Ending updating using controler %s"
 msgstr "%s => Fin de la mise à jour à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:136
+#: gn2pg/helpers.py:137
 msgid "Starting update download for source %s"
 msgstr "Démarrage du téléchargement de la mise à jour pour la source %s"
 
-#: gn2pg/main.py:37
+#: gn2pg/main.py:39
 msgid "Print version number"
 msgstr "Affichage du numéro de version"
 
-#: gn2pg/main.py:45
+#: gn2pg/main.py:47
 msgid "Increase output verbosity"
 msgstr "Augmenter la verbosité de la sortie"
 
-#: gn2pg/main.py:49
+#: gn2pg/main.py:50
 msgid "Reduce output verbosity"
 msgstr "Réduire la verbosité de la sortie"
 
@@ -204,112 +220,133 @@ msgstr ""
 "        Vous pouvez également utiliser votre propre script en utilisant le "
 "chemin de fichier absolu à la place de \"to_gnsynthese\""
 
-#: gn2pg/main.py:77
+#: gn2pg/main.py:76
 msgid "Perform a full download"
 msgstr "Effectuer un téléchargement complet"
 
-#: gn2pg/main.py:81
+#: gn2pg/main.py:79
 msgid "Perform an incremental download"
 msgstr "Effectuer un téléchargement incrémentiel"
 
-#: gn2pg/main.py:139
+#: gn2pg/main.py:138
 msgid "%s, version %s"
 msgstr "%s, version %s"
 
-#: gn2pg/main.py:145
+#: gn2pg/main.py:144
 #, fuzzy
 msgid "Creating TOML configuration file"
 msgstr "Chargement de la configuration TOML %s"
 
-#: gn2pg/main.py:151
+#: gn2pg/main.py:150
 #, fuzzy
 msgid "Editing TOML configuration file"
 msgstr "Chargement de la configuration TOML %s"
 
-#: gn2pg/main.py:158
+#: gn2pg/main.py:156
 #, fuzzy
 msgid "Configuration file %s does not exist"
 msgstr "Le fichier %s n'existe pas"
 
-#: gn2pg/main.py:161
+#: gn2pg/main.py:158
 #, fuzzy
 msgid "Getting configuration data from %s"
 msgstr "Chargement de la configuration TOML %s"
 
-#: gn2pg/main.py:166
+#: gn2pg/main.py:162
 #, fuzzy
 msgid "Incorrect content in TOML configuration %s"
 msgstr "Contenu incorrect dans la configuration YAML %s : %s"
 
-#: gn2pg/main.py:172
+#: gn2pg/main.py:167
 msgid "config file have {len(cfg_source_list)} source(s) wich are : %s"
 msgstr ""
 
-#: gn2pg/main.py:179
+#: gn2pg/main.py:174
 #, fuzzy
 msgid "Create, if not exists, json tables"
 msgstr "Créer ou recréer des tables json"
 
-#: gn2pg/main.py:183
+#: gn2pg/main.py:178
 msgid "Execute custom script %s on db"
 msgstr "Exécution du script personnalisé %s sur la base de données"
 
-#: gn2pg/main.py:187
+#: gn2pg/main.py:182
 #, fuzzy
 msgid "Perform full action"
 msgstr "Effectuer un téléchargement complet"
 
-#: gn2pg/main.py:191
+#: gn2pg/main.py:186
 msgid "Perform update action"
 msgstr "Effectuer une action de mise à jour"
 
-#: gn2pg/store_postgresql.py:223
+#: gn2pg/store_postgresql.py:205
 #, fuzzy
 msgid "Connecting to %s database, to finalize creation"
 msgstr "Connexion à la base de données %s"
 
-#: gn2pg/store_postgresql.py:236 gn2pg/store_postgresql.py:247
+#: gn2pg/store_postgresql.py:218 gn2pg/store_postgresql.py:229
 msgid "Execute: %s"
 msgstr "Exécuter: %s"
 
-#: gn2pg/store_postgresql.py:252
+#: gn2pg/store_postgresql.py:233
 msgid "Schema %s owned by %s successfully created"
 msgstr "Le schéma %s appartenant à %s a été créé avec succès."
 
-#: gn2pg/store_postgresql.py:259
+#: gn2pg/store_postgresql.py:240
 msgid "Failed to create %s schema"
 msgstr "Échec de la création du schéma %s"
 
-#: gn2pg/store_postgresql.py:287
+#: gn2pg/store_postgresql.py:265
 msgid "Counting datas in database for all sources"
 msgstr "Comptage des données dans la base de données pour toutes les sources"
 
-#: gn2pg/store_postgresql.py:289 gn2pg/store_postgresql.py:361
+#: gn2pg/store_postgresql.py:267
 msgid "Connecting to database %s"
 msgstr "Connexion à la base de données %s"
 
-#: gn2pg/store_postgresql.py:312
+#: gn2pg/store_postgresql.py:287
 msgid "Start to execute %s script"
 msgstr "Lancement de l'exécution du script %s"
 
-#: gn2pg/store_postgresql.py:321
+#: gn2pg/store_postgresql.py:292
 msgid "You choosed to use internal to_gnsynthese.sql script in schema %s"
 msgstr ""
 "Vous avez choisi d'utiliser le script interne to_gnsynthese.sql dans le "
 "schéma %s"
 
-#: gn2pg/store_postgresql.py:328
+#: gn2pg/store_postgresql.py:297
 msgid "file %s exists, continue"
 msgstr "le fichier %s existe, continuer"
 
-#: gn2pg/store_postgresql.py:331
+#: gn2pg/store_postgresql.py:300
 msgid "file %s DO NOT EXISTS, exit"
 msgstr "le fichier %s N'EXISTE PAS, quitter"
 
-#: gn2pg/store_postgresql.py:344
+#: gn2pg/store_postgresql.py:310
 msgid "script %s successfully applied"
 msgstr "script %s appliqué avec succès"
 
-#: gn2pg/store_postgresql.py:386
+#: gn2pg/store_postgresql.py:342
 msgid "Entry into StorePostgresql"
 msgstr "Entrée dans StorePostgresql"
+
+#: gn2pg/store_postgresql.py:393
+msgid ""
+"One error occured for data from source %s with %s = %s. Error message is %s"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:431
+#, fuzzy
+msgid "One error occurred for data from source %s with %s = %s"
+msgstr ""
+"Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
+
+#: gn2pg/store_postgresql.py:437
+msgid ""
+"%s items have been stored in db from %s of source %s (%s error occurred)"
+msgstr ""
+
+#: gn2pg/store_postgresql.py:469
+#, fuzzy
+msgid "Deleting item with id %s from source %s (controler %s)"
+msgstr "Récupération des éléments du contrôleur %s"
