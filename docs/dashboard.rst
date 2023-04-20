@@ -31,13 +31,13 @@ If you want to install the dashboard , follow these instructions:
 1. Copy locally project source code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Get locally the latest release from GitHub repo, e.g. for version 1.4.0.
+Get locally the latest release from GitHub repo, e.g. for version 1.5.0.
 
 .. code-block:: bash
 
-    wget https://github.com/lpoaura/GN2PG/archive/refs/tags/v1.4.0.tar.gz
-    tar xzf v1.4.0.tar.gz
-    mv GN2PG-1.4.0/ gn2pg
+    wget https://github.com/lpoaura/GN2PG/archive/refs/tags/v1.5.0.tar.gz
+    tar xzf v1.5.0.tar.gz
+    mv GN2PG-1.5.0/ gn2pg
 
 
 2. Config settings.ini

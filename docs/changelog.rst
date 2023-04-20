@@ -2,10 +2,12 @@ CHANGELOG
 =========
 
 
-version 1.4.1-dev
-+++++++++++++++++
+version 1.5.0
++++++++++++++
 
++ New web dashboard using flask-admin (#39)
 
+With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
 
 version 1.4.0
 +++++++++++++
