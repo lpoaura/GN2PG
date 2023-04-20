@@ -136,3 +136,7 @@ dmypy.json
 .vscode
 .idea
 
+# SonarQube files
+.scannerwork
+sonar-project.properties
+
