@@ -1,5 +1,5 @@
 """
-GN2GG global settings file
+GN2PG global settings file
 """
 import logging
 import logging.config
@@ -12,12 +12,13 @@ from decouple import Config, RepositoryEnv
 from gn2pg import _
 from gn2pg.app.env import SETTINGS_FILE
 from gn2pg.env import ENVDIR
-
+from gn2pg.check_conf import Gn2PgConf
 logger = logging.getLogger(__name__)
 
 
+
 # SETTINGS.INI
-settings_config = Config(RepositoryEnv(SETTINGS_FILE))
+# settings_config = Config(RepositoryEnv(SETTINGS_FILE))
 
 # SETTINGS for config.toml in order to get [DB] settings
 config_toml_file = settings_config("GN2PG_CONFIG_NAME")

@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """Main cli functions"""
 
-
+import time
+import subprocess
 import logging
 import logging.config
 import shutil
@@ -21,6 +22,12 @@ from gn2pg.utils import BColors
 logger = logging.getLogger(__name__)
 
 sh_col = BColors()
+
+
+def monitor_gunicorn(gunicorn_master_proc):
+    # These run forever until SIG{INT, TERM, KILL, ...} signal is sent
+    while True:
+        time.sleep(1)
 
 
 def init(file: str) -> None:
@@ -138,3 +145,37 @@ def update(cfg_ctrl):
             update_1source(Data, cfg)
         else:
             logger.info(_("Source %s is disabled"), source)
+
+
+def dashboard(cfg_ctrl):
+    """sumary_line
+    
+    Keyword arguments:
+    argument -- description
+    Return: return_description
+    """
+    logger.info(cfg_ctrl._config.keys())
+    try:
+        import flask
+    except ImportError:
+        logger.error(
+            _(
+                """You need to install first dashboard extra packages using command: 
+        pip install gn2pg_cli[dashboard]"""
+            )
+        )
+
+    logger.info(_("Run webserver"))
+    run_args = [
+        "gunicorn",
+        "-w",
+        str(cfg_ctrl._dashboard.gunicorn_workers),
+        "-t",
+        str(cfg_ctrl._dashboard.gunicorn_timeout),
+        # '-b', 'localhost' + ':' + str(5005),
+        "-n",
+        "gn2pg-dashboard",
+        "gn2pg.app.app:create_app()",
+    ]
+    gunicorn_master_proc = subprocess.Popen(run_args)
+    monitor_gunicorn(gunicorn_master_proc)

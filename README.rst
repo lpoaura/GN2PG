@@ -36,6 +36,12 @@ GN2PG Client can be installed by running ``pip``. It requires Python 3.7.4 or ab
     pip install gn2pg-client
 
 
+If you want web dashboard:
+
+.. code-block:: bash
+    pip install gn2pg-client[dashboard]
+
+
 Issues
 ======
 
@@ -156,6 +162,15 @@ To automate the launching of updates, you can write the cron task using the foll
 
     */30 * * * * /usr/bin/env bash -c "source <path to python environment>/bin/activate && gn2pg_cli --update <myconfigfile>" > /dev/null 2>&1
 
+
+Dashboard web server
+####################
+
+To run dashboard webserver, run:
+
+.. code-block:: bash
+
+    gn2pg_cli --dashboard <myconfigfile>
 
 Debug mode
 ############

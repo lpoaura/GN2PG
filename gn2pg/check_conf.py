@@ -42,6 +42,13 @@ _ConfSchema = Schema(
             "db_schema_import": str,
             Optional("db_querystring"): dict,
         },
+        Optional("dashboard"): {
+            Optional("application_root"): str,
+            Optional("server_name"): str,
+            Optional("gunicorn_workers"): int,
+            Optional("gunicorn_timeout"): int,
+            Optional("gunicorn_port"): int,
+        },
         "source": [
             {
                 "name": str,
@@ -80,6 +87,17 @@ class Db:
     port: int = 5432
     schema_import: str = "gn2pg_import"
     querystring: dict = field(default_factory=dict)
+
+
+@dataclass
+class Dashboard:
+    """Dashboard settings"""
+
+    application_root: str = "/gn2pg"
+    server_name: str = "localhost"
+    gunicorn_workers: int = 4
+    gunicorn_timeout: int = 30
+    gunicorn_port: int = 5001
 
 
 @dataclass
@@ -148,6 +166,7 @@ class Gn2PgSourceConf:
                 schema_import=config["db"]["db_schema_import"],
                 querystring=coalesce_in_dict(config["db"], "db_querystring", {}),
             )  # type: Db
+
             if "tuning" in config:
                 tuning = config["tuning"]
                 self._tuning = Tuning(
@@ -391,6 +410,16 @@ class Gn2PgConf:
                 self._source_list[source_name].__dict__,
             )
             i += 1
+        if True:
+            # if "dashboard" in config:
+            # dashboard = config["dashboard"]
+            self._dashboard = Dashboard(
+                application_root="/gn2pg",
+                server_name="localhost",
+                gunicorn_workers=4,
+                gunicorn_timeout=30,
+                gunicorn_port=5001,
+            )
 
     @property
     def version(self) -> str:
@@ -401,3 +430,23 @@ class Gn2PgConf:
     def source_list(self) -> _ConfType:
         """Return list of site configurations."""
         return self._source_list
+
+    @property
+    def application_root(self) -> str:
+        return self._dashboard.application_root
+
+    @property
+    def server_name(self) -> str:
+        return self._dashboard.server_name
+
+    @property
+    def gunicorn_workers(self) -> str:
+        return self._dashboard.gunicorn_workers
+
+    @property
+    def gunicorn_timeout(self) -> str:
+        return self._dashboard.gunicorn_timeout
+
+    @property
+    def gunicorn_port(self) -> str:
+        return self._dashboard.gunicorn_port

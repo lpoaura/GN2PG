@@ -13,7 +13,7 @@ from toml import TomlDecodeError
 from gn2pg import _, __version__, metadata
 from gn2pg.check_conf import Gn2PgConf
 from gn2pg.env import ENVDIR, LOGDIR
-from gn2pg.helpers import edit, full_download, init, update
+from gn2pg.helpers import edit, full_download, init, update, dashboard
 from gn2pg.store_postgresql import PostgresqlUtils
 from gn2pg.utils import BColors
 
@@ -63,6 +63,7 @@ def arguments(args):
         help=_("Create or recreate json tables"),
         action="store_true",
     )
+
     customscript_group = parser.add_mutually_exclusive_group()
     customscript_group.add_argument(
         "--custom-script",
@@ -79,6 +80,13 @@ def arguments(args):
         help=_("Perform an incremental download"),
         action="store_true",
     )
+    
+    parser.add_argument(
+        "--dashboard",
+        help=_("Run dashboard webserver"),
+        action="store_true",
+    )
+
     parser.add_argument("file", help="Configuration file name")
 
     return parser.parse_args(args)
@@ -185,6 +193,13 @@ def main(args) -> None:
     if args.update:
         logger.info(_("Perform update action"))
         update(cfg_ctrl)
+
+    if args.dashboard:
+        logger.info(_("Run dashboard"))
+        dashboard(cfg_ctrl)
+        
+
+
     return None
 
 
