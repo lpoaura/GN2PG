@@ -167,8 +167,8 @@ Logs
 
 Log files are stored in ``$HOME/.gn2pg/log`` directory.
 
-Import datas into GeoNature datas
-#################################
+Import datas into GeoNature database
+####################################
 
 Default script to auto populate GeoNature is called "to_gnsynthese".
 
@@ -182,6 +182,21 @@ Default script to auto populate GeoNature is called "to_gnsynthese".
     You can also replacing synthese script by your own scripts, using file path instead of ``to_gnsynthese``.
 
 
+Dashboard
+=========
+
+A simple web dashboard can be run following `dashboard docs <./docs/dashboard.rst>`_.
+
+.. image:: ./docs/_static/home_gn2pg_dashboard.png
+    :align: center
+    :alt: Dashboard_Home
+
+
+
+.. image:: ./docs/_static/src_gn2pg_dashboard.png
+    :align: center
+    :alt: Dashboard_gn2pg_downloag_log
+
 Contributing
 ============
 
@@ -193,7 +208,8 @@ Install project and development requirements (require `poetry <https://python-po
 
 .. code-block:: bash
 
-    poetry install
+    poetry install --with=docs --all-extras
+    poetry run pre-commit install
 
 Make your devs and pull requests.
 
