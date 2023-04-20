@@ -1,0 +1,5 @@
+{% extends admin_base_template %}
+{% block head_css %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom_flaks_admin.css') }}">
+{% endblock %}

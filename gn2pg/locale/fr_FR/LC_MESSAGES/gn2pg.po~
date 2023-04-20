@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2023-04-18 23:04+0200\n"
+"POT-Creation-Date: 2023-04-18 22:47+0200\n"
 "PO-Revision-Date: 2023-02-07 21:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -63,20 +63,6 @@ msgstr "Le téléchargement des données depuis %s a échoué"
 msgid "Home"
 msgstr "Accueil"
 
-#: gn2pg/app/app.py:27
-#, fuzzy
-msgid "Full downloads"
-msgstr "Téléchargements complets"
-
-#: gn2pg/app/app.py:28
-#, fuzzy
-msgid "Incremental downloads"
-msgstr "Téléchargements incrémentiels"
-
-#: gn2pg/app/app.py:29
-msgid "Error logs"
-msgstr "Log des erreurs"
-
 #: gn2pg/app/config.py:28
 msgid "%s file doesn't exist. Check the filename at the path %s"
 msgstr "Le fichier %s n'existe pas. Vérifier le nom du fichier du chemin %s"
@@ -128,8 +114,7 @@ msgstr "Mise à jour des éléments du contrôleur %s"
 
 #: gn2pg/download.py:238
 msgid "Getting new or update data from source %s since %s"
-msgstr ""
-"Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
+msgstr "Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
 
 #: gn2pg/download.py:254
 msgid "Preparing data delete from source %s since %s"

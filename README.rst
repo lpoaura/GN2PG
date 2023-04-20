@@ -158,7 +158,7 @@ To automate the launching of updates, you can write the cron task using the foll
 
 
 Debug mode
-############
+##########
 
 Debug mode can be activated using ``--verbose`` CLI argument
 
