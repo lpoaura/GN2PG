@@ -6,6 +6,7 @@ from gn2pg.app.database import db
 
 class DownloadLog(db.Model):
     """Download logs table"""
+
     __tablename__ = "download_log"
     __table_args__ = {"schema": "gn2pg_import"}
     source = db.Column(db.String, nullable=False, index=True, primary_key=True)
@@ -28,6 +29,7 @@ class DownloadLog(db.Model):
 
 class IncrementLog(db.Model):
     """Increment logs table"""
+
     __tablename__ = "increment_log"
     __table_args__ = {"schema": "gn2pg_import"}
     source = db.Column(db.String, nullable=False, index=True, primary_key=True)
@@ -47,6 +49,7 @@ class IncrementLog(db.Model):
 
 class ErrorLog(db.Model):
     """Error logs table"""
+
     __tablename__ = "error_log"
     __table_args__ = {"schema": "gn2pg_import"}
     source = db.Column(db.String, nullable=False, index=True, primary_key=True)

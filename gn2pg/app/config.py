@@ -49,6 +49,7 @@ APPLICATION_ROOT = settings_config("APPLICATION_ROOT", default="/gn2pg")
 
 class AppConfig:
     """App config class"""
+
     ENV: str
     APPLICATION_ROOT: str
     DEBUG: bool

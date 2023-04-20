@@ -4,11 +4,11 @@ from flask import Flask
 from flask_admin import Admin, AdminIndexView
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from gn2pg import _
 from gn2pg.app.admin_views import DownloadView, ErrorView, IncrementView
 from gn2pg.app.config import FlaskConfig
 from gn2pg.app.database import db
 from gn2pg.app.models import DownloadLog, ErrorLog, IncrementLog
-from gn2pg import _
 
 
 def create_app(config=FlaskConfig):

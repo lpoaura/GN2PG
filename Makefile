@@ -15,6 +15,9 @@ flake8:
 black:
 	poetry run black gn2pg
 
+isort:
+	poetry run isort gn2pg
+
 pylint:
 	poetry run pylint gn2pg
 
