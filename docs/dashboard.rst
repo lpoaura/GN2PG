@@ -15,6 +15,8 @@ Here are some pictures of dashboarg gn2pg :
     :alt: Dashboard_Home
 
 
+
+
 .. image:: ./_static/src_gn2pg_dashboard.png
     :align: center
     :alt: Dashboard_gn2pg_downloag_log
@@ -23,45 +25,57 @@ Here are some pictures of dashboarg gn2pg :
 Installation
 ############
 
-
 If you want to install the dashboard , follow these instructions:
 
-1. Config settings.ini
+
+1. Copy locally project source code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Get locally the latest release from GitHub repo, e.g. for version 1.4.0.
+
+.. code-block:: bash
+
+    wget https://github.com/lpoaura/GN2PG/archive/refs/tags/v1.4.0.tar.gz
+    tar xzf v1.4.0.tar.gz
+    mv GN2PG-1.4.0/ gn2pg
+
+
+2. Config settings.ini
 ~~~~~~~~~~~~~~~~~~~~~~
 
 First you must have follow all steps of documentation to use ``gn2pg_cli``
-in the documentation file at the root of gn2pg ``README.rst``.
+in the :ref:`how-to` doc (at least ``gn2pg_cli --init <myconfigfile>`` && ``gn2pg_cli --json-tables-create <myconfigfile>``.
 Indeed the dashboard uses information given in your ``~/.gn2pg/config.toml``
 
 * File ``~/.gn2pg/config.toml``
   
-        .. code-block:: TOML
+    .. code-block:: toml
 
-            # GN2PG configuration file
-
-            # Local db configuration
-            [db]
-            db_host = "localhost"
-            db_port = 5432
-            db_user = "<dbUser>"
-            db_password = "<dbPassword>"
-            db_name = "<dbName>"
-            db_schema_import = "schema"
+        # GN2PG configuration file
+        
+        # Local db configuration
+        [db]
+        db_host = "localhost"
+        db_port = 5432
+        db_user = "<dbUser>"
+        db_password = "<dbPassword>"
+        db_name = "<dbName>"
+        db_schema_import = "schema"
 
 After that you have to create and fill the file : ``setting.ini`` based on the example file ``settings.ini.sample``
 You will find this file at : ``install/settings.ini.sample``
 
 * File ``install/settings.ini.sample``
 
-        .. code-block:: TOML
+    .. code-block:: toml
 
-                GN2PG_CONFIG_NAME=gn2pgconfig
-                APPLICATION_ROOT=/gn2pg
-                SERVER_NAME=localhost
-                SECRET_KEY=default-secret-key-to-change-with-strong-one
-                GUNICORN_WORKERS=4
-                GUNICORN_TIMEOUT=30
-                GUNICORN_PORT=5001
+        GN2PG_CONFIG_NAME=gn2pgconfig
+        APPLICATION_ROOT=/gn2pg
+        SERVER_NAME=localhost
+        SECRET_KEY=default-secret-key-to-change-with-strong-one
+        GUNICORN_WORKERS=4
+        GUNICORN_TIMEOUT=30
+        GUNICORN_PORT=5001
 
 
 
@@ -87,7 +101,7 @@ Execute these lines from the root of folder gn2pg.
 .. code-block:: bash
 
     source /venv/bin/activate
-    poetry install --only dashboard
+    poetry install --extras=dashboard
     cd gn2pg
     flask run
 

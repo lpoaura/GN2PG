@@ -21,13 +21,13 @@ settings_config = Config(RepositoryEnv(SETTINGS_FILE))
 
 # SETTINGS for config.toml in order to get [DB] settings
 config_toml_file = settings_config("GN2PG_CONFIG_NAME")
-toml_dst = str(ENVDIR / config_toml_file)
-if Path(toml_dst).is_file():
+TOML_DST = str(ENVDIR / config_toml_file)
+if Path(TOML_DST).is_file():
     ENVDIR.mkdir(exist_ok=True)
 else:
-    logger.warning(_("%s file doesn't exist. Check the filename at the path %s"), toml_dst, ENVDIR)
+    logger.warning(_("%s file doesn't exist. Check the filename at the path %s"), TOML_DST, ENVDIR)
     sys.exit(0)
-gn2pg_config = toml.load(toml_dst, _dict=dict)["db"]
+gn2pg_config = toml.load(TOML_DST, _dict=dict)["db"]
 
 settings_config = Config(RepositoryEnv(SETTINGS_FILE))
 # SET CONFIG ENV VARIABLE
@@ -48,6 +48,7 @@ APPLICATION_ROOT = settings_config("APPLICATION_ROOT", default="/gn2pg")
 
 
 class AppConfig:
+    """App config class"""
     ENV: str
     APPLICATION_ROOT: str
     DEBUG: bool
@@ -62,6 +63,7 @@ class AppConfig:
         self.set_database_uri()
 
     def set_database_uri(self):
+        """define database uri"""
         DB = self.DATABASE
         self.SQLALCHEMY_DATABASE_URI = f"{DB['ENGINE']}://{DB['USER']}:{DB['PASSWORD']}@{DB['HOST']}:{DB['PORT']}/{DB['NAME']}"
 

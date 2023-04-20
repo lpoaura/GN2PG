@@ -1,3 +1,5 @@
+"""DB path"""
+
 from importlib import import_module
 from os import environ
 

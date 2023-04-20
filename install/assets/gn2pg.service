@@ -14,7 +14,7 @@ Environment=GUNICORN_PORT=${GUNICORN_PORT_TO_SET}
 Environment=GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT_TO_SET}
 Environment=GUNICORN_LOG_FILE=/var/log/gn2pg/%N%I.log
 EnvironmentFile=-${GN2PG_DIR}/environ
-ExecStart=${GN2PG_DIR}/venv/bin/gunicorn gn2pg.app.app:create_app() \
+ExecStart=${GN2PG_DIR}/.venv/bin/gunicorn gn2pg.app.app:create_app() \
                 --name "${GUNICORN_PROC_NAME}" --workers "${GUNICORN_NUM_WORKERS}" \
                 --bind "${GUNICORN_HOST}:${GUNICORN_PORT}" --timeout="${GUNICORN_TIMEOUT}" \
                 --log-file "${GUNICORN_LOG_FILE}"

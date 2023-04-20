@@ -32,6 +32,7 @@ release = metadata.VERSION
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.autosectionlabel",
     # "sphinx.ext.intersphinx",
     # "sphinx.ext.todo",
     # "sphinx.ext.coverage",

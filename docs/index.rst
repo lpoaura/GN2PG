@@ -32,9 +32,10 @@ Contents
 
    howto
    process
+   dashboard
    modules
    changelog
-   dashboard
+
 
 
 .. only:: html

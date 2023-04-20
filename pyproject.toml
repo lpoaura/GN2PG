@@ -1,8 +1,6 @@
 [tool.poetry]
 name = "gn2pg_client"
-packages = [
-    { include = "gn2pg" },
-]
+packages = [{ include = "gn2pg" }]
 version = "1.4.0"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
@@ -11,20 +9,20 @@ license = "AGPL-3.0-or-later"
 readme = "README.rst"
 homepage = "https://github.com/lpoaura/gn2gn_client/"
 keywords = ["GeoNature", "Export", "SINP", "opendata", "biodiversity"]
-classifiers= [
-        "Development Status :: 1 - Planning",
-        "Environment :: Console",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Affero General Public License v3",
-        "Natural Language :: French",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: Implementation :: PyPy",
-        "Topic :: Documentation",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: System :: Installation/Setup",
-        "Topic :: System :: Software Distribution",
-    ]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: French",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Software Distribution",
+]
 
 [tool.poetry.scripts]
 gn2pg_cli = "gn2pg.main:run"
@@ -38,12 +36,22 @@ coloredlogs = "^15.0.1"
 schema = "^0.7.5"
 toml = "^0.10.2"
 sqlalchemy = "^1.4.46"
-flask = { version = "^2.2.3", extras = ["dashboard"] }
-flask-sqlalchemy = { version = "^3.0.3", extras = ["dashboard"] }
-flask-admin = { version = "^1.6.1", extras = ["dashboard"]}
-gunicorn = { version = "^20.1.0", extras = ["dashboard"] }
-python-decouple = {version = "^3.8", extras = ["dashboard"]}
-python-dotenv = {version = "^1.0.0", extras = ["dashboard"]}
+flask = { version = "^2.2.3", optional = true }
+flask-sqlalchemy = { version = "^3.0.3", optional = true }
+flask-admin = { version = "^1.6.1", optional = true }
+gunicorn = { version = "^20.1.0", optional = true }
+python-decouple = { version = "^3.8", optional = true }
+python-dotenv = { version = "^1.0.0", optional = true }
+
+[tool.poetry.extras]
+dashboard = [
+    'flask',
+    'flask-sqlalchemy',
+    'flask-admin',
+    'gunicorn',
+    'python-decouple',
+    'python-dotenv',
+]
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.0.0"

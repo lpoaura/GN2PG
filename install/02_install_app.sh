@@ -18,9 +18,9 @@ DIR_CONFIG="${DIR}/assets"
 
 cd $BASE_DIR
 #Installation des dépendances liées au dashboard
-echo "Activation du virtual env..."
-source venv/bin/activate
-poetry install --only dashboard
+poetry config virtualenvs.create true --local
+poetry config virtualenvs.in-project true --local
+poetry install --extras=dashboard
 
 
 # Configuration systemd
