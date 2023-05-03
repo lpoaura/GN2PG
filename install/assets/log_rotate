@@ -1,0 +1,11 @@
+/var/log/gn2pg/gn2pg.log {
+    su ${USER} ${USER}
+    daily
+    rotate 8
+    size 100M
+    create
+    compress
+    postrotate
+    systemctl reload gn2pg || true
+    endscript
+}

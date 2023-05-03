@@ -2,7 +2,7 @@
  GN2PG Client
 **************
 
-.. image:: https://img.shields.io/badge/python-3.7+-yellowgreen
+.. image:: https://img.shields.io/badge/python-3.8+-yellowgreen
    :target: https://www.python.org/
 .. image:: https://img.shields.io/badge/PostgreSQL-10+-blue
    :target: https://www.postgresql.org/
@@ -18,6 +18,9 @@
 This project provides an import data from GeoNature_ instances to a PostgreSQL database (client side).
 Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 
+.. tip::
+
+    The minimum version of the source GeoNature instance required for the incremental update must be a version 2.12.0
 
 .. contents:: Topics
 
@@ -158,7 +161,7 @@ To automate the launching of updates, you can write the cron task using the foll
 
 
 Debug mode
-############
+##########
 
 Debug mode can be activated using ``--verbose`` CLI argument
 
@@ -167,8 +170,8 @@ Logs
 
 Log files are stored in ``$HOME/.gn2pg/log`` directory.
 
-Import datas into GeoNature datas
-#################################
+Import datas into GeoNature database
+####################################
 
 Default script to auto populate GeoNature is called "to_gnsynthese".
 
@@ -182,6 +185,21 @@ Default script to auto populate GeoNature is called "to_gnsynthese".
     You can also replacing synthese script by your own scripts, using file path instead of ``to_gnsynthese``.
 
 
+Dashboard
+=========
+
+A simple web dashboard can be run following `dashboard docs <./docs/dashboard.rst>`_.
+
+.. image:: ./docs/_static/home_gn2pg_dashboard.png
+    :align: center
+    :alt: Dashboard_Home
+
+
+
+.. image:: ./docs/_static/src_gn2pg_dashboard.png
+    :align: center
+    :alt: Dashboard_gn2pg_downloag_log
+
 Contributing
 ============
 
@@ -193,7 +211,8 @@ Install project and development requirements (require `poetry <https://python-po
 
 .. code-block:: bash
 
-    poetry install
+    poetry install --with=docs --all-extras
+    poetry run pre-commit install
 
 Make your devs and pull requests.
 

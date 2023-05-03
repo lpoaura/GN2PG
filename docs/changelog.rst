@@ -1,6 +1,32 @@
 CHANGELOG
 =========
 
+
+version 1.5.0
++++++++++++++
+
++ New web dashboard using flask-admin (#39)
++ fix pre-commit checks config (#43)
+
+.. tip::
+
+    The minimum version of the source GeoNature instance required for the incremental update must be a version 2.12.0
+
+
+With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
+
+version 1.4.0
++++++++++++++
+
+* Optimization and code factorization (#27 / #29)
+* Add automatic tests (#29)
+* Improve performances with parallelization of API calls with multithreading (#27 / #30)
+* Fix missing custom query strings on updates
+* Update base image version in Docker
+* Update dependencies
+
+With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
+
 version 1.3.0
 +++++++++++++
 

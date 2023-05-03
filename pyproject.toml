@@ -1,9 +1,7 @@
 [tool.poetry]
 name = "gn2pg_client"
-packages = [
-    { include = "gn2pg" },
-]
-version = "1.4.0"
+packages = [{ include = "gn2pg" }]
+version = "1.5.0"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]
@@ -11,20 +9,20 @@ license = "AGPL-3.0-or-later"
 readme = "README.rst"
 homepage = "https://github.com/lpoaura/gn2gn_client/"
 keywords = ["GeoNature", "Export", "SINP", "opendata", "biodiversity"]
-classifiers= [
-        "Development Status :: 1 - Planning",
-        "Environment :: Console",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Affero General Public License v3",
-        "Natural Language :: French",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: Implementation :: PyPy",
-        "Topic :: Documentation",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: System :: Installation/Setup",
-        "Topic :: System :: Software Distribution",
-    ]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Natural Language :: French",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Software Distribution",
+]
 
 [tool.poetry.scripts]
 gn2pg_cli = "gn2pg.main:run"
@@ -38,7 +36,22 @@ coloredlogs = "^15.0.1"
 schema = "^0.7.5"
 toml = "^0.10.2"
 sqlalchemy = "^1.4.46"
+flask = { version = "^2.2.3", optional = true }
+flask-sqlalchemy = { version = "^3.0.3", optional = true }
+flask-admin = { version = "^1.6.1", optional = true }
+gunicorn = { version = "^20.1.0", optional = true }
+python-decouple = { version = "^3.8", optional = true }
+python-dotenv = { version = "^1.0.0", optional = true }
 
+[tool.poetry.extras]
+dashboard = [
+    'flask',
+    'flask-sqlalchemy',
+    'flask-admin',
+    'gunicorn',
+    'python-decouple',
+    'python-dotenv',
+]
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.0.0"
@@ -47,14 +60,19 @@ pylint = "^2.6.0"
 mypy = "^0.991"
 tox = "^4.2.3"
 isort = "^5.11.4"
-sphinx-rtd-theme = "^0.5.0"
 pre-commit = "^2.21.0"
 black = "^22.12.0"
 click = "^8.1.3"
+types-setuptools = "^67.2.0.0"
+no-implicit-optional = "^1.3"
+types-toml = "^0.10.8.3"
+types-requests = "^2.28.11.12"
 
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^6.1.0"
+sphinx = "^6.1.3"
+sphinx-rtd-theme = "^1.2.0"
+sphinxcontrib-napoleon = "^0.7"
 
 
 [tool.poetry.group.test.dependencies]
@@ -97,6 +115,11 @@ disable = """
     too-many-instance-attributes,
     too-few-public-methods
 """
+good-names=["i","j" ,"k","ex","Run","_","db"]
+
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

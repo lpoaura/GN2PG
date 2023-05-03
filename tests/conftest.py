@@ -15,5 +15,5 @@ pytest_plugins = [
     "tests.fixtures.check_conf",
     "tests.fixtures.db",
     "tests.fixtures.download",
-    "tests.fixtures.store_postgresql",
+    "tests.fixtures.store_postgresql"
 ]

@@ -16,7 +16,7 @@ from functools import partial
 from multiprocessing import Queue
 from multiprocessing.pool import ThreadPool
 from threading import Thread
-from typing import Callable
+from typing import Callable, Optional
 
 from gn2pg import _, __version__
 from gn2pg.api import DataAPI
@@ -110,7 +110,7 @@ class DownloadGn:
                     )
 
         # The Queue enables the report thread to get the progress from other threads
-        queue = Queue()
+        queue: Queue = Queue()
         # Initialize and start the report thread
         thread = Thread(target=report, args=[queue])
         thread.start()
@@ -204,7 +204,7 @@ class DownloadGn:
         # Log download timestamp to download.
         self._backend.increment_log(controler=self._api_instance.controler, last_ts=increment_ts)
 
-    def update(self, since: str = None, actions: list = None) -> None:
+    def update(self, since: Optional[str] = None, actions: Optional[list] = None) -> None:
         """[summary]
 
         Args:

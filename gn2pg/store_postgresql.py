@@ -491,7 +491,7 @@ class StorePostgresql:
         controler: str,
         error_count: int = 0,
         http_status: int = 0,
-        comment: str = None,
+        comment: Optional[str] = None,
     ):
         """Write download log entries to database.
 

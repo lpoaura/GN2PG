@@ -16,7 +16,7 @@ Exceptions:
 import json
 import logging
 import math
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urlencode
 
 import requests
@@ -38,7 +38,13 @@ class BaseAPI:
     """Top class, not for direct use.
     Provides internal and template methods to use GeoNature API."""
 
-    def __init__(self, config, controler, max_retry=None, max_requests=None):
+    def __init__(
+        self,
+        config,
+        controler,
+        max_retry: Optional[int] = None,
+        max_requests: Optional[int] = None,
+    ):
         self._config = config
         if max_retry is None:
             max_retry = config.max_retry
@@ -54,16 +60,13 @@ class BaseAPI:
         # init session
         self._session = requests.Session()
         self._session.headers = {"Content-Type": "application/json"}
-        auth_payload = json.dumps(
-            {
-                "login": config.user_name,
-                "password": config.user_password,
-                "id_application": config.id_application,
-            }
-        )
+        auth_payload = {
+            "login": config.user_name,
+            "password": config.user_password,
+        }
         login = self._session.post(
             self._api_url + "auth/login",
-            data=auth_payload,
+            json=auth_payload,
         )
         try:
             if login.status_code == 200:
@@ -93,7 +96,7 @@ class BaseAPI:
                 modules_list.status_code,
                 modules_list.url,
             )
-            if modules_list.status_code == 200:
+            if modules_list.status_code == 200 and "login?next=" not in modules_list.url:
                 modules = json.loads(modules_list.content)
                 for item in modules:
                     if item["module_code"] == "EXPORTS":
@@ -127,11 +130,11 @@ class BaseAPI:
         return self._http_status
 
     @property
-    def controler(self) -> str:
+    def controler(self) -> Optional[str]:
         """Return the controler name."""
         return self._ctrl
 
-    def _url(self, kind: str = "data", params: dict = None) -> str:
+    def _url(self, kind: str = "data", params: Optional[dict] = None) -> Optional[str]:
         """Generate export API URL with QueryStrings if params.
 
         Args:
@@ -155,14 +158,15 @@ class BaseAPI:
         self,
         params: dict,
         kind: str = "data",
-    ) -> Optional[list]:
+    ) -> Optional[List[str]]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
 
-        Args:
-            **kwargs : Keyword args to filter data from API (cf. swagger API doc)
-
-        Returns:
-            list: url page list
+        :param params: Querystrings
+        :type params: dict
+        :param kind: kind of data, defaults to "data"
+        :type kind: str, optional
+        :return: url page list
+        :rtype: Optional[List[str]]
         """
         # GET from API
         session = self._session
@@ -221,5 +225,5 @@ class BaseAPI:
 class DataAPI(BaseAPI):
     """Data API"""
 
-    def __init__(self, config, max_retry=None, max_requests=None):
+    def __init__(self, config, max_retry: int = None, max_requests: int = None):
         super().__init__(config, "data", max_retry, max_requests)

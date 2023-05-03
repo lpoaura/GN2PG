@@ -1,0 +1,15 @@
+
+
+.container{
+    min-width: 100vw;
+}
+.navbar {
+    border-width: 1px;
+    border-radius: 0;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.ctn-row-long-text{
+    max-height: 500px;
+}
