@@ -6,6 +6,12 @@ version 1.5.0
 +++++++++++++
 
 + New web dashboard using flask-admin (#39)
++ fix pre-commit checks config (#43)
+
+.. tip::
+
+    The minimum version of the source GeoNature instance required for the incremental update must be a version 2.12.0
+
 
 With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
 

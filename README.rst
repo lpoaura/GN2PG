@@ -2,7 +2,7 @@
  GN2PG Client
 **************
 
-.. image:: https://img.shields.io/badge/python-3.7+-yellowgreen
+.. image:: https://img.shields.io/badge/python-3.8+-yellowgreen
    :target: https://www.python.org/
 .. image:: https://img.shields.io/badge/PostgreSQL-10+-blue
    :target: https://www.postgresql.org/
@@ -18,6 +18,9 @@
 This project provides an import data from GeoNature_ instances to a PostgreSQL database (client side).
 Widely inspired from `ClientApiVN <https://framagit.org/lpo/Client_API_VN/>`_
 
+.. tip::
+
+    The minimum version of the source GeoNature instance required for the incremental update must be a version 2.12.0
 
 .. contents:: Topics
 
