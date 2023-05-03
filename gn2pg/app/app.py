@@ -14,11 +14,13 @@ from gn2pg.app.models import DownloadLog, ErrorLog, IncrementLog
 def create_app(config=FlaskConfig):
     """Create app"""
 
-    app = Flask(__name__, static_url_path=config.APPLICATION_ROOT)
+    app = Flask(__name__, static_url_path=config.application_root)
     app.config.from_object(config)
+    app.config["SQLALCHEMY_DATABASE_URI"] = config.sqlalchemy_database_uri
+    app.config["APPLICATION_ROOT"] = config.application_root
     app.wsgi_app = ProxyFix(app.wsgi_app, x_host=1)
     db.init_app(app)
-    app.config["DB"] = db
+    app.config["db"] = db
     url_base = app.config["APPLICATION_ROOT"]
     admin = Admin(
         app,
@@ -36,5 +38,5 @@ def create_app(config=FlaskConfig):
 
 
 if __name__ == "__main__":
-    app = create_app()
-    app.run()
+    app_dev = create_app()
+    app_dev.run()

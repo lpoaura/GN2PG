@@ -50,23 +50,26 @@ APPLICATION_ROOT = settings_config("APPLICATION_ROOT", default="/gn2pg")
 class AppConfig:
     """App config class"""
 
-    ENV: str
-    APPLICATION_ROOT: str
-    DEBUG: bool
-    SQLALCHEMY_DATABASE_URI: str
-    DATABASE: dict
+    env: str
+    application_root: str
+    debug: bool
+    sqlalchemy_database_uri: str
+    database: dict
 
     def __init__(self):
-        self.ENV = ENV
-        self.APPLICATION_ROOT = APPLICATION_ROOT
-        self.DEBUG = DEBUG
-        self.DATABASE = DATABASES["default"]
+        self.env = ENV
+        self.application_root = APPLICATION_ROOT
+        self.debug = DEBUG
+        self.database = DATABASES["default"]
         self.set_database_uri()
 
     def set_database_uri(self):
         """define database uri"""
-        DB = self.DATABASE
-        self.SQLALCHEMY_DATABASE_URI = f"{DB['ENGINE']}://{DB['USER']}:{DB['PASSWORD']}@{DB['HOST']}:{DB['PORT']}/{DB['NAME']}"
+        db = self.database
+        self.sqlalchemy_database_uri = (
+            f"{db['ENGINE']}://"
+            + f"{db['USER']}:{db['PASSWORD']}@{db['HOST']}:{db['PORT']}/{db['NAME']}"
+        )
 
 
 FlaskConfig = AppConfig()

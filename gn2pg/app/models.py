@@ -1,3 +1,4 @@
+"""Module providing Models according to database from config file."""
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 

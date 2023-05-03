@@ -1,3 +1,4 @@
+"""Module providing constant environment variable path directory."""
 from pathlib import Path
 
 # DIRECTORY FOR SETTINGS.INI
