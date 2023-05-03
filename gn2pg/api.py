@@ -60,16 +60,13 @@ class BaseAPI:
         # init session
         self._session = requests.Session()
         self._session.headers = {"Content-Type": "application/json"}
-        auth_payload = json.dumps(
-            {
-                "login": config.user_name,
-                "password": config.user_password,
-                "id_application": config.id_application,
-            }
-        )
+        auth_payload = {
+            "login": config.user_name,
+            "password": config.user_password,
+        }
         login = self._session.post(
             self._api_url + "auth/login",
-            data=auth_payload,
+            json=auth_payload,
         )
         try:
             if login.status_code == 200:
@@ -99,7 +96,7 @@ class BaseAPI:
                 modules_list.status_code,
                 modules_list.url,
             )
-            if modules_list.status_code == 200:
+            if modules_list.status_code == 200 and "login?next=" not in modules_list.url:
                 modules = json.loads(modules_list.content)
                 for item in modules:
                     if item["module_code"] == "EXPORTS":
@@ -164,11 +161,12 @@ class BaseAPI:
     ) -> Optional[List[str]]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
 
-        Args:
-            **kwargs : Keyword args to filter data from API (cf. swagger API doc)
-
-        Returns:
-            list: url page list
+        :param params: Querystrings
+        :type params: dict
+        :param kind: kind of data, defaults to "data"
+        :type kind: str, optional
+        :return: url page list
+        :rtype: Optional[List[str]]
         """
         # GET from API
         session = self._session
