@@ -115,6 +115,8 @@ disable = """
     too-many-instance-attributes,
     too-few-public-methods
 """
+good-names=["i","j" ,"k","ex","Run","_","db"]
+
 
 [tool.mypy]
 ignore_missing_imports = true
