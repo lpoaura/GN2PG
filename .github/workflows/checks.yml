@@ -35,7 +35,7 @@ jobs:
     #------------------------------------
     - name: Install dependencies
       run: |
-        poetry install
+        poetry install --all-extras
     #------------------------------
     #--------  run isort  ---------
     #------------------------------
