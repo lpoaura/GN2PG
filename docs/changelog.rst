@@ -1,6 +1,47 @@
 CHANGELOG
 =========
 
+version 1.5.1
++++++++++++++
+
++ refactor: mutualize triggers/functions for upsert into GeoNature database (#44)
+
+With the financial support of `Office français de la biodiversité <https://www.ofb.gouv.fr>`_.
+
+**TODO after upgrade: **
+
+Delete triggers and functions on destination database. 
+
+.. code-block:: sql
+
+    DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature_with_nomenclature_label ON gn2pg_import.data_json;
+    DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature_with_cd_nomenclature ON gn2pg_import.data_json;
+    DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature_with_metadata ON gn2pg_import.data_json;
+    DROP TRIGGER IF EXISTS tri_c_delete_data_from_geonature ON gn2pg_import.data_json;
+
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_source(_source TEXT);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_nomenclature_label();
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_cd_nomenclature();
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_delete_data_from_geonature();
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories(_id_ds INTEGER, _territories JSONB) ;
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_create_actors_in_usershub(_actor_role JSONB, _source CHARACTER VARYING) ;
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_dataset_actor(_id_dataset INTEGER, _actor_roles JSONB, _source CHARACTER VARYING);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_actors(_id_af INTEGER, _actor_roles JSONB, _source CHARACTER VARYING) ;
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata(_af_data JSONB, _source CHARACTER VARYING);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata(_ds_data JSONB, _id_af INTEGER, _source CHARACTER VARYING);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_source(_source TEXT);
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata();
+    DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_delete_data_from_geonature();
+
+Apply new to_gnsynthese.sql script.
+
+.. code-block:: bash
+
+    gn2pg_cli --custom-script to_gnsynthese <myconfigfile>
+
 
 version 1.5.0
 +++++++++++++
