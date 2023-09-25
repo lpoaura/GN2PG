@@ -80,9 +80,6 @@ class DownloadGn:
             func (Callable): function that each thread will call
             pages (list): list of pages
             store (bool): if True, display Storing in logger
-
-        Returns:
-            None
         """
 
         def report(queue) -> None:
@@ -127,9 +124,6 @@ class DownloadGn:
         Args:
             page (str): url to download
             queue (Queue): gather the progress
-
-        Returns:
-            None
         """
         response = self.process_progress(page=page)
 
@@ -143,9 +137,6 @@ class DownloadGn:
         Args:
             page (str): url to download
             queue (Queue): gather the progress
-
-        Returns:
-            None
         """
         response = self.process_progress(page=page)
 
@@ -175,15 +166,11 @@ class DownloadGn:
         return {
             "items": items,
             "len_items": len_items,
-            "total_len": resp["total_filtered"],
+            "total_len": resp["total_filtered"] if "total_filtered" in resp else resp["total"],
         }
 
     def store(self) -> None:
-        """Store data into Database
-
-        Returns:
-            None
-        """
+        """Store data into Database"""
         # Store start download TimeStamp to populate increment log  after download end.
 
         increment_ts = datetime.now()
@@ -209,9 +196,7 @@ class DownloadGn:
 
         Args:
             since (str): DateTime limit to update.
-
-        Returns:
-            [type]: [description]
+            actions (list): Actions list (Insert > I, Update > U, Delete > D)
         """
         # Update new or modified data from API
         logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
