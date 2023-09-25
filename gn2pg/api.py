@@ -186,7 +186,7 @@ class BaseAPI:
 
         if response.status_code == 200:
             resp = response.json()
-            total_filtered = resp["total_filtered"]
+            total_filtered = resp["total_filtered"] if "total_filtered" in resp else resp["total"]
             total_pages = math.ceil(total_filtered / params.get("limit"))
             logger.debug(
                 _("API %s contains %s data in %s page(s)"),
