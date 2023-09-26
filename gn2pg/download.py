@@ -141,7 +141,7 @@ class DownloadGn:
         response = self.process_progress(page=page)
 
         if response.get("total_len") > 0:
-            self._backend.store_data(self._backend.delete_data(response.get("items")))
+            self._backend.delete_data(response.get("items"))
             queue.put(response)
         else:
             logger.info(
@@ -244,7 +244,7 @@ class DownloadGn:
         deleted_pages = self._api_instance.page_list(
             kind="log",
             params={
-                "filter_d_up_meta_last_action_date": since,
+                "meta_last_action_date": f"gte:{since}",
                 "limit": self._config.max_page_length,
                 "last_action": "D",
             },

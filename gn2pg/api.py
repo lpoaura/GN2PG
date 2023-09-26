@@ -85,7 +85,9 @@ class BaseAPI:
                 )
 
         except Exception as error:
-            logger.critical("Session failed (%s)", error)
+            logger.critical(
+                "Session failed (%s), HTTP status code is %s", error, login.status_code
+            )
             raise HTTPError(login.status_code) from error
 
         #  Find exports api path
