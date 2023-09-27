@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "gn2pg_client"
 packages = [{ include = "gn2pg" }]
-version = "1.5.1"
+version = "1.6.0"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]

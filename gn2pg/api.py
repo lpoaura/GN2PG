@@ -85,7 +85,9 @@ class BaseAPI:
                 )
 
         except Exception as error:
-            logger.critical("Session failed (%s)", error)
+            logger.critical(
+                "Session failed (%s), HTTP status code is %s", error, login.status_code
+            )
             raise HTTPError(login.status_code) from error
 
         #  Find exports api path
@@ -186,7 +188,7 @@ class BaseAPI:
 
         if response.status_code == 200:
             resp = response.json()
-            total_filtered = resp["total_filtered"]
+            total_filtered = resp["total_filtered"] if "total_filtered" in resp else resp["total"]
             total_pages = math.ceil(total_filtered / params.get("limit"))
             logger.debug(
                 _("API %s contains %s data in %s page(s)"),

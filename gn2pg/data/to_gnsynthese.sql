@@ -39,10 +39,9 @@ BEGIN
          , 'Description of acquisition framework : ' || _name
          , now()
          , now()
-    WHERE NOT exists(
-            SELECT 1
-            FROM gn_meta.t_acquisition_frameworks
-            WHERE unique_acquisition_framework_id = _uuid);
+    WHERE NOT exists(SELECT 1
+                     FROM gn_meta.t_acquisition_frameworks
+                     WHERE unique_acquisition_framework_id = _uuid);
     SELECT id_acquisition_framework
     INTO the_af_id
     FROM gn_meta.t_acquisition_frameworks
@@ -84,10 +83,9 @@ BEGIN
          , TRUE
          , TRUE
          , now()
-    WHERE NOT exists(
-            SELECT 1
-            FROM gn_meta.t_datasets
-            WHERE unique_dataset_id = _uuid);
+    WHERE NOT exists(SELECT 1
+                     FROM gn_meta.t_datasets
+                     WHERE unique_dataset_id = _uuid);
     SELECT id_dataset
     INTO the_dataset_id
     FROM gn_meta.t_datasets
@@ -114,10 +112,9 @@ DECLARE
 BEGIN
     INSERT INTO gn_synthese.t_sources (name_source)
     SELECT _source
-    WHERE NOT exists(
-            SELECT 1
-            FROM gn_synthese.t_sources
-            WHERE name_source = _source);
+    WHERE NOT exists(SELECT 1
+                     FROM gn_synthese.t_sources
+                     WHERE name_source = _source);
     SELECT id_source
     INTO the_source_id
     FROM gn_synthese.t_sources
@@ -160,7 +157,6 @@ COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_nomenclature_from_label (_type TEX
 /* Add unique constraint to synthese on  id_source and /entity_source_pk_value */
 CREATE UNIQUE INDEX IF NOT EXISTS uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese (id_source, entity_source_pk_value)
 ;
-
 
 
 
@@ -210,8 +206,9 @@ BEGIN
         VALUES ( (_actor_role ->> 'uuid_actor')::UUID
                , _actor_role #>> '{identity,first_name}'
                , _actor_role #>> '{identity,last_name}'
-               , _actor_role ->> 'email'
-               , jsonb_build_object('source', _source, 'module', 'gn2pg'))
+               , NULL
+               , jsonb_build_object('source', _source, 'module', 'gn2pg', 'gn2pg_data',
+                                    jsonb_build_object('email', _actor_role ->> 'email')))
         ON CONFLICT (uuid_role) DO NOTHING;
         SELECT id_role
         INTO the_id_actor
@@ -310,10 +307,9 @@ BEGIN
 --       , jsonb_build_object('source', _source, 'module', 'gn2pg')
          , now()
          , now()
-    WHERE NOT exists(
-            SELECT 1
-            FROM gn_meta.t_acquisition_frameworks
-            WHERE unique_acquisition_framework_id = (_af_data #>> '{uuid}')::UUID);
+    WHERE NOT exists(SELECT 1
+                     FROM gn_meta.t_acquisition_frameworks
+                     WHERE unique_acquisition_framework_id = (_af_data #>> '{uuid}')::UUID);
     SELECT id_acquisition_framework
     INTO the_af_id
     FROM gn_meta.t_acquisition_frameworks
@@ -367,10 +363,9 @@ BEGIN
 --       , jsonb_build_object('source', _source, 'module', 'gn2pg')
          , now()
          , now()
-    WHERE NOT exists(
-            SELECT 1
-            FROM gn_meta.t_datasets
-            WHERE unique_dataset_id = (_ds_data #>> '{uuid}')::UUID);
+    WHERE NOT exists(SELECT 1
+                     FROM gn_meta.t_datasets
+                     WHERE unique_dataset_id = (_ds_data #>> '{uuid}')::UUID);
     SELECT id_dataset
     INTO the_dataset_id
     FROM gn_meta.t_datasets
@@ -396,10 +391,9 @@ DECLARE
 BEGIN
     INSERT INTO gn_synthese.t_sources (name_source)
     SELECT _source
-    WHERE NOT exists(
-            SELECT 1
-            FROM gn_synthese.t_sources
-            WHERE name_source = _source);
+    WHERE NOT exists(SELECT 1
+                     FROM gn_synthese.t_sources
+                     WHERE name_source = _source);
     SELECT id_source
     INTO the_source_id
     FROM gn_synthese.t_sources
@@ -486,146 +480,164 @@ BEGIN
     INTO the_id_source;
     SELECT new.item #>> '{id_synthese}'
     INTO the_entity_source_pk_value;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_metadata' THEN gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata(new.item #> '{ca_data}', new.source)
-            ELSE gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(cast(new.item #>> '{ca_uuid}' AS UUID), new.item #>> '{ca_nom}')
-        END AS the_id_af
+    SELECT CASE new.type
+               WHEN 'synthese_with_metadata' THEN gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata(
+                           new.item #> '{ca_data}', new.source)
+               ELSE gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(cast(new.item #>> '{ca_uuid}' AS UUID),
+                                                                             new.item #>> '{ca_nom}')
+               END AS the_id_af
     INTO the_id_af;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_metadata' then gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata(
-                new.item #> '{jdd_data}', 
-                the_id_af, 
-                new.source
-            )
-            ELSE gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(
-                cast(new.item #>> '{jdd_uuid}' AS UUID),
-                new.item #>> '{jdd_nom}', 
-                the_id_af
-            )
-        END AS id_dataset
+    SELECT CASE new.type
+               WHEN 'synthese_with_metadata' THEN gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata(
+                           new.item #> '{jdd_data}',
+                           the_id_af,
+                           new.source
+                   )
+               ELSE gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(
+                       cast(new.item #>> '{jdd_uuid}' AS UUID),
+                       new.item #>> '{jdd_nom}',
+                       the_id_af
+                   )
+               END AS id_dataset
     INTO the_id_dataset;
-    SELECT 
-        CASE new.type 
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('NAT_OBJ_GEO',  new.item #>> '{nature_objet_geo}')
-            ELSE ref_nomenclatures.get_id_nomenclature('NAT_OBJ_GEO',  new.item #>> '{nature_objet_geo}')
-        END AS id_nomenclature_geo_object_nature
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('NAT_OBJ_GEO',
+                                                                                                 new.item #>>
+                                                                                                 '{nature_objet_geo}')
+               ELSE ref_nomenclatures.get_id_nomenclature('NAT_OBJ_GEO', new.item #>> '{nature_objet_geo}')
+               END AS id_nomenclature_geo_object_nature
     INTO the_id_nomenclature_geo_object_nature;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_GRP',  new.item #>> '{type_regroupement}')
-            ELSE ref_nomenclatures.get_id_nomenclature('TYP_GRP',  new.item #>> '{type_regroupement}')
-        END AS id_nomenclature_grp_typ
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_GRP', new.item #>>
+                                                                                                            '{type_regroupement}')
+               ELSE ref_nomenclatures.get_id_nomenclature('TYP_GRP', new.item #>> '{type_regroupement}')
+               END AS id_nomenclature_grp_typ
     INTO the_id_nomenclature_grp_typ;
     SELECT new.item #>> '{methode_regroupement}'
     INTO the_grp_method;
-    SELECT 
-        CASE new.type 
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('METH_OBS',  new.item #>> '{technique_obs}')
-            ELSE ref_nomenclatures.get_id_nomenclature('METH_OBS',  new.item #>> '{technique_obs}')
-        END AS id_nomenclature_obs_technique
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('METH_OBS',
+                                                                                                 new.item #>>
+                                                                                                 '{technique_obs}')
+               ELSE ref_nomenclatures.get_id_nomenclature('METH_OBS', new.item #>> '{technique_obs}')
+               END AS id_nomenclature_obs_technique
     INTO the_id_nomenclature_obs_technique;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_BIO',  new.item #>> '{statut_biologique}')
-            ELSE ref_nomenclatures.get_id_nomenclature('STATUT_BIO',  new.item #>> '{statut_biologique}')
-        END AS id_nomenclature_bio_status
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_BIO',
+                                                                                                 new.item #>>
+                                                                                                 '{statut_biologique}')
+               ELSE ref_nomenclatures.get_id_nomenclature('STATUT_BIO', new.item #>> '{statut_biologique}')
+               END AS id_nomenclature_bio_status
     INTO the_id_nomenclature_bio_status;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('ETA_BIO',  new.item #>> '{etat_biologique}')
-            ELSE ref_nomenclatures.get_id_nomenclature('ETA_BIO',  new.item #>> '{etat_biologique}')
-        END AS id_nomenclature_bio_condition
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('ETA_BIO', new.item #>>
+                                                                                                            '{etat_biologique}')
+               ELSE ref_nomenclatures.get_id_nomenclature('ETA_BIO', new.item #>> '{etat_biologique}')
+               END AS id_nomenclature_bio_condition
     INTO the_id_nomenclature_bio_condition;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('NATURALITE',  new.item #>> '{naturalite}')
-            ELSE ref_nomenclatures.get_id_nomenclature('NATURALITE',  new.item #>> '{naturalite}')
-        END AS id_nomenclature_naturalness
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('NATURALITE',
+                                                                                                 new.item #>>
+                                                                                                 '{naturalite}')
+               ELSE ref_nomenclatures.get_id_nomenclature('NATURALITE', new.item #>> '{naturalite}')
+               END AS id_nomenclature_naturalness
     INTO the_id_nomenclature_naturalness;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('PREUVE_EXIST',  new.item #>> '{preuve_existante}')
-            ELSE ref_nomenclatures.get_id_nomenclature('PREUVE_EXIST',  new.item #>> '{preuve_existante}')
-        END AS id_nomenclature_exist_proof
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('PREUVE_EXIST',
+                                                                                                 new.item #>>
+                                                                                                 '{preuve_existante}')
+               ELSE ref_nomenclatures.get_id_nomenclature('PREUVE_EXIST', new.item #>> '{preuve_existante}')
+               END AS id_nomenclature_exist_proof
     INTO the_id_nomenclature_exist_proof;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_VALID',  new.item #>> '{statut_validation}')
-            ELSE ref_nomenclatures.get_id_nomenclature('STATUT_VALID',  new.item #>> '{statut_validation}')
-        END AS id_nomenclature_valid_status
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_VALID',
+                                                                                                 new.item #>>
+                                                                                                 '{statut_validation}')
+               ELSE ref_nomenclatures.get_id_nomenclature('STATUT_VALID', new.item #>> '{statut_validation}')
+               END AS id_nomenclature_valid_status
     INTO the_id_nomenclature_valid_status;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('NIV_PRECIS',  new.item #>> '{precision_diffusion}')
-            ELSE ref_nomenclatures.get_id_nomenclature('NIV_PRECIS', new.item #>> '{precision_diffusion}')
-        END AS id_nomenclature_diffusion_level
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('NIV_PRECIS',
+                                                                                                 new.item #>>
+                                                                                                 '{precision_diffusion}')
+               ELSE ref_nomenclatures.get_id_nomenclature('NIV_PRECIS', new.item #>> '{precision_diffusion}')
+               END AS id_nomenclature_diffusion_level
     INTO the_id_nomenclature_diffusion_level;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STADE_VIE',  new.item #>> '{stade_vie}')
-            ELSE ref_nomenclatures.get_id_nomenclature('STADE_VIE',  new.item #>> '{stade_vie}')
-        END AS id_nomenclature_life_stage
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STADE_VIE',
+                                                                                                 new.item #>>
+                                                                                                 '{stade_vie}')
+               ELSE ref_nomenclatures.get_id_nomenclature('STADE_VIE', new.item #>> '{stade_vie}')
+               END AS id_nomenclature_life_stage
     INTO the_id_nomenclature_life_stage;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('SEXE',  new.item #>> '{sexe}')
-            ELSE ref_nomenclatures.get_id_nomenclature('SEXE',  new.item #>> '{sexe}')
-        END AS id_nomenclature_sex
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('SEXE',
+                                                                                                 new.item #>> '{sexe}')
+               ELSE ref_nomenclatures.get_id_nomenclature('SEXE', new.item #>> '{sexe}')
+               END AS id_nomenclature_sex
     INTO the_id_nomenclature_sex;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('OBJ_DENBR',  new.item #>> '{objet_denombrement}')
-            ELSE ref_nomenclatures.get_id_nomenclature('OBJ_DENBR',  new.item #>> '{objet_denombrement}')
-        END AS id_nomenclature_obj_count
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('OBJ_DENBR',
+                                                                                                 new.item #>>
+                                                                                                 '{objet_denombrement}')
+               ELSE ref_nomenclatures.get_id_nomenclature('OBJ_DENBR', new.item #>> '{objet_denombrement}')
+               END AS id_nomenclature_obj_count
     INTO the_id_nomenclature_obj_count;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_DENBR',  new.item #>> '{type_denombrement}')
-            ELSE ref_nomenclatures.get_id_nomenclature('TYP_DENBR',  new.item #>> '{type_denombrement}')
-        END AS id_nomenclature_type_count
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_DENBR',
+                                                                                                 new.item #>>
+                                                                                                 '{type_denombrement}')
+               ELSE ref_nomenclatures.get_id_nomenclature('TYP_DENBR', new.item #>> '{type_denombrement}')
+               END AS id_nomenclature_type_count
     INTO the_id_nomenclature_type_count;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('SENSIBILITE',  new.item #>> '{niveau_sensibilite}')
-            ELSE ref_nomenclatures.get_id_nomenclature('SENSIBILITE',  new.item #>> '{niveau_sensibilite}')
-        END AS id_nomenclature_sensitivity
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('SENSIBILITE',
+                                                                                                 new.item #>>
+                                                                                                 '{niveau_sensibilite}')
+               ELSE ref_nomenclatures.get_id_nomenclature('SENSIBILITE', new.item #>> '{niveau_sensibilite}')
+               END AS id_nomenclature_sensitivity
     INTO the_id_nomenclature_sensitivity;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_OBS',  new.item #>> '{statut_observation}')
-            ELSE ref_nomenclatures.get_id_nomenclature('STATUT_OBS',  new.item #>> '{statut_observation}')
-        END AS id_nomenclature_observation_status
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_OBS',
+                                                                                                 new.item #>>
+                                                                                                 '{statut_observation}')
+               ELSE ref_nomenclatures.get_id_nomenclature('STATUT_OBS', new.item #>> '{statut_observation}')
+               END AS id_nomenclature_observation_status
     INTO the_id_nomenclature_observation_status;
     SELECT CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('DEE_FLOU',  new.item #>> '{floutage_dee}')
-            ELSE ref_nomenclatures.get_id_nomenclature('DEE_FLOU',  new.item #>> '{floutage_dee}')
-        END AS id_nomenclature_blurring
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('DEE_FLOU',
+                                                                                                 new.item #>>
+                                                                                                 '{floutage_dee}')
+               ELSE ref_nomenclatures.get_id_nomenclature('DEE_FLOU', new.item #>> '{floutage_dee}')
+               END AS id_nomenclature_blurring
     INTO the_id_nomenclature_blurring;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_SOURCE',  new.item #>> '{statut_source}')
-            ELSE ref_nomenclatures.get_id_nomenclature('STATUT_SOURCE',  new.item #>> '{statut_source}')
-        END AS id_nomenclature_source_status
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STATUT_SOURCE',
+                                                                                                 new.item #>>
+                                                                                                 '{statut_source}')
+               ELSE ref_nomenclatures.get_id_nomenclature('STATUT_SOURCE', new.item #>> '{statut_source}')
+               END AS id_nomenclature_source_status
     INTO the_id_nomenclature_source_status;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_INF_GEO',  new.item #>> '{type_info_geo}')
-            ELSE ref_nomenclatures.get_id_nomenclature('TYP_INF_GEO',  new.item #>> '{type_info_geo}')
-        END AS id_nomenclature_info_geo_type
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYP_INF_GEO',
+                                                                                                 new.item #>>
+                                                                                                 '{type_info_geo}')
+               ELSE ref_nomenclatures.get_id_nomenclature('TYP_INF_GEO', new.item #>> '{type_info_geo}')
+               END AS id_nomenclature_info_geo_type
     INTO the_id_nomenclature_info_geo_type;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('OCC_COMPORTEMENT',  new.item #>> '{comportement}')
-            ELSE ref_nomenclatures.get_id_nomenclature('OCC_COMPORTEMENT',  new.item #>> '{comportement}')
-        END AS id_nomenclature_behaviour
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('OCC_COMPORTEMENT',
+                                                                                                 new.item #>>
+                                                                                                 '{comportement}')
+               ELSE ref_nomenclatures.get_id_nomenclature('OCC_COMPORTEMENT', new.item #>> '{comportement}')
+               END AS id_nomenclature_behaviour
     INTO the_id_nomenclature_behaviour;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STAT_BIOGEO',  new.item #>> '{statut_biogeo}')
-            ELSE ref_nomenclatures.get_id_nomenclature('STAT_BIOGEO',  new.item #>> '{statut_biogeo}') 
-        END AS id_nomenclature_biogeo_status
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('STAT_BIOGEO',
+                                                                                                 new.item #>>
+                                                                                                 '{statut_biogeo}')
+               ELSE ref_nomenclatures.get_id_nomenclature('STAT_BIOGEO', new.item #>> '{statut_biogeo}')
+               END AS id_nomenclature_biogeo_status
     INTO the_id_nomenclature_biogeo_status;
     SELECT new.item #>> '{reference_biblio}'
     INTO the_reference_biblio;
@@ -679,11 +691,11 @@ BEGIN
     INTO the_determiner;
     SELECT NULL
     INTO the_id_digitiser;
-    SELECT 
-        CASE new.type
-            WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYPE',  new.item #>> '{label}')
-            ELSE ref_nomenclatures.get_id_nomenclature('TYPE',  new.item #>> '{label}')
-        END AS id_nomenclature_determination_method
+    SELECT CASE new.type
+               WHEN 'synthese_with_label' THEN gn2pg_import.fct_c_get_id_nomenclature_from_label('TYPE',
+                                                                                                 new.item #>> '{label}')
+               ELSE ref_nomenclatures.get_id_nomenclature('TYPE', new.item #>> '{label}')
+               END AS id_nomenclature_determination_method
     INTO the_id_nomenclature_determination_method;
     SELECT new.item #>> '{comment_releve}'
     INTO the_comment_context;
@@ -881,7 +893,7 @@ CREATE TRIGGER tri_c_upsert_data_to_geonature
     AFTER INSERT OR UPDATE
     ON gn2pg_import.data_json
     FOR EACH ROW
-    EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature();
+EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature();
 
 -- DELETE
 CREATE OR REPLACE FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature() RETURNS TRIGGER
