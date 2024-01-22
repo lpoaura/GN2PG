@@ -1,5 +1,8 @@
+.. _how-to:
+
 HowTo
 =====
+
 
 Help
 ++++

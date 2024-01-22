@@ -67,7 +67,7 @@ You will find this file at : ``install/settings.ini.sample``
 
 * File ``install/settings.ini.sample``
 
-    .. code-block:: toml
+    .. code-block:: ini
 
         GN2PG_CONFIG_NAME=gn2pgconfig
         APPLICATION_ROOT=/gn2pg
