@@ -17,4 +17,3 @@ jobs:
         with:
           pypi_token: ${{ secrets.PYPI_TOKEN }}
           python_version: ${{ env.PYTHON_VERSION }}
-          ignore_dev_requirements: "yes"
