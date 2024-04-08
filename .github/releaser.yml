@@ -1,0 +1,56 @@
+name: "🚀 Releaser"
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+# env:
+#   PROJECT_FOLDER: "plugin_qgis_lpo"
+#   PYTHON_VERSION: 3.9
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run image
+        uses: abatilo/actions-poetry@v3
+      #------------------------------------
+      #  -----  Install dependencies  -----
+      #------------------------------------
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Create changelog diff
+        id: changelog_diff
+        run: |
+          sed -n "/^## \[${GITHUB_REF/refs\/tags\//}\]/,/^## \[$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))\]/{/^## \[$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))\]/!p;}" CHANGELOG.md > release.md
+        # - name: Create release
+        # id: create_release
+        # uses: actions/create-release@v1
+        # env:
+        #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # with:
+        #   tag_name: ${{ steps.get_tag.outputs.version }}
+        #   release_name: Release ${{ steps.get_tag.outputs.version }}
+        #   body_path: ./release_notes.md
+        #   draft: false
+        #   prerelease: false
+        # - name: Delete release_notes file
+        # run: rm release_notes.md
+
+      - name: Create release on GitHub
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          bodyFile: release.md
+          generateReleaseNotes: true
+      - name: Delete release file
+        run: rm release.md
