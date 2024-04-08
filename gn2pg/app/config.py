@@ -1,6 +1,7 @@
 """
 GN2GG global settings file
 """
+
 import logging
 import logging.config
 import sys
