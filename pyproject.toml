@@ -57,7 +57,7 @@ dashboard = [
 flake8 = "^6.0.0"
 coverage = "^7.0.3"
 pylint = "^2.6.0"
-mypy = "^0.991"
+mypy = ">=0.991,<1.10"
 tox = "^4.2.3"
 isort = "^5.11.4"
 pre-commit = "^2.21.0"
