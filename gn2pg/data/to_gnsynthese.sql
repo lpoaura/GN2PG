@@ -701,7 +701,7 @@ BEGIN
     INTO the_comment_context;
     SELECT new.item #>> '{comment_occurence}'
     INTO the_comment_description;
-    SELECT NULL
+    SELECT new.item #> '{additional_data}'
     INTO the_additional_data;
     SELECT NULL
     INTO the_meta_validation_date;
