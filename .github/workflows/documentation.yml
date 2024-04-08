@@ -49,7 +49,7 @@ jobs:
         #  -----  Install dependencies  -----
         #------------------------------------
       - name: Install dependencies
-        run: poetry install --only=docs
+        run: poetry install
 
       - name: Build doc using Sphinx
         run: poetry run sphinx-build -b html -d docs/_build/cache -j auto docs docs/_build/html
