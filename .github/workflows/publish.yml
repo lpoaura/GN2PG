@@ -1,4 +1,4 @@
-name: Python package
+name: "🎁 Publish python package"
 on:
   push:
     tags:
