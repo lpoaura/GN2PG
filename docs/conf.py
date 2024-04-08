@@ -8,7 +8,7 @@
 
 import os
 import sys
-
+from datetime import datetime
 
 sys.path.insert(0, os.path.abspath("../.."))
 
@@ -23,8 +23,10 @@ from gn2pg import metadata
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
 project = metadata.PROJECT
+description = metadata.DESCRIPTION
+repo_url = metadata.URL
 author = metadata.AUTHORS_STRING
-release = metadata.VERSION
+version = release = metadata.VERSION
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -33,13 +35,17 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
-    # "sphinx.ext.intersphinx",
+    "sphinx.ext.intersphinx",
     # "sphinx.ext.todo",
-    # "sphinx.ext.coverage",
+    "sphinx.ext.coverage",
     # "sphinx.ext.viewcode",
+    "myst_parser",
     "sphinx_rtd_theme",
 ]
 
+source_suffix = {".md": "markdown", ".rst": "restructuredtext"}
+
+master_doc = "index"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -49,4 +55,37 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+html_theme_options = {
+    "display_version": True,
+    "logo_only": False,
+    "prev_next_buttons_location": "both",
+    "style_external_links": True,
+    "style_nav_header_background": "SteelBlue",
+    # Toc options
+    "collapse_navigation": True,
+    "includehidden": False,
+    "navigation_depth": 4,
+    "sticky_navigation": False,
+    "titles_only": False,
+}
+
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_image",
+    # "linkify",
+    "replacements",
+    "smartquotes",
+    "substitution",
+]
+
+myst_substitutions = {
+    "author": author,
+    "date_update": datetime.now().strftime("%d %B %Y"),
+    "description": description,
+    "repo_url": metadata.URL,
+    "title": project,
+    "version": version,
+}

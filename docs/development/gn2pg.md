@@ -1,85 +1,93 @@
-gn2pg package
-=============
+# gn2pg package
 
-Submodules
-----------
+## Submodules
 
-gn2pg.api module
-----------------
+## gn2pg.api module
 
+```{eval-rst}
 .. automodule:: gn2pg.api
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.check\_conf module
-------------------------
+## gn2pg.check_conf module
 
+```{eval-rst}
 .. automodule:: gn2pg.check_conf
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.download module
----------------------
+## gn2pg.download module
 
+```{eval-rst}
 .. automodule:: gn2pg.download
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.env module
-----------------
+## gn2pg.env module
 
+```{eval-rst}
 .. automodule:: gn2pg.env
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.helpers module
---------------------
+## gn2pg.helpers module
 
+```{eval-rst}
 .. automodule:: gn2pg.helpers
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.main module
------------------
+## gn2pg.main module
 
+```{eval-rst}
 .. automodule:: gn2pg.main
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.metadata module
----------------------
+## gn2pg.metadata module
 
+```{eval-rst}
 .. automodule:: gn2pg.metadata
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.store\_postgresql module
-------------------------------
+## gn2pg.store_postgresql module
 
+```{eval-rst}
 .. automodule:: gn2pg.store_postgresql
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-gn2pg.utils module
-------------------
+## gn2pg.utils module
 
+```{eval-rst}
 .. automodule:: gn2pg.utils
    :members:
    :undoc-members:
    :show-inheritance:
+```
 
-Module contents
----------------
+## Module contents
 
+```{eval-rst}
 .. automodule:: gn2pg
    :members:
    :undoc-members:
    :show-inheritance:
+```
