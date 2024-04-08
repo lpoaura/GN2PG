@@ -1,4 +1,12 @@
+"""Test conf options"""
+
+
 def pytest_addoption(parser):
+    """Set pytest options
+
+    Args:
+        parser (_type_): _description_
+    """
     parser.addoption("--user", action="store", default="default user")
     parser.addoption("--password", action="store", default="default password")
     parser.addoption("--url", action="store", default="default url")
@@ -15,5 +23,5 @@ pytest_plugins = [
     "tests.fixtures.check_conf",
     "tests.fixtures.db",
     "tests.fixtures.download",
-    "tests.fixtures.store_postgresql"
+    "tests.fixtures.store_postgresql",
 ]

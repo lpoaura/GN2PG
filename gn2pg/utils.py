@@ -49,15 +49,15 @@ def simplify(source: str) -> str:
 
 
 def coalesce_in_dict(source: dict, key: str, default: Any) -> Any:
-    """[summary]
+    """Coalesce function applyed on dict values
 
     Args:
-        source (dict): [description]
-        key(str):
-        default (any): [description]
+        source (dict): Source
+        key(str): key
+        default (any): Default value
 
     Returns:
-        any: [description]
+        any: Any value
     """
     if key in source:
         return source[key]

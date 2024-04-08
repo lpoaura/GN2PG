@@ -408,7 +408,7 @@ class StorePostgresql:
 
         Args:
             controler (str): Name of API controler.
-            items_dict (dict): Data returned from API call.
+            items (list): Data returned from API call.
             id_key_name (str, optional): id key name from source. Defaults to "id_synthese".
             uuid_key_name (str, optional): uuid key name from source. Defaults to "id_perm_sinp".
 
@@ -496,14 +496,10 @@ class StorePostgresql:
         """Write download log entries to database.
 
         Args:
-            source (str): GeoNature source name.
             controler (str): Name of API controler.
             error_count (int, optional): Number of errors during download. Defaults to 0.
             http_status (int, optional):  HTTP status of latest download. Defaults to 0.
             comment (str, optional): Optional comment, in free text.. Defaults to "".
-
-        Returns:
-            None
         """
         # Store to database, if enabled
         metadata = self._metadata.tables[
@@ -524,9 +520,6 @@ class StorePostgresql:
         Args:
             controler (str): controler name
             last_ts (datetime): last increment timestamp
-
-        Returns:
-            None: ...
         """
         # Store to database, if enabled
         metadata = self._metadata.tables[
@@ -609,9 +602,6 @@ class StorePostgresql:
             error (str): [description]
             id_key_name (str, optional): [description]. Defaults to "id_synthese".
             last_ts (datetime, optional): [description]. Defaults to datetime.now().
-
-        Returns:
-            [type]: [description]
         """
 
         metadata = self._metadata.tables[self._config.database.schema_import + "." + "error_log"]

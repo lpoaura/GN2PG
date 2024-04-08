@@ -64,9 +64,7 @@ def toml_conf(pytestconfig):
 
 @pytest.fixture(scope="session")
 def gn2pg_conf_file(toml_conf):
-    with tempfile.NamedTemporaryFile(
-        dir=ENVDIR, suffix=".toml", delete=True, mode="w"
-    ) as f:
+    with tempfile.NamedTemporaryFile(dir=ENVDIR, suffix=".toml", delete=True, mode="w") as f:
         name = f.name
         f.write(toml_conf)
         f.seek(0)

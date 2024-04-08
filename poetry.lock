@@ -1294,7 +1294,7 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 name = "python-decouple"
 version = "3.8"
 description = "Strict separation of settings from code."
-optional = true
+optional = false
 python-versions = "*"
 files = [
     {file = "python-decouple-3.8.tar.gz", hash = "sha256:ba6e2657d4f376ecc46f77a3a615e058d93ba5e465c01bbe57289bfb7cce680f"},
@@ -1951,4 +1951,4 @@ dashboard = ["flask", "flask-admin", "flask-sqlalchemy", "gunicorn", "python-dec
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "b06d55bd91e7b5ef1df362fa81a82763af87e3256e38daa577bba36641de9eb4"
+content-hash = "aed89cfe847a4aa0a3a15d58dbe889573fdfda546ceba54273201e0de013ec16"
