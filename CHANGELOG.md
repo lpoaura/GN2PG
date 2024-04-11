@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.6.3 - 2024-04-11
+
+### What's Changed
+
+- Fix #65, delete don't work when source contains upper case or special characters
+
 ## 1.6.2 - 2024-04-08
 
 ### What's Changed
