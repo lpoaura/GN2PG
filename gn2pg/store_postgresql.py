@@ -478,7 +478,7 @@ class StorePostgresql:
                     and_(
                         self._table_defs["data"]["metadata"].c.id_data == item[id_key_name],
                         self._table_defs["data"]["metadata"].c.controler == controler,
-                        self._table_defs["data"]["metadata"].c.source == self._config.name,
+                        self._table_defs["data"]["metadata"].c.source == self._config.std_name,
                     )
                 )
             )
