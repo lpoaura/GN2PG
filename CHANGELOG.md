@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.6.4 - 2024-04-24
+
+## Fixes
+
+- Fix typo error on trigger scripts.
+
 ## 1.6.3 - 2024-04-11
 
 ### What's Changed
