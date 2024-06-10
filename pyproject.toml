@@ -70,7 +70,7 @@ types-requests = "^2.31.0.20240406"
 
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^6"
+sphinx = ">=6,<8"
 sphinx-rtd-theme = "^1.2.0"
 sphinxcontrib-napoleon = "^0.7"
 myst-parser = "^2.0.0"
