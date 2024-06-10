@@ -77,7 +77,7 @@ myst-parser = "^2.0.0"
 
 
 [tool.poetry.group.test.dependencies]
-sqlalchemy-utils = "^0.39.0"
+sqlalchemy-utils = ">=0.39,<0.42"
 pytest = "^7.2.1"
 
 [tool.isort]
