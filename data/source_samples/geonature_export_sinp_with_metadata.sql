@@ -22,26 +22,72 @@ WITH af_actors AS (SELECT cafa.id_acquisition_framework,
                             LEFT JOIN utilisateurs.t_roles tro ON cafa.id_role = tro.id_role
                             JOIN ref_nomenclatures.t_nomenclatures tn
                                  ON cafa.id_nomenclature_actor_role = tn.id_nomenclature),
-     af AS (SELECT taf.id_acquisition_framework,
-                   jsonb_build_object('uuid', taf.unique_acquisition_framework_id, 'name',
+     af_territories AS (SELECT caft.id_acquisition_framework,
+                               array_agg(DISTINCT t_nomenclatures.cd_nomenclature) AS territories
+                        FROM gn_meta.cor_acquisition_framework_territory caft
+                                 LEFT JOIN ref_nomenclatures.t_nomenclatures
+                                           ON caft.id_nomenclature_territory =
+                                              t_nomenclatures.id_nomenclature
+                        GROUP BY caft.id_acquisition_framework),
+     af_objectives AS (SELECT cafo.id_acquisition_framework,
+                              array_agg(DISTINCT t_nomenclatures.cd_nomenclature) AS objectives
+                       FROM gn_meta.cor_acquisition_framework_objectif cafo
+                                LEFT JOIN ref_nomenclatures.t_nomenclatures
+                                          ON cafo.id_nomenclature_objectif =
+                                             t_nomenclatures.id_nomenclature
+                       GROUP BY cafo.id_acquisition_framework),
+     af_voletsinp AS (SELECT cafv.id_acquisition_framework,
+                             array_agg(DISTINCT t_nomenclatures.cd_nomenclature) AS voletsinp
+                      FROM gn_meta.cor_acquisition_framework_voletsinp cafv
+                               LEFT JOIN ref_nomenclatures.t_nomenclatures
+                                         ON cafv.id_nomenclature_voletsinp =
+                                            t_nomenclatures.id_nomenclature
+                      GROUP BY cafv.id_acquisition_framework),
+     af_publication AS (SELECT cafp.id_acquisition_framework,
+                               array_agg(DISTINCT
+                                         jsonb_build_object('uuid', sinp_datatype_publications.unique_publication_id,
+                                                            'reference',
+                                                            sinp_datatype_publications.publication_reference,
+                                                            'url',
+                                                            sinp_datatype_publications.publication_url)) AS publications
+                        FROM gn_meta.cor_acquisition_framework_publication cafp
+                                 LEFT JOIN gn_meta.sinp_datatype_publications
+                                           ON cafp.id_publication = sinp_datatype_publications.id_publication
+                        GROUP BY cafp.id_acquisition_framework)
+--      ,
+--      af AS
+         (SELECT taf.id_acquisition_framework,
+                   jsonb_pretty(jsonb_build_object('uuid', taf.unique_acquisition_framework_id, 'name',
                                       taf.acquisition_framework_name,
                                       'desc', taf.acquisition_framework_desc, 'start_date',
                                       taf.acquisition_framework_start_date, 'end_date',
                                       taf.acquisition_framework_end_date,
-                                      'initial_closing_date', taf.initial_closing_date, 'territorial_level',
-                                      ntl.cd_nomenclature, 'financing_type', nft.cd_nomenclature, 'target_description',
+                                      'initial_closing_date', taf.initial_closing_date, 'territories',
+                                      af_territories.territories, 'territorial_level',
+                                      ntl.cd_nomenclature, 'territory_desc', taf.territory_desc, 'objectives',
+                                      af_objectives.objectives, 'publications', af_publication.publications,
+                                      'financing_type', nft.cd_nomenclature,
+                                      'target_description',
                                       taf.target_description, 'ecologic_or_geologic_target',
                                       taf.ecologic_or_geologic_target, 'actors',
-                                      json_agg(af_actors.json_data)) AS af_data
+                                      json_agg(af_actors.json_data), 'is_parent', taf.is_parent, 'parent_uuid',
+                                      tafp.unique_acquisition_framework_id)) AS af_data
             FROM gn_meta.t_acquisition_frameworks taf
+                     LEFT JOIN gn_meta.t_acquisition_frameworks tafp
+                               ON tafp.id_acquisition_framework = taf.acquisition_framework_parent_id
                      JOIN af_actors ON af_actors.id_acquisition_framework = taf.id_acquisition_framework
                      LEFT JOIN ref_nomenclatures.t_nomenclatures ntl
                                ON taf.id_nomenclature_territorial_level = ntl.id_nomenclature
                      LEFT JOIN ref_nomenclatures.t_nomenclatures nft
                                ON taf.id_nomenclature_financing_type = nft.id_nomenclature
+                     LEFT JOIN af_territories ON af_territories.id_acquisition_framework = taf.id_acquisition_framework
+                     LEFT JOIN af_objectives ON af_objectives.id_acquisition_framework = taf.id_acquisition_framework
+                     LEFT JOIN af_voletsinp ON af_voletsinp.id_acquisition_framework = taf.id_acquisition_framework
+                     LEFT JOIN af_publication ON af_publication.id_acquisition_framework = taf.id_acquisition_framework
             GROUP BY taf.id_acquisition_framework, taf.acquisition_framework_name, taf.acquisition_framework_desc,
                      taf.acquisition_framework_start_date, taf.acquisition_framework_end_date, taf.initial_closing_date,
-                     ntl.cd_nomenclature, nft.cd_nomenclature),
+                     ntl.cd_nomenclature, nft.cd_nomenclature, af_territories.territories, af_objectives.objectives,
+                     af_voletsinp.voletsinp, af_publication.publications, taf.is_parent,tafp.unique_acquisition_framework_id),
      ds_actors AS (SELECT cda.id_dataset,
                           json_build_object('type_role',
                                             CASE
