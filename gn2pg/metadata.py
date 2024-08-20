@@ -8,7 +8,7 @@ Information describing the project.
 PACKAGE = "gn2pg_client"
 PROJECT = "GeoNature 2 PostgreSQL Client application"
 PROJECT_NO_SPACES = PROJECT.replace(" ", "")
-VERSION = "1.6.4"
+VERSION = "1.6.6"
 DESCRIPTION = "Import tool from GeoNature to a PostgreSQL database through Export module API"
 AUTHORS = [
     "@lpofredc (LPOAuRA)",

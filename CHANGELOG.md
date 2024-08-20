@@ -6,9 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.6.6 - 2024-08-20
+
+### Fixes
+
+- Pagination is now calculated from API response (`limit` value), fix #81
+
+## 1.6.5 - 2024-06-10
+
+### Fixes
+
+- Fix trigger to populate additional data (fix #73).
+
 ## 1.6.4 - 2024-04-24
 
-## Fixes
+### Fixes
 
 - Fix typo error on trigger scripts.
 

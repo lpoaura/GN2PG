@@ -20,7 +20,8 @@ class TestApi:
         r = base_api._session.get(url=api_url)
         resp = r.json()
         total_filtered = resp["total_filtered"]
-        total_pages = math.ceil(total_filtered / params.get("limit"))
+        limit = resp["limit"]
+        total_pages = math.ceil(total_filtered / limit)
 
         page_gen = base_api.page_list(params=params)
 
