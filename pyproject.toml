@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "gn2pg_client"
 packages = [{ include = "gn2pg" }]
-version = "1.6.5"
+version = "1.6.6"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]
@@ -70,7 +70,7 @@ types-requests = "^2.31.0.20240406"
 
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "^6"
+sphinx = ">=6,<8"
 sphinx-rtd-theme = "^1.2.0"
 sphinxcontrib-napoleon = "^0.7"
 myst-parser = "^2.0.0"
