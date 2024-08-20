@@ -137,7 +137,7 @@ class BaseAPI:
         """Return the controler name."""
         return self._ctrl
 
-    def _url(self, kind: str = "data", params: Optional[dict] = None) -> Optional[str]:
+    def _url(self, kind: str = "data", params: Optional[dict] = None) -> str:
         """Generate export API URL with QueryStrings if params.
 
         Args:
@@ -180,7 +180,7 @@ class BaseAPI:
 
         api_url = self._url(kind, params)
 
-        response = session.get(url=api_url, params={**params, **{"limit": 1}})
+        response = session.get(url=api_url, params={**params})
         logger.debug(
             _("Defining page_list from %s with status code %s"),
             api_url,
@@ -190,7 +190,8 @@ class BaseAPI:
         if response.status_code == 200:
             resp = response.json()
             total_filtered = resp["total_filtered"] if "total_filtered" in resp else resp["total"]
-            total_pages = math.ceil(total_filtered / params.get("limit"))
+            limit = resp["limit"]
+            total_pages = math.ceil(total_filtered / limit)
             logger.debug(
                 _("API %s contains %s data in %s page(s)"),
                 api_url,
@@ -198,7 +199,9 @@ class BaseAPI:
                 total_pages,
             )
 
-            page_list = (self._url(kind, {**params, **{"offset": p}}) for p in range(total_pages))
+            page_list = list(
+                self._url(kind, {**params, **{"offset": p}}) for p in range(total_pages)
+            )
             return page_list
         logger.info(_("No data available from from %s"), self._config.name)
         return None
