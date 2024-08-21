@@ -43,6 +43,12 @@ repos:
           ]
         files: 'gn2pg'
 
+  - repo: https://github.com/amureki/pre-commit-pgFormatter
+    rev: v1.3.0  # Use the sha / tag you want to point at
+    hooks:
+      - id: pg_format
+        args: [-b,-f1,-C,-U2,-k,-g,-w80]
+
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:
     autoupdate_schedule: weekly
