@@ -158,7 +158,75 @@ COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_nomenclature_from_label (_type TEX
 CREATE UNIQUE INDEX IF NOT EXISTS uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese (id_source, entity_source_pk_value)
 ;
 
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_territories(_id_af INTEGER, _territories JSONB);
 
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_territories(_id_af INTEGER, _territories JSONB) RETURNS BOOLEAN
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    i RECORD;
+BEGIN
+    RAISE DEBUG '_id_af %, territories %', _id_af::INT, _territories;
+
+    FOR i IN (SELECT jsonb_array_elements_text(_territories) item)
+        LOOP
+            RAISE DEBUG 'iterritory % %',i, i.item;
+            INSERT INTO gn_meta.cor_acquisition_framework_territory (id_acquisition_framework, id_nomenclature_territory)
+            VALUES (_id_af,
+                    ref_nomenclatures.get_id_nomenclature('TERRITOIRE', i.item))
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+RETURN TRUE;
+END
+$$;
+
+
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_objectives(_id_af INTEGER, _objectives JSONB);
+
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_objectives(_id_af INTEGER, _objectives JSONB) RETURNS BOOLEAN
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    i RECORD;
+BEGIN
+    RAISE DEBUG '_id_af %, objectives %', _id_af::INT, _objectives;
+
+    FOR i IN (SELECT jsonb_array_elements_text(_objectives) item)
+        LOOP
+            RAISE DEBUG 'iterritory % %',i, i.item;
+            INSERT INTO gn_meta.cor_acquisition_framework_objectif (id_acquisition_framework, id_nomenclature_objectif)
+            VALUES (_id_af,
+                    ref_nomenclatures.get_id_nomenclature('CA_OBJECTIFS', i.item))
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+RETURN TRUE;
+END
+$$;
+
+
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_publications(_id_af INTEGER, _objectives JSONB);
+
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_publications(_id_af INTEGER, _publications JSONB) RETURNS VOID
+    LANGUAGE plpgsql
+AS
+$$
+DECLARE
+    i RECORD;
+BEGIN
+    RAISE DEBUG '_id_af %, territories %', _id_af::INT, _objectives;
+
+    FOR i IN (SELECT jsonb_array_elements_text(_objectives) item)
+        LOOP
+            RAISE DEBUG 'iterritory % %',i, i.item;
+            INSERT INTO gn_meta.sinp_datatype_publications (id_acquisition_framework, id_publication)
+            VALUES (_id_af,
+                    ref_nomenclatures.get_id_nomenclature('CA_OBJECTIFS', i.item))
+            ON CONFLICT DO NOTHING;
+        END LOOP;
+END
+$$;
 
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories(_id_ds INTEGER, _territories JSONB);
 
