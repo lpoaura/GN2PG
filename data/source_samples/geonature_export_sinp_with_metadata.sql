@@ -69,7 +69,7 @@ WITH af_actors AS (SELECT cafa.id_acquisition_framework,
                                     'financing_type', nft.cd_nomenclature,
                                     'target_description',
                                     taf.target_description, 'ecologic_or_geologic_target',
-                                    taf.ecologic_or_geologic_target, 'actors',
+                                    taf.ecologic_or_geologic_target, 'sinp_theme', af_voletsinp.voletsinp, 'actors',
                                     json_agg(af_actors.json_data), 'is_parent', taf.is_parent, 'parent_uuid',
                                     tafp.unique_acquisition_framework_id) AS af_data
           FROM gn_meta.t_acquisition_frameworks taf
