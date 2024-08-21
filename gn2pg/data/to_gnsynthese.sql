@@ -237,6 +237,34 @@ BEGIN
 END
 $$;
 
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_sinp_theme (_id_af INTEGER
+    , _sinp_themes JSONB);
+
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_sinp_theme (_id_af
+    INTEGER , _sinp_themes JSONB)
+    RETURNS BOOLEAN
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    i RECORD;
+BEGIN
+    RAISE DEBUG '_id_af %, themes %' , _id_af::INT , _sinp_themes;
+
+    FOR i IN (
+        SELECT
+            jsonb_array_elements_text(_sinp_themes) item)
+        LOOP
+            RAISE DEBUG 'ithemes % %' , i , i.item;
+	    INSERT INTO gn_meta.cor_acquisition_framework_voletsinp
+		(id_acquisition_framework , id_nomenclature_voletsinp)
+                VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('VOLET_SINP' , i.item))
+            ON CONFLICT
+                DO NOTHING;
+        END LOOP;
+    RETURN TRUE;
+END
+$$;
+
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_publications (_id_af
     INTEGER , _objectives JSONB);
 
@@ -462,6 +490,12 @@ BEGIN
     RAISE DEBUG 'the_af_id %' , the_af_id;
     PERFORM
         gn2pg_import.fct_c_insert_af_actors (the_af_id , _af_data -> 'actors' , _source);
+    PERFORM
+        gn2pg_import.fct_c_insert_af_territories (the_af_id , _af_data -> 'territories');
+    PERFORM
+        gn2pg_import.fct_c_insert_af_objectives (the_af_id , _af_data -> 'objectives');
+    PERFORM
+        gn2pg_import.fct_c_insert_af_sinp_theme (the_af_id , _af_data -> 'voletsinp');
     RETURN the_af_id;
 END
 $$;
@@ -484,9 +518,9 @@ BEGIN
 	dataset_desc , marine_domain , terrestrial_domain ,
 	id_nomenclature_source_status , id_nomenclature_resource_type ,
 	id_nomenclature_dataset_objectif , id_nomenclature_data_origin ,
-	id_nomenclature_collecting_method , id_nomenclature_data_type
+	id_nomenclature_collecting_method , id_nomenclature_data_type ,
         --                            , additional_data
-        , meta_create_date , meta_update_date)
+        keywords , meta_create_date , meta_update_date)
     SELECT
         (_ds_data #>> '{uuid}')::UUID
         , _id_af
@@ -507,6 +541,7 @@ BEGIN
 	    #>> '{collecting_method}'))::INT
 	, (ref_nomenclatures.get_id_nomenclature ('DATA_TYP' , _ds_data
 	    #>> '{data_type}'))::INT
+        , (_ds_data #>> '{keywords}')::VARCHAR
         , now()
         , now()
     WHERE
@@ -528,7 +563,8 @@ BEGIN
 	    'actors' , _source);
     IF jsonb_array_length(_ds_data -> 'territories') > 0 THEN
         PERFORM
-            gn2pg_import.fct_c_insert_ds_territories (the_dataset_id , _ds_data -> 'territories');
+	    gn2pg_import.fct_c_insert_ds_territories (the_dataset_id , _ds_data
+		-> 'territories');
     END IF;
     RETURN the_dataset_id;
 END
