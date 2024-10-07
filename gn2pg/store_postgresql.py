@@ -7,8 +7,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
+import importlib.resources
 
-import pkg_resources
 from sqlalchemy import (
     Column,
     DateTime,
@@ -287,7 +287,7 @@ class PostgresqlUtils:
         logger.info(_("Start to execute %s script"), script)
         conn = self._db.connect()
         if script == "to_gnsynthese":
-            file = pkg_resources.resource_filename(__name__, "data/to_gnsynthese.sql")
+            file = importlib.resources.files(__name__).joinpath("data", "to_gnsynthese.sql")
             logger.info(
                 _("You choosed to use internal to_gnsynthese.sql script in schema %s"),
                 self._db_schema,
