@@ -10,7 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixes
 
-- Populate additional_date (if column exists) on datasets, acquisition frameworks and sources,fix #87
+- Populate `additional_data` (if column exists) on `gn_meta.t_datasets`, `gn_meta.t_acquisition_frameworks` and `gn_synthese.t_sources`,fix #87
+- Replace module `pkg_resouces` by native `importlib`, fix #88
 
 ## 1.6.6 - 2024-08-20
 
