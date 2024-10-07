@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.6.7 - 2024-10-xx
+
+### Fixes
+
+- Populate additional_date (if column exists) on datasets, acquisition frameworks and sources,fix #87
+
 ## 1.6.6 - 2024-08-20
 
 ### Fixes

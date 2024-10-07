@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from subprocess import call
 
-import pkg_resources
+import importlib.resources
 
 from gn2pg import _
 from gn2pg.download import Data
@@ -22,20 +22,24 @@ logger = logging.getLogger(__name__)
 
 sh_col = BColors()
 
-
 def init(file: str) -> None:
     """Init config file from template
 
     Args:
-        file (str): [description]
+        file (str): The name of the configuration file to create.
     """
-
-    toml_src = pkg_resources.resource_filename(__name__, "data/gn2pgconfig.toml")
+    
+    # Get the path to the template file
+    toml_src = importlib.resources.files(__name__).joinpath("data", "gn2pgconfig.toml")
+    
     toml_dst = str(ENVDIR / file)
+    
+    # Check if the destination file already exists
     if Path(toml_dst).is_file():
         ENVDIR.mkdir(exist_ok=True)
         logger.info(_("Conf directory %s created"), str(ENVDIR))
         logger.warning(_("%s file already exists"), toml_dst)
+        
         overwrite = input(
             _(
                 f"{sh_col.color('header')}Would you like to overwrite file "
@@ -44,16 +48,18 @@ def init(file: str) -> None:
                 f"/[{sh_col.color('bold')}n{sh_col.color('endc')}]o) ? "
             )
         )
+        
         if overwrite.lower() == "n":
             logger.warning(_("File %s will be preserved"), toml_dst)
             sys.exit(0)
         else:
             logger.warning(_("file %s will be overwritten"), toml_dst)
+    
     logger.info(_("Creating TOML configuration file %s, from %s"), toml_dst, toml_src)
     shutil.copyfile(toml_src, toml_dst)
     logger.info(_("Please edit %s before running the script"), toml_dst)
     sys.exit(0)
-
+    
 
 def edit(file: str) -> None:
     """Open editor to edit config file

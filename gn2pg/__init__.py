@@ -7,17 +7,18 @@ import logging.config
 from pathlib import Path
 
 import coloredlogs
-from pkg_resources import DistributionNotFound, get_distribution
+
+from importlib.metadata import version
 
 from gn2pg import metadata
 
 try:
     DIST_NAME = "gn2pg_client"
-    __version__ = get_distribution(DIST_NAME).version
-except DistributionNotFound:  # pragma: no cover
+    __version__ = version(DIST_NAME)
+except :  # pragma: no cover
     __version__ = metadata.VERSION
 finally:
-    del get_distribution, DistributionNotFound
+    del version
 
 __author__ = metadata.AUTHORS_STRING
 __license__ = metadata.LICENSE
