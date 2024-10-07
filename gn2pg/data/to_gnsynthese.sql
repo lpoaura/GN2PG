@@ -68,7 +68,7 @@ BEGIN
         THEN
             UPDATE gn_meta.t_acquisition_frameworks
             SET additional_data = JSONB_SET(
-                    JSONB_SET(additional_data, '{source}', to_jsonb(_name), TRUE)
+                    JSONB_SET(additional_data, '{source}', TO_JSONB(_name), TRUE)
                 , '{module}', '"gn2pg"'::jsonb, TRUE)
             WHERE id_acquisition_framework = the_af_id;
         END IF;
@@ -127,7 +127,7 @@ BEGIN
         THEN
             UPDATE gn_meta.t_datasets
             SET additional_data = JSONB_SET(
-                    JSONB_SET(additional_data, '{source}', to_jsonb(_name), TRUE)
+                    JSONB_SET(additional_data, '{source}', TO_JSONB(_name), TRUE)
                 , '{module}', '"gn2pg"'::jsonb, TRUE)
             WHERE id_dataset = the_dataset_id;
         END IF;
@@ -173,7 +173,7 @@ BEGIN
         THEN
             UPDATE gn_synthese.t_sources
             SET additional_data = JSONB_SET(
-                    JSONB_SET(additional_data, '{source}', to_jsonb(_source), TRUE)
+                    JSONB_SET(additional_data, '{source}', TO_JSONB(_source), TRUE)
                 , '{module}', '"gn2pg"'::jsonb, TRUE)
             WHERE id_source = the_source_id;
         END IF;
@@ -348,7 +348,7 @@ BEGIN
         LOOP
             RAISE DEBUG 'iterritory % %' , i , i.item;
             INSERT INTO gn_meta.cor_dataset_territory (id_dataset, id_nomenclature_territory)
-            VALUES (_id_ds, ref_nomenclatures.get_id_nomenclature('TERRITOIRE', i.item))
+            VALUES (_id_ds, ref_nomenclatures.get_id_nomenclature('TERRITOIRE', coalesce(i.item,'METROP')))
             ON CONFLICT
                 DO NOTHING;
         END LOOP;
@@ -480,7 +480,10 @@ CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata(
 AS
 $func$
 DECLARE
-    the_af_id INT;
+    the_af_id       INT;
+    the_territories jsonb;
+    the_objectives  jsonb;
+    the_voletsinp   jsonb;
 BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM gn_meta.t_acquisition_frameworks
@@ -512,12 +515,31 @@ BEGIN
 
         PERFORM
             gn2pg_import.fct_c_insert_af_actors(the_af_id, _af_data -> 'actors', _source);
+
+        IF _af_data ->> 'territories' IS NULL THEN
+            SELECT ARRAY_TO_JSON(ARRAY ['METROP'])::jsonb INTO the_territories;
+        ELSE
+            SELECT _af_data -> 'territories' INTO the_territories;
+        END IF;
         PERFORM
-            gn2pg_import.fct_c_insert_af_territories(the_af_id, _af_data -> 'territories');
+            gn2pg_import.fct_c_insert_af_territories(the_af_id, the_territories);
+        IF _af_data ->> 'objectives' IS NULL THEN
+            SELECT ARRAY_TO_JSON(ARRAY ['11'])::jsonb INTO the_objectives;
+        ELSE
+            SELECT _af_data -> 'objectives' INTO the_objectives;
+        END IF;
+        IF _af_data ->> 'voletsinp' IS NULL THEN
+            SELECT ARRAY_TO_JSON(ARRAY ['1'])::jsonb INTO the_voletsinp;
+        ELSE
+            SELECT _af_data -> 'voletsinp' INTO the_voletsinp;
+        END IF;
+
         PERFORM
-            gn2pg_import.fct_c_insert_af_objectives(the_af_id, _af_data -> 'objectives');
+            gn2pg_import.fct_c_insert_af_territories(the_af_id, the_territories);
         PERFORM
-            gn2pg_import.fct_c_insert_af_sinp_theme(the_af_id, _af_data -> 'voletsinp');
+            gn2pg_import.fct_c_insert_af_objectives(the_af_id, the_objectives);
+        PERFORM
+            gn2pg_import.fct_c_insert_af_sinp_theme(the_af_id, the_voletsinp);
 
         IF gn2pg_import.fct_c_check_has_additional_data_column(
                 'gn_meta',
@@ -527,10 +549,11 @@ BEGIN
         THEN
             UPDATE gn_meta.t_acquisition_frameworks
             SET additional_data = JSONB_SET(
-                    JSONB_SET(additional_data, '{source}', to_jsonb(_source), TRUE)
+                    JSONB_SET(additional_data, '{source}', TO_JSONB(_source), TRUE)
                 , '{module}', '"gn2pg"'::jsonb, TRUE)
             WHERE id_acquisition_framework = the_af_id;
         END IF;
+        RETURN the_af_id;
     ELSE
         SELECT id_acquisition_framework
         INTO the_af_id
@@ -607,7 +630,7 @@ BEGIN
         THEN
             UPDATE gn_meta.t_datasets
             SET additional_data = JSONB_SET(
-                    JSONB_SET(additional_data, '{source}', to_jsonb(_source), TRUE)
+                    JSONB_SET(additional_data, '{source}', TO_JSONB(_source), TRUE)
                 , '{module}', '"gn2pg"'::jsonb, TRUE)
             WHERE id_dataset = the_dataset_id;
         END IF;

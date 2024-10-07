@@ -6,12 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
-## 1.6.7 - 2024-10-xx
+## 1.6.7 - 2024-10-xx
 
 ### Fixes
 
 - Populate `additional_data` (if column exists) on `gn_meta.t_datasets`, `gn_meta.t_acquisition_frameworks` and `gn_synthese.t_sources`,fix #87
 - Replace module `pkg_resouces` by native `importlib`, fix #88
+- Add default values for missing many to many relations on acquisition frameworks, fix #92
 
 ## 1.6.6 - 2024-08-20
 
