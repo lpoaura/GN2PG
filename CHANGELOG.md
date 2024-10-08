@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+
+## 1.6.8 - 2024-10-08
+
+### Fixes
+
+- TypeError while using new importlib resources, fix #94
+
+
 ## 1.6.7 - 2024-10-07
 
 ### Fixes
