@@ -54,9 +54,8 @@ BEGIN
                    WHERE unique_acquisition_framework_id = _uuid)
     THEN
         INSERT INTO gn_meta.t_acquisition_frameworks
-        (unique_acquisition_framework_id, acquisition_framework_name,
-         acquisition_framework_desc, acquisition_framework_start_date,
-         meta_create_date)
+        ( unique_acquisition_framework_id, acquisition_framework_name, acquisition_framework_desc
+        , acquisition_framework_start_date, meta_create_date)
         SELECT _uuid
              , _name
              , 'Description of acquisition framework : ' || _name
@@ -105,9 +104,8 @@ BEGIN
                    FROM gn_meta.t_datasets
                    WHERE unique_dataset_id = _uuid)
     THEN
-        INSERT INTO gn_meta.t_datasets (unique_dataset_id,
-                                        id_acquisition_framework, dataset_name, dataset_shortname,
-                                        dataset_desc, marine_domain, terrestrial_domain, meta_create_date)
+        INSERT INTO gn_meta.t_datasets ( unique_dataset_id, id_acquisition_framework, dataset_name, dataset_shortname
+                                       , dataset_desc, marine_domain, terrestrial_domain, meta_create_date)
         SELECT _uuid
              , _id_af
              , _name
@@ -219,9 +217,12 @@ COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_nomenclature_from_label (_type
 
 
 /* Add unique constraint to synthese on  id_source and /entity_source_pk_value */
-CREATE UNIQUE INDEX IF NOT EXISTS
-    uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese
-    (id_source, entity_source_pk_value);
+DROP INDEX IF EXISTS gn_synthese.uidx_synthese_id_source_id_entity_source_pk_value ;
+-- CREATE UNIQUE INDEX IF NOT EXISTS
+--     uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese
+--     (id_source, entity_source_pk_value);
+
+
 
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_territories (_id_af
                                                                       INTEGER, _territories jsonb);
@@ -266,7 +267,7 @@ BEGIN
 
     FOR i IN (SELECT JSONB_ARRAY_ELEMENTS_TEXT(_objectives) item)
         LOOP
-            RAISE DEBUG 'iterritory % %' , i , i.item;
+            RAISE DEBUG 'iobjective % %' , i , i.item;
             INSERT INTO gn_meta.cor_acquisition_framework_objectif
                 (id_acquisition_framework, id_nomenclature_objectif)
             VALUES (_id_af, ref_nomenclatures.get_id_nomenclature('CA_OBJECTIFS', i.item))
@@ -304,31 +305,32 @@ BEGIN
 END
 $$;
 
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_publications (_id_af
-                                                                       INTEGER, _objectives jsonb);
 
-CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_publications(_id_af
-                                                                         INTEGER, _publications jsonb)
-    RETURNS VOID
-    LANGUAGE plpgsql
-AS
-$$
-DECLARE
-    i RECORD;
-BEGIN
-    RAISE DEBUG '_id_af %, territories %' , _id_af::INT , _objectives;
-
-    FOR i IN (SELECT JSONB_ARRAY_ELEMENTS_TEXT(_objectives) item)
-        LOOP
-            RAISE DEBUG 'iterritory % %' , i , i.item;
-            INSERT INTO gn_meta.sinp_datatype_publications
-                (id_acquisition_framework, id_publication)
-            VALUES (_id_af, ref_nomenclatures.get_id_nomenclature('CA_OBJECTIFS', i.item))
-            ON CONFLICT
-                DO NOTHING;
-        END LOOP;
-END
-$$;
+-- DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_publications (_id_af
+--                                                                        INTEGER, _objectives jsonb);
+--
+-- CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_publications(_id_af
+--                                                                          INTEGER, _publications jsonb)
+--     RETURNS VOID
+--     LANGUAGE plpgsql
+-- AS
+-- $$
+-- DECLARE
+--     i RECORD;
+-- BEGIN
+--     RAISE DEBUG '_id_af %, territories %' , _id_af::INT , _objectives;
+--
+--     FOR i IN (SELECT JSONB_ARRAY_ELEMENTS_TEXT(_objectives) item)
+--         LOOP
+--             RAISE DEBUG 'iterritory % %' , i , i.item;
+--             INSERT INTO gn_meta.sinp_datatype_publications
+--                 (id_acquisition_framework, id_publication)
+--             VALUES (_id_af, ref_nomenclatures.get_id_nomenclature('CA_OBJECTIFS', i.item))
+--             ON CONFLICT
+--                 DO NOTHING;
+--         END LOOP;
+-- END
+-- $$;
 
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories (_id_ds
                                                                       INTEGER, _territories jsonb);
@@ -348,7 +350,7 @@ BEGIN
         LOOP
             RAISE DEBUG 'iterritory % %' , i , i.item;
             INSERT INTO gn_meta.cor_dataset_territory (id_dataset, id_nomenclature_territory)
-            VALUES (_id_ds, ref_nomenclatures.get_id_nomenclature('TERRITOIRE', coalesce(i.item,'METROP')))
+            VALUES (_id_ds, ref_nomenclatures.get_id_nomenclature('TERRITOIRE', COALESCE(i.item, 'METROP')))
             ON CONFLICT
                 DO NOTHING;
         END LOOP;
@@ -368,8 +370,8 @@ BEGIN
         INSERT INTO utilisateurs.bib_organismes ( uuid_organisme, nom_organisme
                                                 , email_organisme, additional_data)
         VALUES ((_actor_role ->> 'uuid_actor')::uuid, _actor_role #>>
-                                                      '{identity,organism_name}', _actor_role ->> 'email',
-                JSONB_BUILD_OBJECT('source', _source, 'module'
+                                                      '{identity,organism_name}', _actor_role ->> 'email'
+               , JSONB_BUILD_OBJECT('source', _source, 'module'
                     , 'gn2pg'))
         ON CONFLICT (uuid_organisme)
             DO NOTHING;
@@ -378,15 +380,13 @@ BEGIN
         FROM utilisateurs.bib_organismes
         WHERE uuid_organisme = (_actor_role ->> 'uuid_actor')::uuid;
     ELSIF _actor_role ->> 'type_role' = 'role' THEN
-        INSERT INTO utilisateurs.t_roles (uuid_role, nom_role, prenom_role,
-                                          email, champs_addi)
+        INSERT INTO utilisateurs.t_roles (uuid_role, nom_role, prenom_role, email, champs_addi)
         VALUES ((_actor_role ->> 'uuid_actor')::uuid, _actor_role #>>
-                                                      '{identity,first_name}', _actor_role #>> '{identity,last_name}',
-                NULL,
-                JSONB_BUILD_OBJECT('source', _source, 'module'
+                                                      '{identity,first_name}', _actor_role #>> '{identity,last_name}'
+               , NULL, JSONB_BUILD_OBJECT('source', _source, 'module'
                     , 'gn2pg', 'gn2pg_data',
-                                   JSONB_BUILD_OBJECT('email', _actor_role ->>
-                                                               'email')))
+                                          JSONB_BUILD_OBJECT('email', _actor_role ->>
+                                                                      'email')))
         ON CONFLICT (uuid_role)
             DO NOTHING;
         SELECT id_role
@@ -413,20 +413,15 @@ BEGIN
             IF i.item ->> 'type_role' = 'organism' THEN
                 INSERT INTO gn_meta.cor_dataset_actor ( id_dataset, id_organism
                                                       , id_nomenclature_actor_role)
-                VALUES (_id_dataset,
-                        gn2pg_import.fct_c_get_or_create_actors_in_usershub
-                        (i.item, _source),
-                        ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
+                VALUES (_id_dataset, gn2pg_import.fct_c_get_or_create_actors_in_usershub
+                                     (i.item, _source), ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
                             , i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
             ELSIF i.item ->> 'type_role' = 'role' THEN
-                INSERT INTO gn_meta.cor_dataset_actor (id_dataset, id_role,
-                                                       id_nomenclature_actor_role)
-                VALUES (_id_dataset,
-                        gn2pg_import.fct_c_get_or_create_actors_in_usershub
-                        (i.item, _source),
-                        ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
+                INSERT INTO gn_meta.cor_dataset_actor (id_dataset, id_role, id_nomenclature_actor_role)
+                VALUES (_id_dataset, gn2pg_import.fct_c_get_or_create_actors_in_usershub
+                                     (i.item, _source), ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
                             , i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
@@ -450,23 +445,17 @@ BEGIN
         LOOP
             IF i.item ->> 'type_role' = 'organism' THEN
                 INSERT INTO gn_meta.cor_acquisition_framework_actor
-                (id_acquisition_framework, id_organism,
-                 id_nomenclature_actor_role)
-                VALUES (_id_af,
-                        gn2pg_import.fct_c_get_or_create_actors_in_usershub
-                        (i.item, _source),
-                        ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
+                (id_acquisition_framework, id_organism, id_nomenclature_actor_role)
+                VALUES (_id_af, gn2pg_import.fct_c_get_or_create_actors_in_usershub
+                                (i.item, _source), ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
                             , i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
             ELSIF i.item ->> 'type_role' = 'role' THEN
                 INSERT INTO gn_meta.cor_acquisition_framework_actor
-                (id_acquisition_framework, id_role,
-                 id_nomenclature_actor_role)
-                VALUES (_id_af,
-                        gn2pg_import.fct_c_get_or_create_actors_in_usershub
-                        (i.item, _source),
-                        ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
+                (id_acquisition_framework, id_role, id_nomenclature_actor_role)
+                VALUES (_id_af, gn2pg_import.fct_c_get_or_create_actors_in_usershub
+                                (i.item, _source), ref_nomenclatures.get_id_nomenclature('ROLE_ACTEUR'
                             , i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
@@ -490,13 +479,11 @@ BEGIN
                    WHERE unique_acquisition_framework_id = (_af_data #>> '{uuid}')::uuid)
     THEN
         INSERT INTO gn_meta.t_acquisition_frameworks
-        (unique_acquisition_framework_id, acquisition_framework_name,
-         acquisition_framework_desc, acquisition_framework_start_date,
-         acquisition_framework_end_date, ecologic_or_geologic_target,
-         id_nomenclature_financing_type, id_nomenclature_territorial_level,
-         initial_closing_date, target_description
+        ( unique_acquisition_framework_id, acquisition_framework_name, acquisition_framework_desc
+        , acquisition_framework_start_date, acquisition_framework_end_date, ecologic_or_geologic_target
+        , id_nomenclature_financing_type, id_nomenclature_territorial_level, initial_closing_date, target_description
             --                                          , additional_data
-            , meta_create_date, meta_update_date)
+        , meta_create_date, meta_update_date)
         SELECT (_af_data #>> '{uuid}')::uuid
              , (_af_data #>> '{name}')::VARCHAR
              , (_af_data #>> '{desc}')::VARCHAR
@@ -516,6 +503,7 @@ BEGIN
         PERFORM
             gn2pg_import.fct_c_insert_af_actors(the_af_id, _af_data -> 'actors', _source);
 
+        /* Manage AF territories */
         IF _af_data ->> 'territories' IS NULL THEN
             SELECT ARRAY_TO_JSON(ARRAY ['METROP'])::jsonb INTO the_territories;
         ELSE
@@ -523,24 +511,26 @@ BEGIN
         END IF;
         PERFORM
             gn2pg_import.fct_c_insert_af_territories(the_af_id, the_territories);
+
+        /* Manage AF objectives */
         IF _af_data ->> 'objectives' IS NULL THEN
             SELECT ARRAY_TO_JSON(ARRAY ['11'])::jsonb INTO the_objectives;
         ELSE
             SELECT _af_data -> 'objectives' INTO the_objectives;
         END IF;
+        PERFORM
+            gn2pg_import.fct_c_insert_af_objectives(the_af_id, the_objectives);
+
+        /* Manage AF volet_sinp */
         IF _af_data ->> 'voletsinp' IS NULL THEN
             SELECT ARRAY_TO_JSON(ARRAY ['1'])::jsonb INTO the_voletsinp;
         ELSE
             SELECT _af_data -> 'voletsinp' INTO the_voletsinp;
         END IF;
-
-        PERFORM
-            gn2pg_import.fct_c_insert_af_territories(the_af_id, the_territories);
-        PERFORM
-            gn2pg_import.fct_c_insert_af_objectives(the_af_id, the_objectives);
         PERFORM
             gn2pg_import.fct_c_insert_af_sinp_theme(the_af_id, the_voletsinp);
 
+        /* Manage additional_data if exists */
         IF gn2pg_import.fct_c_check_has_additional_data_column(
                 'gn_meta',
                 't_acquisition_frameworks',
@@ -553,7 +543,6 @@ BEGIN
                 , '{module}', '"gn2pg"'::jsonb, TRUE)
             WHERE id_acquisition_framework = the_af_id;
         END IF;
-        RETURN the_af_id;
     ELSE
         SELECT id_acquisition_framework
         INTO the_af_id
@@ -582,14 +571,13 @@ BEGIN
                    FROM gn_meta.t_datasets
                    WHERE unique_dataset_id = (_ds_data #>> '{uuid}')::uuid)
     THEN
-        INSERT INTO gn_meta.t_datasets (unique_dataset_id,
-                                        id_acquisition_framework, dataset_name, dataset_shortname,
-                                        dataset_desc, marine_domain, terrestrial_domain,
-                                        id_nomenclature_source_status, id_nomenclature_resource_type,
-                                        id_nomenclature_dataset_objectif, id_nomenclature_data_origin,
-                                        id_nomenclature_collecting_method, id_nomenclature_data_type,
+        INSERT INTO gn_meta.t_datasets ( unique_dataset_id, id_acquisition_framework, dataset_name, dataset_shortname
+                                       , dataset_desc, marine_domain, terrestrial_domain, id_nomenclature_source_status
+                                       , id_nomenclature_resource_type, id_nomenclature_dataset_objectif
+                                       , id_nomenclature_data_origin, id_nomenclature_collecting_method
+                                       , id_nomenclature_data_type,
             --                            , additional_data
-                                        keywords, meta_create_date, meta_update_date)
+                                         keywords, meta_create_date, meta_update_date)
         SELECT (_ds_data #>> '{uuid}')::uuid
              , _id_af
              , (_ds_data #>> '{name}')::VARCHAR
@@ -978,136 +966,101 @@ BEGIN
 
 
     /* Proceed to upsert */
-    INSERT INTO gn_synthese.synthese (unique_id_sinp, unique_id_sinp_grp,
-                                      id_source, entity_source_pk_value, id_dataset,
-                                      id_nomenclature_geo_object_nature, id_nomenclature_grp_typ,
-                                      grp_method, id_nomenclature_obs_technique, id_nomenclature_bio_status
-        , id_nomenclature_bio_condition, id_nomenclature_naturalness,
-                                      id_nomenclature_exist_proof, id_nomenclature_valid_status,
-                                      id_nomenclature_diffusion_level, id_nomenclature_life_stage,
-                                      id_nomenclature_sex, id_nomenclature_obj_count,
-                                      id_nomenclature_type_count, id_nomenclature_sensitivity,
-                                      id_nomenclature_observation_status, id_nomenclature_blurring,
-                                      id_nomenclature_source_status, id_nomenclature_info_geo_type,
-                                      id_nomenclature_behaviour, id_nomenclature_biogeo_status,
-                                      reference_biblio, count_min, count_max, cd_nom, cd_hab, nom_cite,
-                                      meta_v_taxref, sample_number_proof, digital_proof, non_digital_proof
-        , altitude_min, altitude_max, depth_min, depth_max, place_name,
-                                      the_geom_4326, the_geom_point, the_geom_local, precision, date_min
-        , date_max, validator, validation_comment, observers, determiner,
-                                      id_digitiser, id_nomenclature_determination_method, comment_context,
-                                      comment_description, additional_data, meta_validation_date,
-                                      last_action)
-    VALUES (the_unique_id_sinp, the_unique_id_sinp_grp, the_id_source,
-            the_entity_source_pk_value, the_id_dataset,
-            the_id_nomenclature_geo_object_nature, the_id_nomenclature_grp_typ
-               , the_grp_method, the_id_nomenclature_obs_technique,
-            the_id_nomenclature_bio_status, the_id_nomenclature_bio_condition
-               , the_id_nomenclature_naturalness, the_id_nomenclature_exist_proof
-               , the_id_nomenclature_valid_status,
-            the_id_nomenclature_diffusion_level,
-            the_id_nomenclature_life_stage, the_id_nomenclature_sex,
-            the_id_nomenclature_obj_count, the_id_nomenclature_type_count,
-            the_id_nomenclature_sensitivity,
-            the_id_nomenclature_observation_status,
-            the_id_nomenclature_blurring, the_id_nomenclature_source_status,
-            the_id_nomenclature_info_geo_type, the_id_nomenclature_behaviour,
-            the_id_nomenclature_biogeo_status, the_reference_biblio,
-            the_count_min, the_count_max, the_cd_nom, the_cd_hab,
-            the_nom_cite, the_meta_v_taxref, the_sample_number_proof,
-            the_digital_proof, the_non_digital_proof, the_altitude_min,
-            the_altitude_max, the_depth_min, the_depth_max, the_place_name,
-            _the_geom_4326, _the_geom_point, _the_geom_local, the_precision
-               , the_date_min, the_date_max, the_validator,
-            the_validation_comment, the_observers, the_determiner,
-            the_id_digitiser, the_id_nomenclature_determination_method,
-            the_comment_context, the_comment_description, the_additional_data
-               , the_meta_validation_date, 'I')
-    ON CONFLICT (id_source , entity_source_pk_value)
-        DO UPDATE SET unique_id_sinp                       = the_unique_id_sinp,
-                      unique_id_sinp_grp                   =
-                          the_unique_id_sinp_grp,
-                      id_source                            = the_id_source,
-                      entity_source_pk_value               = the_entity_source_pk_value,
-                      id_dataset                           = the_id_dataset,
-                      id_nomenclature_geo_object_nature
-                                                           = the_id_nomenclature_geo_object_nature,
-                      id_nomenclature_grp_typ              = the_id_nomenclature_grp_typ,
-                      grp_method                           = the_grp_method,
-                      id_nomenclature_obs_technique        =
-                          the_id_nomenclature_obs_technique,
-                      id_nomenclature_bio_status
-                                                           = the_id_nomenclature_bio_status,
-                      id_nomenclature_bio_condition        =
-                          the_id_nomenclature_bio_condition,
-                      id_nomenclature_naturalness
-                                                           = the_id_nomenclature_naturalness,
-                      id_nomenclature_exist_proof
-                                                           = the_id_nomenclature_exist_proof,
-                      id_nomenclature_valid_status         = the_id_nomenclature_valid_status
-            ,
-                      id_nomenclature_diffusion_level      =
-                          the_id_nomenclature_diffusion_level,
-                      id_nomenclature_life_stage           = the_id_nomenclature_life_stage,
-                      id_nomenclature_sex                  = the_id_nomenclature_sex,
-                      id_nomenclature_obj_count            = the_id_nomenclature_obj_count,
-                      id_nomenclature_type_count           = the_id_nomenclature_type_count,
-                      id_nomenclature_sensitivity          = the_id_nomenclature_sensitivity,
-                      id_nomenclature_observation_status   =
-                          the_id_nomenclature_observation_status,
-                      id_nomenclature_blurring             = the_id_nomenclature_blurring,
-                      id_nomenclature_source_status        =
-                          the_id_nomenclature_source_status,
-                      id_nomenclature_info_geo_type        =
-                          the_id_nomenclature_info_geo_type,
-                      id_nomenclature_behaviour            =
-                          the_id_nomenclature_behaviour,
-                      id_nomenclature_biogeo_status        =
-                          the_id_nomenclature_biogeo_status,
-                      reference_biblio                     =
-                          the_reference_biblio,
-                      count_min                            = the_count_min,
-                      count_max                            =
-                          the_count_max,
-                      cd_nom                               = the_cd_nom,
-                      cd_hab                               = the_cd_hab,
-                      nom_cite                             = the_nom_cite,
-                      meta_v_taxref                        = the_meta_v_taxref,
-                      sample_number_proof                  = the_sample_number_proof,
-                      digital_proof                        =
-                          the_digital_proof,
-                      non_digital_proof                    = the_non_digital_proof,
-                      altitude_min                         = the_altitude_min,
-                      altitude_max                         =
-                          the_altitude_max,
-                      depth_min                            = the_depth_min,
-                      depth_max                            =
-                          the_depth_max,
-                      place_name                           = the_place_name,
-                      the_geom_4326                        =
-                          _the_geom_4326,
-                      the_geom_point                       = _the_geom_point,
-                      the_geom_local                       = _the_geom_local,
-                      precision                            = the_precision,
-                      date_min                             = the_date_min,
-                      date_max                             = the_date_max,
-                      validator                            =
-                          the_validator,
-                      validation_comment                   = the_validation_comment,
-                      observers                            = the_observers,
-                      determiner                           = the_determiner,
-                      id_digitiser                         = the_id_digitiser,
-                      id_nomenclature_determination_method =
-                          the_id_nomenclature_determination_method,
-                      comment_context                      =
-                          the_comment_context,
-                      comment_description                  =
-                          the_comment_description,
-                      additional_data                      = the_additional_data
-            ,
-                      meta_validation_date                 = the_meta_validation_date,
-                      last_action
-                                                           = 'U';
+    INSERT INTO gn_synthese.synthese ( unique_id_sinp, unique_id_sinp_grp, id_source, entity_source_pk_value, id_dataset
+                                     , id_nomenclature_geo_object_nature, id_nomenclature_grp_typ, grp_method
+                                     , id_nomenclature_obs_technique, id_nomenclature_bio_status
+                                     , id_nomenclature_bio_condition, id_nomenclature_naturalness
+                                     , id_nomenclature_exist_proof, id_nomenclature_valid_status
+                                     , id_nomenclature_diffusion_level, id_nomenclature_life_stage, id_nomenclature_sex
+                                     , id_nomenclature_obj_count, id_nomenclature_type_count
+                                     , id_nomenclature_sensitivity, id_nomenclature_observation_status
+                                     , id_nomenclature_blurring, id_nomenclature_source_status
+                                     , id_nomenclature_info_geo_type, id_nomenclature_behaviour
+                                     , id_nomenclature_biogeo_status, reference_biblio, count_min, count_max, cd_nom
+                                     , cd_hab, nom_cite, meta_v_taxref, sample_number_proof, digital_proof
+                                     , non_digital_proof
+                                     , altitude_min, altitude_max, depth_min, depth_max, place_name, the_geom_4326
+                                     , the_geom_point, the_geom_local, precision, date_min
+                                     , date_max, validator, validation_comment, observers, determiner, id_digitiser
+                                     , id_nomenclature_determination_method, comment_context, comment_description
+                                     , additional_data, meta_validation_date, last_action)
+    VALUES ( the_unique_id_sinp, the_unique_id_sinp_grp, the_id_source, the_entity_source_pk_value, the_id_dataset
+           , the_id_nomenclature_geo_object_nature, the_id_nomenclature_grp_typ
+           , the_grp_method, the_id_nomenclature_obs_technique, the_id_nomenclature_bio_status
+           , the_id_nomenclature_bio_condition
+           , the_id_nomenclature_naturalness, the_id_nomenclature_exist_proof
+           , the_id_nomenclature_valid_status, the_id_nomenclature_diffusion_level, the_id_nomenclature_life_stage
+           , the_id_nomenclature_sex, the_id_nomenclature_obj_count, the_id_nomenclature_type_count
+           , the_id_nomenclature_sensitivity, the_id_nomenclature_observation_status, the_id_nomenclature_blurring
+           , the_id_nomenclature_source_status, the_id_nomenclature_info_geo_type, the_id_nomenclature_behaviour
+           , the_id_nomenclature_biogeo_status, the_reference_biblio, the_count_min, the_count_max, the_cd_nom
+           , the_cd_hab, the_nom_cite, the_meta_v_taxref, the_sample_number_proof, the_digital_proof
+           , the_non_digital_proof, the_altitude_min, the_altitude_max, the_depth_min, the_depth_max, the_place_name
+           , _the_geom_4326, _the_geom_point, _the_geom_local, the_precision
+           , the_date_min, the_date_max, the_validator, the_validation_comment, the_observers, the_determiner
+           , the_id_digitiser, the_id_nomenclature_determination_method, the_comment_context, the_comment_description
+           , the_additional_data
+           , the_meta_validation_date, 'I')
+    ON CONFLICT (unique_id_sinp)
+        DO UPDATE SET unique_id_sinp                       = the_unique_id_sinp
+                    , unique_id_sinp_grp                   = the_unique_id_sinp_grp
+                    , id_source                            = the_id_source
+                    , entity_source_pk_value               = the_entity_source_pk_value
+                    , id_dataset                           = the_id_dataset
+                    , id_nomenclature_geo_object_nature    = the_id_nomenclature_geo_object_nature
+                    , id_nomenclature_grp_typ              = the_id_nomenclature_grp_typ
+                    , grp_method                           = the_grp_method
+                    , id_nomenclature_obs_technique        = the_id_nomenclature_obs_technique
+                    , id_nomenclature_bio_status           = the_id_nomenclature_bio_status
+                    , id_nomenclature_bio_condition        = the_id_nomenclature_bio_condition
+                    , id_nomenclature_naturalness          = the_id_nomenclature_naturalness
+                    , id_nomenclature_exist_proof          = the_id_nomenclature_exist_proof
+                    , id_nomenclature_valid_status         = the_id_nomenclature_valid_status
+                    , id_nomenclature_diffusion_level      = the_id_nomenclature_diffusion_level
+                    , id_nomenclature_life_stage           = the_id_nomenclature_life_stage
+                    , id_nomenclature_sex                  = the_id_nomenclature_sex
+                    , id_nomenclature_obj_count            = the_id_nomenclature_obj_count
+                    , id_nomenclature_type_count           = the_id_nomenclature_type_count
+                    , id_nomenclature_sensitivity          = the_id_nomenclature_sensitivity
+                    , id_nomenclature_observation_status   = the_id_nomenclature_observation_status
+                    , id_nomenclature_blurring             = the_id_nomenclature_blurring
+                    , id_nomenclature_source_status        = the_id_nomenclature_source_status
+                    , id_nomenclature_info_geo_type        = the_id_nomenclature_info_geo_type
+                    , id_nomenclature_behaviour            = the_id_nomenclature_behaviour
+                    , id_nomenclature_biogeo_status        = the_id_nomenclature_biogeo_status
+                    , reference_biblio                     = the_reference_biblio
+                    , count_min                            = the_count_min
+                    , count_max                            = the_count_max
+                    , cd_nom                               = the_cd_nom
+                    , cd_hab                               = the_cd_hab
+                    , nom_cite                             = the_nom_cite
+                    , meta_v_taxref                        = the_meta_v_taxref
+                    , sample_number_proof                  = the_sample_number_proof
+                    , digital_proof                        = the_digital_proof
+                    , non_digital_proof                    = the_non_digital_proof
+                    , altitude_min                         = the_altitude_min
+                    , altitude_max                         = the_altitude_max
+                    , depth_min                            = the_depth_min
+                    , depth_max                            = the_depth_max
+                    , place_name                           = the_place_name
+                    , the_geom_4326                        = _the_geom_4326
+                    , the_geom_point                       = _the_geom_point
+                    , the_geom_local                       = _the_geom_local
+                    , precision                            = the_precision
+                    , date_min                             = the_date_min
+                    , date_max                             = the_date_max
+                    , validator                            = the_validator
+                    , validation_comment                   = the_validation_comment
+                    , observers                            = the_observers
+                    , determiner                           = the_determiner
+                    , id_digitiser                         = the_id_digitiser
+                    , id_nomenclature_determination_method = the_id_nomenclature_determination_method
+                    , comment_context                      = the_comment_context
+                    , comment_description                  = the_comment_description
+                    , additional_data                      = the_additional_data
+                    , meta_validation_date                 = the_meta_validation_date
+                    , last_action                          = 'U'
+    WHERE excluded.id_source = the_id_source;
     RETURN new;
 END;
 $$;
@@ -1120,6 +1073,7 @@ CREATE TRIGGER tri_c_upsert_data_to_geonature
     AFTER INSERT OR UPDATE
     ON gn2pg_import.data_json
     FOR EACH ROW
+    WHEN (new.uuid IS NOT NULL)
 EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature();
 
 -- DELETE
