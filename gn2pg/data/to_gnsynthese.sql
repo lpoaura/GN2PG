@@ -247,7 +247,7 @@ COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_nomenclature_from_label (_type
 DROP INDEX IF EXISTS gn_synthese.uidx_synthese_id_source_id_entity_source_pk_value;
 
 
-/*
+/* -- Obsolete index not compatible with geonature >= 2.15
 CREATE UNIQUE INDEX IF NOT EXISTS
  uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese
  (id_source , entity_source_pk_value);
@@ -349,11 +349,11 @@ CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_publications (_id_af
 DECLARE
  i RECORD;
 BEGIN
- RAISE DEBUG '_id_af %, territories %' , _id_af::INT , _objectives;
+ RAISE DEBUG '_id_af %, territories %' , _id_af::INT , _publications;
 
  FOR i IN (
  SELECT
- jsonb_array_elements_text(_objectives) item)
+ jsonb_array_elements_text(_publications) item)
  LOOP
  RAISE DEBUG 'iterritory % %' , i , i.item;
  INSERT INTO gn_meta.sinp_datatype_publications
@@ -611,46 +611,6 @@ BEGIN
         WHERE
             id_acquisition_framework = the_af_id;
     END IF;
-ELSE
-    SELECT
-        _af_data -> 'territories' INTO the_territories;
-END IF;
-    PERFORM
-        gn2pg_import.fct_c_insert_af_territories (the_af_id , the_territories);
-    IF _af_data ->> 'objectives' IS NULL THEN
-        SELECT
-            array_to_json(ARRAY['11'])::JSONB INTO the_objectives;
-    ELSE
-        SELECT
-            _af_data -> 'objectives' INTO the_objectives;
-    END IF;
-    IF _af_data ->> 'voletsinp' IS NULL THEN
-        SELECT
-            array_to_json(ARRAY['1'])::JSONB INTO the_voletsinp;
-    ELSE
-        SELECT
-            _af_data -> 'voletsinp' INTO the_voletsinp;
-    END IF;
-
-    PERFORM
-        gn2pg_import.fct_c_insert_af_territories (the_af_id , the_territories);
-    PERFORM
-        gn2pg_import.fct_c_insert_af_objectives (the_af_id , the_objectives);
-    PERFORM
-        gn2pg_import.fct_c_insert_af_sinp_theme (the_af_id , the_voletsinp);
-
-    IF gn2pg_import.fct_c_check_has_additional_data_column ('gn_meta' ,
-	't_acquisition_frameworks' , 'additional_data') THEN
-        UPDATE
-            gn_meta.t_acquisition_frameworks
-        SET
-	    additional_data = jsonb_set(jsonb_set(additional_data ,
-		'{source}' , TO_JSONB (_source) , TRUE) ,
-		'{module}' , '"gn2pg"'::JSONB , TRUE)
-        WHERE
-            id_acquisition_framework = the_af_id;
-    END IF;
-    RETURN the_af_id;
 ELSE
     SELECT
         id_acquisition_framework INTO the_af_id
