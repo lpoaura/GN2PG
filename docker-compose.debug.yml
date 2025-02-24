@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   gn2pg:
     image: gn2pg

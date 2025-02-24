@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """Methods to store data to Postgresql database."""
 
+import importlib.resources
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
-import importlib.resources
 
 from sqlalchemy import (
     Column,
@@ -225,7 +225,7 @@ class PostgresqlUtils:
                 query = f"""
                 CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_import}
                 AUTHORIZATION {self._config.database.user};
-                """
+                """  # noqa: E702
                 logger.debug(_("Execute: %s"), query)
                 conn.execute(text(query))
                 logger.info(
@@ -270,7 +270,7 @@ class PostgresqlUtils:
                 SELECT source, COUNT(uuid)
                     FROM {self._config.database.schema_import}.data_json
                     GROUP BY source;
-                """
+                """  # noqa: E702
 
             result = conn.execute(text(query)).fetchall()
             conn.close()
@@ -287,7 +287,11 @@ class PostgresqlUtils:
         logger.info(_("Start to execute %s script"), script)
         conn = self._db.connect()
         if script == "to_gnsynthese":
-            file = importlib.resources.files(__package__).joinpath("data", "to_gnsynthese.sql")
+            file = importlib.resources.files(  # pylint: disable=too-many-function-args
+                __package__ or "gn2pg"
+            ).joinpath(  # pylint: disable=too-many-function-args
+                "data", "to_gnsynthese.sql"
+            )
             logger.info(
                 _("You choosed to use internal to_gnsynthese.sql script in schema %s"),
                 self._db_schema,
@@ -464,25 +468,31 @@ class StorePostgresql:
         """
         del_count = 0
         # Store to database, if enabled
-        for item in items:
-            logger.debug(
-                _("Deleting item with id %s from source %s (controler %s)"),
-                item[id_key_name],
-                self._config.name,
-                controler,
-            )
-            deleted_data = self._conn.execute(
-                self._table_defs["data"]["metadata"]
-                .delete()
-                .where(
-                    and_(
-                        self._table_defs["data"]["metadata"].c.id_data == item[id_key_name],
-                        self._table_defs["data"]["metadata"].c.controler == controler,
-                        self._table_defs["data"]["metadata"].c.source == self._config.std_name,
-                    )
+        logger.debug(
+            _("Api returned %s row to delete from from source %s (controler %s)"),
+            str(len(items)),
+            self._config.name,
+            controler,
+        )
+        keys = [item[id_key_name] for item in items]
+        deleted_data = self._conn.execute(
+            self._table_defs["data"]["metadata"]
+            .delete()
+            .where(
+                and_(
+                    self._table_defs["data"]["metadata"].c.id_data.in_(keys),
+                    self._table_defs["data"]["metadata"].c.controler == controler,
+                    self._table_defs["data"]["metadata"].c.source == self._config.std_name,
                 )
             )
-            del_count += deleted_data.rowcount
+        )
+        del_count += deleted_data.rowcount
+        logger.debug(
+            _("%s rows have been deleted from source %s (controler %s)"),
+            str(del_count),
+            self._config.name,
+            controler,
+        )
 
         return del_count
 

@@ -7,6 +7,7 @@ repos:
     rev: v4.0.1
     hooks:
       - id: trailing-whitespace
+        exclude_types: [sql]
       - id: end-of-file-fixer
       - id: check-toml
 
@@ -43,8 +44,8 @@ repos:
           ]
         files: 'gn2pg'
 
-  - repo: https://github.com/amureki/pre-commit-pgFormatter
-    rev: v1.3.0  # Use the sha / tag you want to point at
+  - repo: https://github.com/lpofredc/pre-commit-pgformatter
+    rev: 1.0.0 # Use the sha / tag you want to point at
     hooks:
       - id: pg_format
         args: [-b,-f1,-C,-U2,-k,-g,-w80]

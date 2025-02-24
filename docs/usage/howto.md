@@ -255,6 +255,11 @@ Default script to auto populate GeoNature is called "synthese".
 gn2pg_cli --custom-script to_gnsynthese <myconfigfile>
 ```
 
-:::{tip}
+:::{note}
 You can also replacing synthese script by your own scripts, using file path instead of `to_gnsynthese`.
+:::
+
+
+:::{attention}
+When data from GN2PG is inserted into the `geonature.synthese` table using the supplied trigger, existing triggers on geonature.synthese are executed a posteriori and can override data values from the GN2PG source (for example, the id_nomenclature_sensitivity value).
 :::

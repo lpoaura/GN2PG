@@ -4,18 +4,17 @@
 import gettext
 import logging
 import logging.config
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import coloredlogs
-
-from importlib.metadata import version
 
 from gn2pg import metadata
 
 try:
     DIST_NAME = "gn2pg_client"
     __version__ = version(DIST_NAME)
-except :  # pragma: no cover
+except PackageNotFoundError:
     __version__ = metadata.VERSION
 finally:
     del version
