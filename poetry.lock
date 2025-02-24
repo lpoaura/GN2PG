@@ -2008,4 +2008,4 @@ dashboard = ["flask", "flask-admin", "flask-sqlalchemy", "gunicorn", "python-dec
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "4871c067a11ef23b758f4eec9e5f06daf9e0626cd41ebed61b8d62b616a90524"
+content-hash = "5a1a14717fec67cb9b63f20446b4970596ff398f134790d6a240a5c013c93c6c"

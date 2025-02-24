@@ -56,7 +56,7 @@ dashboard = [
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.0.0"
 coverage = "^7.4.4"
-pylint = "^3.1.0"
+pylint = "^3.2"
 mypy = "^1.9.0"
 tox = "^4.14.2"
 isort = "^5.13.2"
