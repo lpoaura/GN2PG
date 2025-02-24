@@ -244,10 +244,14 @@ COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_nomenclature_from_label (_type
 
 
 /* Add unique constraint to synthese on  id_source and /entity_source_pk_value */
-CREATE UNIQUE INDEX IF NOT EXISTS
-    uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese
-    (id_source , entity_source_pk_value);
+DROP INDEX IF EXISTS gn_synthese.uidx_synthese_id_source_id_entity_source_pk_value;
 
+
+/*
+CREATE UNIQUE INDEX IF NOT EXISTS
+ uidx_synthese_id_source_id_entity_source_pk_value ON gn_synthese.synthese
+ (id_source , entity_source_pk_value);
+ */
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_territories (_id_af
     INTEGER , _territories jsonb);
 
@@ -293,7 +297,7 @@ BEGIN
         SELECT
             jsonb_array_elements_text(_objectives) item)
         LOOP
-            RAISE DEBUG 'iterritory % %' , i , i.item;
+            RAISE DEBUG 'iobjective % %' , i , i.item;
 	    INSERT INTO gn_meta.cor_acquisition_framework_objectif
 		(id_acquisition_framework , id_nomenclature_objectif)
                 VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('CA_OBJECTIFS' , i.item))
@@ -335,30 +339,32 @@ $$;
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_publications (_id_af
     INTEGER , _objectives jsonb);
 
-CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_publications (_id_af
-    INTEGER , _publications JSONB)
-    RETURNS VOID
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    i RECORD;
-BEGIN
-    RAISE DEBUG '_id_af %, territories %' , _id_af::INT , _objectives;
 
-    FOR i IN (
-        SELECT
-            jsonb_array_elements_text(_objectives) item)
-        LOOP
-            RAISE DEBUG 'iterritory % %' , i , i.item;
-	    INSERT INTO gn_meta.sinp_datatype_publications
-		(id_acquisition_framework , id_publication)
-                VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('CA_OBJECTIFS' , i.item))
-            ON CONFLICT
-                DO NOTHING;
-        END LOOP;
+/*
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_insert_af_publications (_id_af
+ INTEGER , _publications JSONB)
+ RETURNS VOID
+ LANGUAGE plpgsql
+ AS $$
+DECLARE
+ i RECORD;
+BEGIN
+ RAISE DEBUG '_id_af %, territories %' , _id_af::INT , _objectives;
+
+ FOR i IN (
+ SELECT
+ jsonb_array_elements_text(_objectives) item)
+ LOOP
+ RAISE DEBUG 'iterritory % %' , i , i.item;
+ INSERT INTO gn_meta.sinp_datatype_publications
+ (id_acquisition_framework , id_publication)
+ VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('CA_OBJECTIFS' , i.item))
+ ON CONFLICT
+ DO NOTHING;
+ END LOOP;
 END
 $$;
-
+ */
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories (_id_ds
     INTEGER , _territories jsonb);
 
@@ -556,6 +562,8 @@ BEGIN
     PERFORM
         gn2pg_import.fct_c_insert_af_actors (the_af_id , _af_data -> 'actors' , _source);
 
+
+    /* Manage AF territories */
     IF _af_data ->> 'territories' IS NULL THEN
         SELECT
             array_to_json(ARRAY['METROP'])::JSONB INTO the_territories;
@@ -563,6 +571,50 @@ BEGIN
         SELECT
             _af_data -> 'territories' INTO the_territories;
     END IF;
+    PERFORM
+        gn2pg_import.fct_c_insert_af_territories (the_af_id , the_territories);
+
+
+    /* Manage AF objectives */
+    IF _af_data ->> 'objectives' IS NULL THEN
+        SELECT
+            array_to_json(ARRAY['11'])::JSONB INTO the_objectives;
+    ELSE
+        SELECT
+            _af_data -> 'objectives' INTO the_objectives;
+    END IF;
+    PERFORM
+        gn2pg_import.fct_c_insert_af_objectives (the_af_id , the_objectives);
+
+
+    /* Manage AF volet_sinp */
+    IF _af_data ->> 'voletsinp' IS NULL THEN
+        SELECT
+            array_to_json(ARRAY['1'])::JSONB INTO the_voletsinp;
+    ELSE
+        SELECT
+            _af_data -> 'voletsinp' INTO the_voletsinp;
+    END IF;
+    PERFORM
+        gn2pg_import.fct_c_insert_af_sinp_theme (the_af_id , the_voletsinp);
+
+
+    /* Manage additional_data if exists */
+    IF gn2pg_import.fct_c_check_has_additional_data_column ('gn_meta' ,
+	't_acquisition_frameworks' , 'additional_data') THEN
+        UPDATE
+            gn_meta.t_acquisition_frameworks
+        SET
+	    additional_data = jsonb_set(jsonb_set(additional_data ,
+		'{source}' , TO_JSONB (_source) , TRUE) ,
+		'{module}' , '"gn2pg"'::JSONB , TRUE)
+        WHERE
+            id_acquisition_framework = the_af_id;
+    END IF;
+ELSE
+    SELECT
+        _af_data -> 'territories' INTO the_territories;
+END IF;
     PERFORM
         gn2pg_import.fct_c_insert_af_territories (the_af_id , the_territories);
     IF _af_data ->> 'objectives' IS NULL THEN
@@ -1074,7 +1126,7 @@ BEGIN
 	    the_id_digitiser , the_id_nomenclature_determination_method ,
 	    the_comment_context , the_comment_description , the_additional_data
 	    , the_meta_validation_date , 'I')
-    ON CONFLICT (id_source , entity_source_pk_value)
+    ON CONFLICT (unique_id_sinp)
         DO UPDATE SET
 	    unique_id_sinp = the_unique_id_sinp , unique_id_sinp_grp =
 		the_unique_id_sinp_grp , id_source = the_id_source ,
@@ -1125,7 +1177,9 @@ BEGIN
 		the_comment_context , comment_description =
 		the_comment_description , additional_data = the_additional_data
 		, meta_validation_date = the_meta_validation_date , last_action
-		= 'U';
+		= 'U'
+        WHERE
+            excluded.id_source = the_id_source;
     RETURN new;
 END;
 $$;
@@ -1137,6 +1191,7 @@ DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature ON gn2pg_import.data_json;
 CREATE TRIGGER tri_c_upsert_data_to_geonature
     AFTER INSERT OR UPDATE ON gn2pg_import.data_json
     FOR EACH ROW
+    WHEN (new.uuid IS NOT NULL)
     EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature ();
 
 -- DELETE
