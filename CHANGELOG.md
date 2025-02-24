@@ -7,14 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
 
+## 1.7.0 - 2024-10-08
+
+### Fixes
+
+- Quick fix for #103, pending a better fix to exclude metadata insertions for rejected data, partially fix #103.
+- Various little fixes
+
 ## 1.6.9 - 2024-10-08
 
 ### Fixes
 
 - TypeError while using new importlib resources, fix #94
 
-
-## 1.6.8 - 2024-10-08 (unpublished)
+## 1.6.8 - 2024-10-08 (unpublished)
 
 ...
 
