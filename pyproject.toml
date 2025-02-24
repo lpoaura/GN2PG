@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "gn2pg_client"
 packages = [{ include = "gn2pg" }]
-version = "1.6.9"
+version = "1.7.0"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = ["lpofredc <frederic.cloitre@lpo.fr>"]
 maintainers = ["lpofredc <frederic.cloitre@lpo.fr>"]
@@ -40,7 +40,7 @@ flask = { version = "^2", optional = true }
 flask-sqlalchemy = { version = "^3", optional = true }
 flask-admin = { version = "^1", optional = true }
 gunicorn = { version = ">=0.0.0", optional = true }
-python-decouple = "^3.8"
+python-decouple = { version = "^3.8", optional = true }
 python-dotenv = { version = "^1", optional = true }
 
 [tool.poetry.extras]
