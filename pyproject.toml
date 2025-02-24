@@ -36,7 +36,7 @@ coloredlogs = ">=0.0.0"
 schema = "^0"
 toml = "^0"
 sqlalchemy = "^1"
-flask = { version = "^2", optional = true }
+flask = { version = ">=2,<4", optional = true }
 flask-sqlalchemy = { version = "^3", optional = true }
 flask-admin = { version = "^1", optional = true }
 gunicorn = { version = ">=0.0.0", optional = true }
