@@ -30,7 +30,11 @@ def init(file: str) -> None:
     """
 
     # Get the path to the template file
-    toml_src = importlib.resources.files(__package__).joinpath("data", "gn2pgconfig.toml")
+    toml_src = importlib.resources.files(  # pylint: disable=too-many-function-args
+        __package__ or "gn2pg"
+    ).joinpath(  # pylint: disable=too-many-function-args
+        "data", "gn2pgconfig.toml"
+    )
 
     toml_dst = str(ENVDIR / file)
 

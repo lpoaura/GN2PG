@@ -287,7 +287,11 @@ class PostgresqlUtils:
         logger.info(_("Start to execute %s script"), script)
         conn = self._db.connect()
         if script == "to_gnsynthese":
-            file = importlib.resources.files(__package__).joinpath("data", "to_gnsynthese.sql")
+            file = importlib.resources.files(  # pylint: disable=too-many-function-args
+                __package__ or "gn2pg"
+            ).joinpath(  # pylint: disable=too-many-function-args
+                "data", "to_gnsynthese.sql"
+            )
             logger.info(
                 _("You choosed to use internal to_gnsynthese.sql script in schema %s"),
                 self._db_schema,
