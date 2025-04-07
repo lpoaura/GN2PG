@@ -13,7 +13,7 @@ from subprocess import call
 
 from gn2pg import _
 from gn2pg.download import Data
-from gn2pg.env import ENVDIR
+from gn2pg.env import CONFDIR
 from gn2pg.store_postgresql import StorePostgresql
 from gn2pg.utils import BColors
 
@@ -36,12 +36,12 @@ def init(file: str) -> None:
         "data", "gn2pgconfig.toml"
     )
 
-    toml_dst = str(ENVDIR / file)
+    toml_dst = str(CONFDIR / file)
 
     # Check if the destination file already exists
     if Path(toml_dst).is_file():
-        ENVDIR.mkdir(exist_ok=True)
-        logger.info(_("Conf directory %s created"), str(ENVDIR))
+        CONFDIR.mkdir(exist_ok=True)
+        logger.info(_("Conf directory %s created"), str(CONFDIR))
         logger.warning(_("%s file already exists"), toml_dst)
 
         overwrite = input(
@@ -71,7 +71,7 @@ def edit(file: str) -> None:
     Args:
         file (str): [description]
     """
-    config_file = ENVDIR / file
+    config_file = CONFDIR / file
     call(["editor", config_file])
 
 

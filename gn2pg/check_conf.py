@@ -3,7 +3,12 @@
 """TOML validation tools"""
 
 import logging
+import os
+import pprint
+import subprocess
 from dataclasses import dataclass, field
+from os import listdir
+from os.path import isfile, join
 from typing import Any, Dict
 from typing import Optional as TypeOptional
 
@@ -11,8 +16,9 @@ from schema import Optional, Schema
 from toml import load
 
 from gn2pg import _, __version__
-from gn2pg.env import ENVDIR
 from gn2pg.utils import coalesce_in_dict, simplify
+
+from .env import CONFDIR
 
 logger = logging.getLogger(__name__)
 
@@ -348,7 +354,7 @@ class Gn2PgConf:
             file (str): [description]
         """
 
-        path = ENVDIR / file
+        path = CONFDIR / file
         if not path.is_file():
             logger.critical(_("File %s does not exist"), file)
             raise MissingConfigurationFile
@@ -388,7 +394,7 @@ class Gn2PgConf:
             logger.debug(
                 _("Settings for %s are : %s"),
                 source_name,
-                self._source_list[source_name].__dict__,
+                self.secure_dict(source_name),
             )
             i += 1
 
@@ -401,3 +407,55 @@ class Gn2PgConf:
     def source_list(self) -> _ConfType:
         """Return list of site configurations."""
         return self._source_list
+
+    def secure_dict(self, source_name) -> Dict:
+        loggingDict = self._source_list[source_name].__dict__
+        pprint.pprint(loggingDict)
+        loggingDict["_db"].password = "***"
+        loggingDict["_source"].user_password = "***"
+        return loggingDict
+
+
+def list_configs():
+    """List all config files from config directory"""
+    [print(f) for f in listdir(CONFDIR) if isfile(join(CONFDIR, f)) and f.endswith(".toml")]
+
+
+def read_config():
+    config_files = [
+        f for f in listdir(CONFDIR) if isfile(join(CONFDIR, f)) and f.endswith(".toml")
+    ]
+    for i, config in enumerate(config_files):
+        print(f"{i}: {config}")
+
+    while True:
+        try:
+            config_idx = int(input("choose config to open : "))
+            conf = Gn2PgConf(config_files[int(config_idx)])
+            pprint.pprint(conf._config)
+            break
+        except ValueError:
+            print("Sorry, you must enter a number.")
+        except IndexError:
+            print(f"You must enter a number between 0 and {len(config_files)-1}")
+
+
+def edit_config():
+    config_files = [
+        f for f in listdir(CONFDIR) if isfile(join(CONFDIR, f)) and f.endswith(".toml")
+    ]
+    for i, config in enumerate(config_files):
+        print(f"{i}: {config}")
+
+    while True:
+        try:
+            config_idx = int(input("choose config to open : "))
+            # conf = Gn2PgConf(config_files[int(config_idx)])
+            editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "nano"
+            print(f"{CONFDIR} / {config_files[int(config_idx)]}")
+            subprocess.run([editor, CONFDIR / config_files[int(config_idx)]])
+            break
+        except ValueError:
+            print("Sorry, you must enter a number.")
+        except IndexError:
+            print(f"You must enter a number between 0 and {len(config_files)-1}")
