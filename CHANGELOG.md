@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.8.0 - 2025-0x-xx
+
+### :rocket: New features
+
+- Restructuring of command line commands into 3 sub-commands:
+    - `gn2pg_cli config`: Configuration management
+    - `gn2pg_cli db`: Receiver database management
+    - `gn2pg_cli download`: Download management
+- Add config commands to list/read/edit configuration files stored in `~/.gn2pg` directory, execute `gn2pg_cli config --help` for more informations
+- ...
 
 ## 1.7.0 - 2024-10-08
 

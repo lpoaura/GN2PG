@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 """Main cli functions"""
 
-
 import importlib.resources
 import logging
-import logging.config
+import os
 import shutil
+import subprocess
 import sys
+from os import listdir
+from os.path import isfile, join
 from pathlib import Path
 from subprocess import call
+from typing import Optional
 
 from gn2pg import _
 from gn2pg.download import Data
@@ -61,7 +64,7 @@ def init(file: str) -> None:
 
     logger.info(_("Creating TOML configuration file %s, from %s"), toml_dst, toml_src)
     shutil.copyfile(toml_src, toml_dst)
-    logger.info(_("Please edit %s before running the script"), toml_dst)
+    edit_config(toml_dst)
     sys.exit(0)
 
 
@@ -148,3 +151,40 @@ def update(cfg_ctrl):
             update_1source(Data, cfg)
         else:
             logger.info(_("Source %s is disabled"), source)
+
+
+def edit_config(file_path: str) -> None:
+    "Open config file in a text editor"
+    editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "nano"
+    subprocess.run([editor, file_path], check=False)
+
+
+def manage_configs(action: str, file: Optional[str] = None):
+    """Manage config files from  config directory (list, read, edit)"""
+    config_files = [
+        f for f in listdir(CONFDIR) if isfile(join(CONFDIR, f)) and f.endswith(".toml")
+    ]
+    if action == "list":
+        for i, config in enumerate(config_files):
+            print(config)
+    print("<manage_configs> action", action)
+    if action in ("read", "edit"):
+        print("<file>", file)
+        if file == "empty":
+            for i, config in enumerate(config_files):
+                print(f"{i}: {config}")
+            while True:
+                try:
+                    config_idx = int(input(_("choose config to open : ")))
+                    file = config_files[int(config_idx)]
+                except ValueError:
+                    print(_("Sorry, you must enter a number."))
+                except IndexError:
+                    print(_(f"You must enter a number between 0 and {len(config_files)-1}"))
+                break
+        file_path = CONFDIR / file
+        if action == "read":
+            with open(file_path, "r", encoding="utf-8") as config_file:
+                print(config_file.read())
+        else:
+            edit_config(file_path)

@@ -3,12 +3,7 @@
 """TOML validation tools"""
 
 import logging
-import os
-import pprint
-import subprocess
 from dataclasses import dataclass, field
-from os import listdir
-from os.path import isfile, join
 from typing import Any, Dict
 from typing import Optional as TypeOptional
 
@@ -409,53 +404,8 @@ class Gn2PgConf:
         return self._source_list
 
     def secure_dict(self, source_name) -> Dict:
-        loggingDict = self._source_list[source_name].__dict__
-        pprint.pprint(loggingDict)
-        loggingDict["_db"].password = "***"
-        loggingDict["_source"].user_password = "***"
-        return loggingDict
-
-
-def list_configs():
-    """List all config files from config directory"""
-    [print(f) for f in listdir(CONFDIR) if isfile(join(CONFDIR, f)) and f.endswith(".toml")]
-
-
-def read_config():
-    config_files = [
-        f for f in listdir(CONFDIR) if isfile(join(CONFDIR, f)) and f.endswith(".toml")
-    ]
-    for i, config in enumerate(config_files):
-        print(f"{i}: {config}")
-
-    while True:
-        try:
-            config_idx = int(input("choose config to open : "))
-            conf = Gn2PgConf(config_files[int(config_idx)])
-            pprint.pprint(conf._config)
-            break
-        except ValueError:
-            print("Sorry, you must enter a number.")
-        except IndexError:
-            print(f"You must enter a number between 0 and {len(config_files)-1}")
-
-
-def edit_config():
-    config_files = [
-        f for f in listdir(CONFDIR) if isfile(join(CONFDIR, f)) and f.endswith(".toml")
-    ]
-    for i, config in enumerate(config_files):
-        print(f"{i}: {config}")
-
-    while True:
-        try:
-            config_idx = int(input("choose config to open : "))
-            # conf = Gn2PgConf(config_files[int(config_idx)])
-            editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "nano"
-            print(f"{CONFDIR} / {config_files[int(config_idx)]}")
-            subprocess.run([editor, CONFDIR / config_files[int(config_idx)]])
-            break
-        except ValueError:
-            print("Sorry, you must enter a number.")
-        except IndexError:
-            print(f"You must enter a number between 0 and {len(config_files)-1}")
+        """Secure sensitive data for logging"""
+        logging_dict = self._source_list[source_name].__dict__
+        logging_dict["_db"].password = "***"
+        logging_dict["_source"].user_password = "***"
+        return logging_dict

@@ -22,7 +22,7 @@ pylint:
 	poetry run pylint gn2pg
 
 trans-update-po:
-	pygettext3 -d base -o gn2pg/locale/gn2pg.pot gn2pg
+	xgettext -d base -o gn2pg/locale/gn2pg.pot --from-code=UTF-8 --language=Python gn2pg/*.py
 	msgmerge --update gn2pg/locale/fr_FR/LC_MESSAGES/gn2pg.po gn2pg/locale/gn2pg.pot
 
 trans-gen-mo:
