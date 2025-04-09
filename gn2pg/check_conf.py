@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """TOML validation tools"""
 
+import copy
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
@@ -405,7 +406,7 @@ class Gn2PgConf:
 
     def secure_dict(self, source_name) -> Dict:
         """Secure sensitive data for logging"""
-        logging_dict = self._source_list[source_name].__dict__
+        logging_dict = copy.deepcopy(self._source_list[source_name].__dict__)
         logging_dict["_db"].password = "***"
         logging_dict["_source"].user_password = "***"
         return logging_dict
