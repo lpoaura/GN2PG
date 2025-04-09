@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-08 17:05+0200\n"
+"POT-Creation-Date: 2025-04-09 13:53+0200\n"
 "PO-Revision-Date: 2023-02-07 21:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -69,37 +69,37 @@ msgstr "Téléchargement de la page %s"
 msgid "Download data from %s failed"
 msgstr "Le téléchargement des données depuis %s a échoué"
 
-#: gn2pg/check_conf.py:166
+#: gn2pg/check_conf.py:165
 #, python-format
 msgid "Error creating %s configuration"
 msgstr "Erreur durant la création de la configuration %s"
 
-#: gn2pg/check_conf.py:355
+#: gn2pg/check_conf.py:354
 #, python-format
 msgid "File %s does not exist"
 msgstr "Le fichier %s n'existe pas"
 
-#: gn2pg/check_conf.py:359
+#: gn2pg/check_conf.py:358
 #, python-format
 msgid "Loading TOML configuration %s"
 msgstr "Chargement de la configuration TOML %s"
 
-#: gn2pg/check_conf.py:364
+#: gn2pg/check_conf.py:363
 #, python-format
 msgid "Incorrect content in YAML configuration %s : %s"
 msgstr "Contenu incorrect dans la configuration YAML %s : %s"
 
-#: gn2pg/check_conf.py:375
+#: gn2pg/check_conf.py:374
 #, python-format
 msgid "Source \"%s\" identifier will be \"%s\""
 msgstr "L'identifiant de la source  \"%s\" sera \"%s\""
 
-#: gn2pg/check_conf.py:383
+#: gn2pg/check_conf.py:382
 #, python-format
 msgid "Source #%s named \"%s\" (->%s) already used by another source"
 msgstr "Le nom de source #%s nommée \"%s\" (->%s) est déjà utilisé"
 
-#: gn2pg/check_conf.py:391
+#: gn2pg/check_conf.py:390
 #, python-format
 msgid "Settings for %s are : %s"
 msgstr "Les paramètres de %s sont : %s"
@@ -135,117 +135,136 @@ msgstr ""
 msgid "Preparing data delete from source %s since %s"
 msgstr "Préparation de la suppression des données de la source %s depuis %s"
 
-#: gn2pg/helpers.py:45
+#: gn2pg/helpers.py:47
 #, python-format
 msgid "Conf directory %s created"
 msgstr "Dossier de configuration %s créée"
 
-#: gn2pg/helpers.py:46
+#: gn2pg/helpers.py:48
 #, python-format
 msgid "%s file already exists"
 msgstr "Le fichier %s existe déjà"
 
-#: gn2pg/helpers.py:50
+#: gn2pg/helpers.py:52
 msgid "{sh_col.color('header')}Would you like to overwrite file "
 msgstr "{sh_col.color('header')}Voulez-vous écraser le fichier "
 
-#: gn2pg/helpers.py:58
+#: gn2pg/helpers.py:60
 #, python-format
 msgid "File %s will be preserved"
 msgstr "Le fichier %s sera conservé"
 
-#: gn2pg/helpers.py:61
+#: gn2pg/helpers.py:63
 #, python-format
 msgid "file %s will be overwritten"
 msgstr "Le fichier %s sera remplacé"
 
-#: gn2pg/helpers.py:63
+#: gn2pg/helpers.py:65
 #, fuzzy, python-format
 msgid "Creating TOML configuration file %s, from %s"
 msgstr "Création de la configuration TOML %s depuis %s"
 
-#: gn2pg/helpers.py:86
+#: gn2pg/helpers.py:88
 #, python-format
 msgid "%s => Starting download using controler %s"
 msgstr "%s => Démarrage du téléchargement à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:92
+#: gn2pg/helpers.py:94
 #, python-format
 msgid "%s => Ending download using controler %s"
 msgstr "%s => Fin du téléchargement en utilisant le contrôleur %s"
 
-#: gn2pg/helpers.py:104 gn2pg/helpers.py:145
+#: gn2pg/helpers.py:106 gn2pg/helpers.py:147
 msgid "Defining full download jobs"
 msgstr "Définition des tâches de téléchargement complet"
 
-#: gn2pg/helpers.py:107
+#: gn2pg/helpers.py:109
 #, python-format
 msgid "Starting full download for source %s"
 msgstr "Démarrage du téléchargement complet de la source %s"
 
-#: gn2pg/helpers.py:110 gn2pg/helpers.py:151
+#: gn2pg/helpers.py:112 gn2pg/helpers.py:153
 #, python-format
 msgid "Source %s is disabled"
 msgstr "La source %s est désactivée"
 
-#: gn2pg/helpers.py:120
+#: gn2pg/helpers.py:122
 #, python-format
 msgid "config source name %s"
 msgstr "Le nom de la source de configuration est %s"
 
-#: gn2pg/helpers.py:121
+#: gn2pg/helpers.py:123
 #, python-format
 msgid "controler %s"
 msgstr "Controlleur %s"
 
-#: gn2pg/helpers.py:125
+#: gn2pg/helpers.py:127
 #, python-format
 msgid "%s => Starting updating using controler %s"
 msgstr "%s => Démarrage de la mise à jour à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:131
+#: gn2pg/helpers.py:133
 #, python-format
 msgid "%s => Ending updating using controler %s"
 msgstr "%s => Fin de la mise à jour à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:148
+#: gn2pg/helpers.py:150
 #, python-format
 msgid "Starting update download for source %s"
 msgstr "Démarrage du téléchargement de la mise à jour pour la source %s"
 
-#: gn2pg/helpers.py:175
+#: gn2pg/helpers.py:178
 msgid "choose config to open : "
 msgstr "Choississez une configuration à ouvrir : "
 
-#: gn2pg/helpers.py:185
+#: gn2pg/helpers.py:181
 msgid "Sorry, you must enter a number."
 msgstr "Désolé, vous devez entrer un nombre."
 
-#: gn2pg/helpers.py:187
+#: gn2pg/helpers.py:183
 msgid "You must enter a number between 0 and {len(config_files)-1}"
 msgstr "Vous devez entrer un nombre entre 0 et {len(config_files)-1}"
 
-#: gn2pg/main.py:42
+#: gn2pg/main.py:36
+msgid "Config management commands"
+msgstr "Commandes de gestion de la configuration"
+
+#: gn2pg/main.py:38
+#, fuzzy
+msgid "Manage configs"
+msgstr "Gestion des configurations"
+
+#: gn2pg/main.py:39 gn2pg/main.py:40
+#, fuzzy
+msgid "Manage downloads"
+msgstr "Gestion des téléchargements"
+
+#: gn2pg/main.py:46
 msgid "Print version number"
 msgstr "Affichage du numéro de version"
 
-#: gn2pg/main.py:50
+#: gn2pg/main.py:54
 msgid "Increase output verbosity"
 msgstr "Augmenter la verbosité de la sortie"
 
-#: gn2pg/main.py:53
+#: gn2pg/main.py:58
 msgid "Reduce output verbosity"
 msgstr "Réduire la verbosité de la sortie"
 
-#: gn2pg/main.py:56
+#: gn2pg/main.py:68
 msgid "Initialize the TOML configuration file"
 msgstr "Initialisation du fichier de configuration TOML"
 
-#: gn2pg/main.py:66
-msgid "Create or recreate json tables"
-msgstr "Créer ou recréer des tables json"
+#: gn2pg/main.py:72 gn2pg/main.py:250
+msgid "List config files"
+msgstr "Lister les configurations"
 
-#: gn2pg/main.py:89
+#: gn2pg/main.py:81 gn2pg/main.py:89
+#, fuzzy
+msgid "Select and view config file"
+msgstr "Lister, choisir et éditer une configuration"
+
+#: gn2pg/main.py:99
 msgid ""
 "Execute custom SQL script in DB, default is \"to_gnsynthese\".\n"
 "        You can also use your own script by using absolute file path instead "
@@ -256,58 +275,80 @@ msgstr ""
 "        Vous pouvez également utiliser votre propre script en utilisant le "
 "chemin de fichier absolu à la place de \"to_gnsynthese\""
 
-#: gn2pg/main.py:94
+#: gn2pg/main.py:105
+msgid "Create or recreate json tables"
+msgstr "Créer ou recréer des tables json"
+
+#: gn2pg/main.py:112
 msgid "Perform a full download"
 msgstr "Effectuer un téléchargement complet"
 
-#: gn2pg/main.py:97
+#: gn2pg/main.py:115
 msgid "Perform an incremental download"
 msgstr "Effectuer un téléchargement incrémentiel"
 
-#: gn2pg/main.py:134
+#: gn2pg/main.py:152
 #, python-format
 msgid "%s, version %s"
 msgstr "%s, version %s"
 
-#: gn2pg/main.py:179
+#: gn2pg/main.py:161
 msgid "You must provide a config file"
 msgstr "Vous devez fournie un fichier de configuration"
 
-#: gn2pg/main.py:183
-#, fuzzy
-msgid "Creating TOML configuration file"
-msgstr "Chargement de la configuration TOML %s"
-
-#: gn2pg/main.py:187
-#, fuzzy, python-format
-msgid "Configuration file %s does not exist"
-msgstr "Le fichier %s n'existe pas"
-
-#: gn2pg/main.py:190
-#, fuzzy, python-format
-msgid "Getting configuration data from %s"
-msgstr "Chargement de la configuration TOML %s"
-
-#: gn2pg/main.py:194
-#, fuzzy
-msgid "Perform full action"
-msgstr "Effectuer un téléchargement complet"
-
-#: gn2pg/main.py:198
-msgid "Perform update action"
-msgstr "Effectuer une action de mise à jour"
-
-#: gn2pg/main.py:201
+#: gn2pg/main.py:166
 #, fuzzy, python-format
 msgid "Incorrect content in TOML configuration %s"
 msgstr "Contenu incorrect dans la configuration YAML %s : %s"
 
-#: gn2pg/main.py:211
-msgid "List config files"
-msgstr "Lister les configurations"
+#: gn2pg/main.py:206
+#, fuzzy, python-format
+msgid "Configuration file %s does not exist"
+msgstr "Le fichier %s n'existe pas"
 
-#: gn2pg/main.py:214 gn2pg/main.py:217
-msgid "Read configs"
+#: gn2pg/main.py:209
+#, fuzzy, python-format
+msgid "Getting configuration data from %s"
+msgstr "Chargement de la configuration TOML %s"
+
+#: gn2pg/main.py:212
+#, fuzzy
+msgid "Perform full action"
+msgstr "Effectuer un téléchargement complet"
+
+#: gn2pg/main.py:216
+msgid "Perform update action"
+msgstr "Effectuer une action de mise à jour"
+
+#: gn2pg/main.py:229
+#, python-format
+msgid "config file have {len(cfg_source_list)} source(s) wich are : %s"
+msgstr ""
+"La configuration choisie a {len(cfg_source_list)} source(s) qui sont : %s"
+
+#: gn2pg/main.py:236
+#, fuzzy
+msgid "Create, if not exists, json tables"
+msgstr "Créer ou recréer des tables json"
+
+#: gn2pg/main.py:239
+#, python-format
+msgid "Execute custom script %s on db"
+msgstr "Exécution du script personnalisé %s sur la base de données"
+
+#: gn2pg/main.py:247
+#, fuzzy, python-brace-format
+msgid "Creating TOML configuration file {args.init}"
+msgstr "Chargement de la configuration TOML %s"
+
+#: gn2pg/main.py:253
+#, fuzzy
+msgid "Read config"
+msgstr "Voir les configurations"
+
+#: gn2pg/main.py:256
+#, fuzzy
+msgid "Edit config"
 msgstr "Voir les configurations"
 
 #: gn2pg/store_postgresql.py:205
@@ -375,6 +416,8 @@ msgstr "Entrée dans StorePostgresql"
 msgid ""
 "One error occured for data from source %s with %s = %s. Error message is %s"
 msgstr ""
+"Une erreur est survenue pour la source %s avec %s = %s."
+"Le message d'erreur est %s"
 
 #: gn2pg/store_postgresql.py:435
 #, fuzzy, python-format
@@ -387,6 +430,7 @@ msgstr ""
 msgid ""
 "%s items have been stored in db from %s of source %s (%s error occurred)"
 msgstr ""
+"%s éléments ont été stockés en base de donnée depuis %s de la source %s (%s erreurs)"
 
 #: gn2pg/store_postgresql.py:472
 #, fuzzy, python-format
@@ -402,28 +446,8 @@ msgstr "Récupération des éléments du contrôleur %s"
 #~ msgid "Please edit %s before running the script"
 #~ msgstr "Veuillez éditer %s avant d'éxécuter une autre action"
 
-#~ msgid "List, choose and edit a config file"
-#~ msgstr "Lister, choisir et éditer une configuration"
-
-#, python-format
-#~ msgid "config file have {len(cfg_source_list)} source(s) wich are : %s"
-#~ msgstr ""
-#~ "La configuration choisie a {len(cfg_source_list)} source(s) qui sont : %s"
-
-#, fuzzy
-#~ msgid "Create, if not exists, json tables"
-#~ msgstr "Créer ou recréer des tables json"
-
-#, python-format
-#~ msgid "Execute custom script %s on db"
-#~ msgstr "Exécution du script personnalisé %s sur la base de données"
-
 #~ msgid "Home"
 #~ msgstr "Accueil"
-
-#, fuzzy
-#~ msgid "Full downloads"
-#~ msgstr "Téléchargements complets"
 
 #, fuzzy
 #~ msgid "Incremental downloads"

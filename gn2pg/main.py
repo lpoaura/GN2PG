@@ -33,11 +33,11 @@ def arguments(args):
     # Get options
     parser = argparse.ArgumentParser(description="Gn2Pg Client app")
 
-    subparser = parser.add_subparsers(help="Config management commands", required=True)
+    subparser = parser.add_subparsers(help=_("Config management commands"), required=True)
 
-    config_parser = subparser.add_parser("config", help="Manage configs")
-    download_parser = subparser.add_parser("download", help="Manage downloads")
-    db_parser = subparser.add_parser("db", help="Manage downloads")
+    config_parser = subparser.add_parser("config", help=_("Manage configs"))
+    download_parser = subparser.add_parser("download", help=_("Manage downloads"))
+    db_parser = subparser.add_parser("db", help=_("Manage downloads"))
 
     # Global commands
     parser.add_argument(
@@ -65,7 +65,7 @@ def arguments(args):
         nargs="?",
         type=str,
         const="config.toml",
-        help="Initialize the TOML configuration file",
+        help=_("Initialize the TOML configuration file"),
     )
     config_group.add_argument(
         "--list",
@@ -128,7 +128,6 @@ def main(args) -> None:
     Args:
       args ([str]): command line parameter list
     """
-    logger.info("<main> begin")
     epilog = f"""\
 {sh_col.color('okblue')}{sh_col.color('bold')}{metadata.PROJECT} \
 {sh_col.color('endc')}{sh_col.color('endc')} \
@@ -203,8 +202,6 @@ def set_logging_level(args) -> None:
 def handle_download_commands(args, cfg_ctrl) -> bool:
     """Handle commands that are not related to 'manage'."""
 
-    logger.info("<handle_data_commands>")
-
     if not (CONFDIR / args.file).is_file():
         logger.critical(_("Configuration file %s does not exist"), str(CONFDIR / args.file))
         return False
@@ -253,10 +250,10 @@ def handle_config_commands(args) -> None:
         logger.info(_("List config files"))
         manage_configs("list")
     if args.read:
-        logger.info(_("Read configs"))
+        logger.info(_("Read config"))
         manage_configs("read", args.read)
     if args.edit:
-        logger.info(_("Read configs"))
+        logger.info(_("Edit config"))
         manage_configs("edit", args.edit)
 
 
