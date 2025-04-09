@@ -3,7 +3,6 @@
 """Methods to store data to Postgresql database."""
 
 import importlib.resources
-import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -25,11 +24,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
-
-logger = logging.getLogger(__name__)
+from gn2pg.logger import logger
 
 
 def db_url(config):
@@ -113,10 +112,15 @@ class PostgresqlUtils:
         self._db_url = db_url(self._config)
         if self._config.database.querystring:
             self._db_url["query"] = self._config.database.querystring
+
         self._db = create_engine(URL.create(**self._db_url), echo=False)
         self._db_schema = self._config.database.schema_import
         self._metadata = MetaData(schema=self._db_schema)
-        self._metadata.reflect(self._db)
+        try:
+            self._metadata.reflect(self._db)
+        except OperationalError as e:
+            logger.critical(_("An error occured while trying to connect to database : %s"), e)
+            sys.exit(0)
 
     # ----------------
     # Internal methods
@@ -205,53 +209,54 @@ class PostgresqlUtils:
             _("Connecting to %s database, to finalize creation"),
             self._config.database.name,
         )
-
-        with self._db.connect() as conn:
-            # Create extensions
-            try:
-                ext_queries = (
-                    'CREATE EXTENSION IF NOT EXISTS "pgcrypto";',
-                    'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
-                    'CREATE EXTENSION IF NOT EXISTS "postgis";',
-                )
-                for query in ext_queries:
+        try:
+            with self._db.connect() as conn:
+                # Create extensions
+                try:
+                    ext_queries = (
+                        'CREATE EXTENSION IF NOT EXISTS "pgcrypto";',
+                        'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
+                    )
+                    for query in ext_queries:
+                        logger.debug(_("Execute: %s"), query)
+                        conn.execute(text(query))
+                    logger.info("PostgreSQL extensions successfully created")
+                except exc.SQLAlchemyError as error:
+                    logger.critical(str(error))
+                # Create import schema
+                try:
+                    query = f"""
+                    CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_import}
+                    AUTHORIZATION {self._config.database.user};
+                    """  # noqa: E702
                     logger.debug(_("Execute: %s"), query)
                     conn.execute(text(query))
-                logger.info("PostgreSQL extensions successfully created")
-            except exc.SQLAlchemyError as error:
-                logger.critical(str(error))
-            # Create import schema
-            try:
-                query = f"""
-                CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_import}
-                AUTHORIZATION {self._config.database.user};
-                """  # noqa: E702
-                logger.debug(_("Execute: %s"), query)
-                conn.execute(text(query))
-                logger.info(
-                    (
-                        _("Schema %s owned by %s successfully created"),
-                        self._config.database.schema_import,
-                        self._config.database.user,
+                    logger.info(
+                        (
+                            _("Schema %s owned by %s successfully created"),
+                            self._config.database.schema_import,
+                            self._config.database.user,
+                        )
                     )
-                )
-            except exc.SQLAlchemyError as error:
-                logger.critical(
-                    _("Failed to create %s schema"),
-                    self._config.database.schema_import,
-                )
-                logger.critical(str(error))
-            # Set path to include VN import schema
+                except exc.SQLAlchemyError as error:
+                    logger.critical(
+                        _("Failed to create %s schema"),
+                        self._config.database.schema_import,
+                    )
+                    logger.critical(str(error))
+                # Set path to include VN import schema
 
-            # Check if tables exist or else create them
-            self._create_download_log()
-            self._create_increment_log()
-            self._create_error_log()
-            self._create_data_json()
+                # Check if tables exist or else create them
+                self._create_download_log()
+                self._create_increment_log()
+                self._create_error_log()
+                self._create_data_json()
 
-            conn.close()
+                conn.close()
 
-            self._db.dispose()
+                self._db.dispose()
+        except OperationalError:
+            logger.critical(_("An error occured while trying to connect to database"))
 
     def count_json_data(self):
         """Count observations stored in json table, by source and type.

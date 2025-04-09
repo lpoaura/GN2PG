@@ -11,7 +11,6 @@ Properties
 
 """
 
-import logging
 from datetime import datetime
 from functools import partial
 from multiprocessing import Queue
@@ -21,8 +20,7 @@ from typing import Callable, Optional
 
 from gn2pg import _, __version__
 from gn2pg.api import DataAPI
-
-logger = logging.getLogger(__name__)
+from gn2pg.logger import logger
 
 
 class DownloadGnException(Exception):
@@ -37,7 +35,9 @@ class DownloadGn:
     """Top class, not for direct use.
     Provides internal and template methods."""
 
-    def __init__(self, config, api_instance, backend, max_retry=None, max_requests=None) -> None:
+    def __init__(
+        self, config, api_instance, backend, max_retry=None, max_requests=None, retry_delay=None
+    ) -> None:
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
@@ -45,6 +45,8 @@ class DownloadGn:
             max_retry = config.max_retry
         if max_requests is None:
             max_requests = config.max_requests
+        if retry_delay is None:
+            retry_delay = config.max_requests
         self._limits = {
             "max_retry": max_retry,
             "max_requests": max_requests,

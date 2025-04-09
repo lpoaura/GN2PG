@@ -3,7 +3,6 @@
 """Main cli functions"""
 
 import importlib.resources
-import logging
 import os
 import shutil
 import subprocess
@@ -11,16 +10,14 @@ import sys
 from os import listdir
 from os.path import isfile, join
 from pathlib import Path
-from subprocess import call
 from typing import Optional
 
 from gn2pg import _
 from gn2pg.download import Data
 from gn2pg.env import CONFDIR
+from gn2pg.logger import logger
 from gn2pg.store_postgresql import StorePostgresql
 from gn2pg.utils import BColors
-
-logger = logging.getLogger(__name__)
 
 sh_col = BColors()
 
@@ -66,16 +63,6 @@ def init(file: str) -> None:
     shutil.copyfile(toml_src, toml_dst)
     edit_config(toml_dst)
     sys.exit(0)
-
-
-def edit(file: str) -> None:
-    """Open editor to edit config file
-
-    Args:
-        file (str): [description]
-    """
-    config_file = CONFDIR / file
-    call(["editor", config_file])
 
 
 def full_download_1source(ctrl, cfg):

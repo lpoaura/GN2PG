@@ -5,18 +5,18 @@
 import argparse
 import logging
 import sys
-from logging.handlers import TimedRotatingFileHandler
 
 from toml import TomlDecodeError
 
 from gn2pg import _, __version__, metadata
 from gn2pg.check_conf import Gn2PgConf
-from gn2pg.env import CONFDIR, LOGDIR
+from gn2pg.env import CONFDIR
 from gn2pg.helpers import full_download, init, manage_configs, update
+from gn2pg.logger import logger
 from gn2pg.store_postgresql import PostgresqlUtils
 from gn2pg.utils import BColors
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
 
 sh_col = BColors()
 
@@ -144,7 +144,6 @@ def main(args) -> None:
     # Create $HOME/tmp directory if it does not exist
 
     # Set up logging
-    setup_logging()
     # Get command line arguments
     args = arguments(args)
     set_logging_level(args)
@@ -170,23 +169,6 @@ def main(args) -> None:
             handle_database_commands(args, cfg_ctrl)
         if "download" in sys.argv:
             handle_download_commands(args, cfg_ctrl)
-
-
-def setup_logging() -> None:
-    """Set up logging configuration."""
-    LOGDIR.mkdir(parents=True, exist_ok=True)
-
-    filehandler = TimedRotatingFileHandler(
-        str(LOGDIR / (__name__ + ".log")),
-        when="midnight",
-        interval=1,
-        backupCount=100,
-    )
-    formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s"
-    )
-    filehandler.setFormatter(formatter)
-    logger.addHandler(filehandler)
 
 
 def set_logging_level(args) -> None:
