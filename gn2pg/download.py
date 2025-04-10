@@ -39,18 +39,13 @@ class DownloadGn:
     """Top class, not for direct use.
     Provides internal and template methods."""
 
-    def __init__(
-        self, config, api_instance, backend, max_retry=None, max_requests=None, retry_delay=None
-    ) -> None:
+    def __init__(self, config, api_instance, backend) -> None:
         self._config = config
         self._api_instance = api_instance
         self._backend = backend
-        if max_retry is None:
-            max_retry = config.max_retry
-        if max_requests is None:
-            max_requests = config.max_requests
-        if retry_delay is None:
-            retry_delay = config.max_requests
+        max_retry = config.max_retry
+        max_requests = config.max_requests
+
         self._limits = {
             "max_retry": max_retry,
             "max_requests": max_requests,
@@ -187,6 +182,8 @@ class DownloadGn:
         params.update(self._config.query_strings)
         logger.info(_("QueryStrings %s"), params)
         pages = self._api_instance.page_list(kind="data", params=params)
+        if not pages:
+            return
         self._backend.download_log(
             self._api_instance.controler,
             self._api_instance.transfer_errors,
@@ -275,5 +272,5 @@ class Data(DownloadGn):
 
     """
 
-    def __init__(self, config, backend, max_retry=None, max_requests=None):
-        super().__init__(config, DataAPI(config), backend, max_retry, max_requests)
+    def __init__(self, config, backend):
+        super().__init__(config, DataAPI(config), backend)

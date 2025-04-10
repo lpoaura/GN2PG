@@ -21,6 +21,8 @@ from typing import List, Optional
 from urllib.parse import urlencode
 
 import requests
+from requests.adapters import HTTPAdapter, Retry
+from requests.exceptions import RetryError
 
 from gn2pg import _, __version__
 
@@ -43,14 +45,11 @@ class BaseAPI:
         self,
         config,
         controler,
-        max_retry: Optional[int] = None,
-        max_requests: Optional[int] = None,
     ):
         self._config = config
-        if max_retry is None:
-            max_retry = config.max_retry
-        if max_requests is None:
-            max_requests = config.max_requests
+        max_retry = config.max_retry
+        max_requests = config.max_requests
+        retry_delay = config.retry_delay
         self._limits = {"max_retry": max_retry, "max_requests": max_requests}
         self._transfer_errors = 0
         self._http_status = 0
@@ -60,6 +59,12 @@ class BaseAPI:
 
         # init session
         self._session = requests.Session()
+        retries = Retry(
+            total=max_retry,
+            backoff_factor=retry_delay,
+            status_forcelist=[500, 501, 502, 503, 504],
+        )
+        self._session.mount("https://", HTTPAdapter(max_retries=retries))
         self._session.headers = {"Content-Type": "application/json"}
         auth_payload = {
             "login": config.user_name,
@@ -180,13 +185,18 @@ class BaseAPI:
 
         api_url = self._url(kind, params)
 
-        response = session.get(url=api_url, params={**params})
+        try:
+            response = session.get(url=api_url, params={**params})
+        except RetryError as e:
+            logger.error(_("Export seems to be unavailable : %s"), e)
+            return None
+
         logger.debug(
             _("Defining page_list from %s with status code %s"),
             api_url,
             response.status_code,
         )
-
+        logger.debug("STATUS CODE %s", response.status_code)
         if response.status_code == 200:
             resp = response.json()
             total_filtered = resp["total_filtered"] if "total_filtered" in resp else resp["total"]
@@ -231,5 +241,5 @@ class BaseAPI:
 class DataAPI(BaseAPI):
     """Data API"""
 
-    def __init__(self, config, max_retry: int = None, max_requests: int = None):
-        super().__init__(config, "data", max_retry, max_requests)
+    def __init__(self, config):
+        super().__init__(config, "data")
