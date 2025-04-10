@@ -15,7 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
     - `gn2pg_cli db`: Receiver database management
     - `gn2pg_cli download`: Download management
 - Add config commands to list/read/edit configuration files stored in `~/.gn2pg` directory, execute `gn2pg_cli config --help` for more informations
-- ...
+
+### :bug: Fixes
+- File log output and stdout are now the same (fix #109)
+- Implement requests Retry on http 50x errors (fix #113)
+- Keep continue to next source after a download fail
 
 ## 1.7.0 - 2024-10-08
 
