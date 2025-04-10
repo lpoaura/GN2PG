@@ -29,7 +29,7 @@ gn2pg_cli = "gn2pg.main:run"
 
 
 [tool.poetry.dependencies]
-python = ">=3.8.1,<4.0"
+python = ">=3.9,<4.0"
 requests = "^2"
 psycopg2-binary = "^2"
 coloredlogs = ">=0.0.0"
