@@ -174,8 +174,8 @@ def main(args) -> None:
             sys.exit(0)
         try:
             cfg_ctrl = Gn2PgConf(args.file)
-        except TomlDecodeError:
-            logger.critical(_("Incorrect content in TOML configuration %s"), args.file)
+        except TomlDecodeError as e:
+            logger.critical(_("Incorrect content in TOML configuration %s : %s"), args.file, e)
             sys.exit(0)
 
         if "db" in sys.argv:
