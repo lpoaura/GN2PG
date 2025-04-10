@@ -11,6 +11,7 @@ Properties
 
 """
 
+import logging
 from datetime import datetime
 from functools import partial
 from multiprocessing import Queue
@@ -20,7 +21,10 @@ from typing import Callable, Optional
 
 from gn2pg import _, __version__
 from gn2pg.api import DataAPI
-from gn2pg.logger import logger
+
+# from gn2pg.logger import logger
+
+logger = logging.getLogger(__name__)
 
 
 class DownloadGnException(Exception):

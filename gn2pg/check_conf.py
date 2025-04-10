@@ -3,6 +3,7 @@
 """TOML validation tools"""
 
 import copy
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
 from typing import Optional as TypeOptional
@@ -11,10 +12,13 @@ from schema import Optional, Schema, SchemaError
 from toml import load
 
 from gn2pg import _, __version__
-from gn2pg.logger import logger
+
+# from gn2pg.logger import logger
 from gn2pg.utils import coalesce_in_dict, simplify
 
 from .env import CONFDIR
+
+logger = logging.getLogger(__name__)
 
 
 class Gn2PgConfException(Exception):

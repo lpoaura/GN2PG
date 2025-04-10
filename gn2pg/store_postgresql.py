@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Methods to store data to Postgresql database."""
-
 import importlib.resources
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -28,7 +28,9 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
-from gn2pg.logger import logger
+
+# from gn2pg.logger import logger
+logger = logging.getLogger(__name__)
 
 
 def db_url(config):
@@ -333,7 +335,11 @@ class StorePostgresql:
         self._db = create_engine(URL.create(**self._db_url), echo=False)
         self._db_schema = self._config.database.schema_import
         self._metadata = MetaData(schema=self._db_schema)
-        self._metadata.reflect(self._db)
+        try:
+            self._metadata.reflect(self._db)
+        except OperationalError as e:
+            logger.critical(_("An error occured while trying to connect to database : %s"), e)
+            sys.exit(0)
 
         self._conn = self._db.connect()
 

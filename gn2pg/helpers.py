@@ -3,6 +3,7 @@
 """Main cli functions"""
 
 import importlib.resources
+import logging
 import os
 import shutil
 import subprocess
@@ -15,11 +16,14 @@ from typing import Optional
 from gn2pg import _
 from gn2pg.download import Data
 from gn2pg.env import CONFDIR
-from gn2pg.logger import logger
+
+# from gn2pg.logger import logger
 from gn2pg.store_postgresql import StorePostgresql
 from gn2pg.utils import BColors
 
 sh_col = BColors()
+
+logger = logging.getLogger(__name__)
 
 
 def init(file: str) -> None:

@@ -3,11 +3,8 @@
 
 import gettext
 import logging
-import logging.config
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-
-import coloredlogs
 
 from gn2pg import metadata
 
@@ -22,16 +19,7 @@ finally:
 __author__ = metadata.AUTHORS_STRING
 __license__ = metadata.LICENSE
 
-coloredlogs.DEFAULT_FIELD_STYLES["module"] = {"color": "blue"}
-
 logger = logging.getLogger(__name__)
-
-coloredlogs.install(
-    level="DEBUG",
-    logger=logger,
-    milliseconds=True,
-    fmt="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
-)
 
 
 # Install gettext for any file in the application

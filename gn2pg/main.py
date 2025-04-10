@@ -4,19 +4,22 @@
 
 import argparse
 import logging
+
+# import logging.config
 import sys
 
+import coloredlogs
 from toml import TomlDecodeError
 
 from gn2pg import _, __version__, metadata
 from gn2pg.check_conf import Gn2PgConf
 from gn2pg.env import CONFDIR
 from gn2pg.helpers import full_download, init, manage_configs, update
-from gn2pg.logger import logger
+from gn2pg.logger import setup_logging
 from gn2pg.store_postgresql import PostgresqlUtils
 from gn2pg.utils import BColors
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 sh_col = BColors()
 
@@ -128,6 +131,7 @@ def main(args) -> None:
     Args:
       args ([str]): command line parameter list
     """
+
     epilog = f"""\
 {sh_col.color('okblue')}{sh_col.color('bold')}{metadata.PROJECT} \
 {sh_col.color('endc')}{sh_col.color('endc')} \
@@ -141,12 +145,21 @@ def main(args) -> None:
 """
     print(epilog)
 
-    # Create $HOME/tmp directory if it does not exist
-
-    # Set up logging
-    # Get command line arguments
     args = arguments(args)
-    set_logging_level(args)
+
+    # Setup logging
+    loglevel = logging.INFO
+    if args.verbose:
+        loglevel = logging.DEBUG
+    if args.quiet:
+        loglevel = logging.WARNING
+    setup_logging(loglevel)
+    coloredlogs.install(
+        level=loglevel,
+        logger=logger,
+        milliseconds=True,
+        fmt="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
+    )
 
     logger.info(_("%s, version %s"), sys.argv[0], __version__)
     logger.debug("Args: %s", args)
@@ -171,14 +184,36 @@ def main(args) -> None:
             handle_download_commands(args, cfg_ctrl)
 
 
-def set_logging_level(args) -> None:
-    """Set the logging level based on command line arguments."""
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-    elif args.quiet:
-        logger.setLevel(logging.WARNING)
-    else:
-        logger.setLevel(logging.INFO)
+# def setup_logging(args) -> None:
+#     """Init logging"""
+
+#     LOGDIR.mkdir(parents=True, exist_ok=True)
+#     loglevel = logging.INFO
+#     print(args)
+#     if args.verbose:
+#         loglevel = logging.DEBUG
+#     if args.quiet:
+#         loglevel = logging.WARNING
+#     # Set the custom logger class
+#     logging.basicConfig(
+#         level=loglevel,
+#         format="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
+#         handlers=[],
+#     )
+#     filehandler = TimedRotatingFileHandler(
+#         str(LOGDIR / ("gn2pg" + ".log")),
+#         when="midnight",
+#         interval=1,
+#         backupCount=100,
+#     )
+#     formatter = logging.Formatter(
+#         "%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s"
+#     )
+#     filehandler.setFormatter(formatter)
+
+#     # logging.addHandler(filehandler)
+#     logger.addHandler(filehandler)
+#     logger.propagate = False
 
 
 def handle_download_commands(args, cfg_ctrl) -> bool:
@@ -198,7 +233,6 @@ def handle_download_commands(args, cfg_ctrl) -> bool:
         logger.info(_("Perform update action"))
         update(cfg_ctrl)
 
-    # Further processing...
     return True
 
 
