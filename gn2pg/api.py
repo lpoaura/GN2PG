@@ -189,14 +189,13 @@ class BaseAPI:
             response = session.get(url=api_url, params={**params})
         except RetryError as e:
             logger.error(_("Export seems to be unavailable : %s"), e)
-            return None
+            raise RetryError from e
 
         logger.debug(
             _("Defining page_list from %s with status code %s"),
             api_url,
             response.status_code,
         )
-        logger.debug("STATUS CODE %s", response.status_code)
         if response.status_code == 200:
             resp = response.json()
             total_filtered = resp["total_filtered"] if "total_filtered" in resp else resp["total"]
@@ -208,12 +207,14 @@ class BaseAPI:
                 total_filtered,
                 total_pages,
             )
+            if total_filtered > 0:
+                page_list = list(
+                    self._url(kind, {**params, **{"offset": p}}) for p in range(total_pages)
+                )
+                return page_list
 
-            page_list = list(
-                self._url(kind, {**params, **{"offset": p}}) for p in range(total_pages)
-            )
-            return page_list
-        logger.info(_("No data available from from %s"), self._config.name)
+        logger.info(_("No data available from %s"), self._config.name)
+
         return None
 
     def get_page(self, page_url: str) -> Optional[dict]:

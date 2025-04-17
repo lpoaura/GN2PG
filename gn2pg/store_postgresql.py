@@ -257,8 +257,8 @@ class PostgresqlUtils:
                 conn.close()
 
                 self._db.dispose()
-        except OperationalError:
-            logger.critical(_("An error occured while trying to connect to database"))
+        except OperationalError as e:
+            logger.critical(_("An error occured while trying to connect to database : %s"), e)
 
     def count_json_data(self):
         """Count observations stored in json table, by source and type.
@@ -386,7 +386,7 @@ class StorePostgresql:
             uuid_key_name (str, optional): data UUID. Defaults to "id_perm_sinp".
         """
         metadata = self._table_defs[controler]["metadata"]
-        logger.debug(elem[id_key_name])
+        # logger.debug(elem[id_key_name])
         try:
             insert_stmt = insert(metadata).values(
                 id_data=elem[id_key_name],
@@ -607,7 +607,7 @@ class StorePostgresql:
 
         return row[0] if row is not None else None
 
-    def error_log(
+    def error_log(  # pylint: disable=R0917
         self,
         controler: str,
         item: dict,

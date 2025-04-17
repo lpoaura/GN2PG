@@ -17,7 +17,9 @@ from functools import partial
 from multiprocessing import Queue
 from multiprocessing.pool import ThreadPool
 from threading import Thread
-from typing import Callable, Optional
+from typing import Callable, List, Optional
+
+from requests.exceptions import RetryError
 
 from gn2pg import _, __version__
 from gn2pg.api import DataAPI
@@ -45,6 +47,7 @@ class DownloadGn:
         self._backend = backend
         max_retry = config.max_retry
         max_requests = config.max_requests
+        self.queue: Queue = Queue()
 
         self._limits = {
             "max_retry": max_retry,
@@ -73,7 +76,7 @@ class DownloadGn:
     # ---------------
     # Generic methods
     # ---------------
-    def launch_treads(self, nb_threads: int, func: Callable, pages: list, store=True) -> None:
+    def launch_threads(self, nb_threads: int, func: Callable, pages: list, store=True) -> None:
         """
         Launch 1 + nb_threads threads to execute a function func on a list of pages
 
@@ -89,35 +92,41 @@ class DownloadGn:
             From a Queue, get the progress, increase it and log it
             """
             progress = 0
-            while True:
-                response = queue.get()
-                if response == "DONE":
-                    break
-                progress += response["len_items"]
-                perc_progress = round(progress / response["total_len"] * 100, 2)
-                if response.get("total_len", 0) > 0:
-                    msg = "Storing" if store else "Deleting"
-                    logger.info(
-                        "%s %d datas (%d/%d %.2f %%) from %s %s",
-                        msg,
-                        response["len_items"],
-                        progress,
-                        response["total_len"],
-                        perc_progress,
-                        self._config.name,
-                        self._api_instance.controler,
-                    )
+            try:
+                while True:
+                    response = queue.get()
+                    if response in ("DONE", "EXIT"):
+                        break
+                    progress += response["len_items"]
+                    perc_progress = round(progress / response["total_len"] * 100, 2)
+                    if response.get("total_len", 0) > 0:
+                        msg = "Storing" if store else "Deleting"
+                        logger.info(
+                            "%s %d datas (%d/%d %.2f %%) from %s %s",
+                            msg,
+                            response["len_items"],
+                            progress,
+                            response["total_len"],
+                            perc_progress,
+                            self._config.name,
+                            self._api_instance.controler,
+                        )
+            except Exception as e:  # pylint: disable=W0718
+                errors.append(e)
 
         # The Queue enables the report thread to get the progress from other threads
-        queue: Queue = Queue()
+        self.queue: Queue = Queue()
+        errors: List[Exception] = []
         # Initialize and start the report thread
-        thread = Thread(target=report, args=[queue])
+        thread = Thread(target=report, args=[self.queue])
         thread.start()
         # Start the worker threads
         with ThreadPool(nb_threads) as thread:
-            thread.map(partial(func, queue=queue), pages)
+            thread.map(partial(func, queue=self.queue), pages)
         # Will stop the report thread
-        queue.put(("DONE"))
+        self.queue.put(("DONE"))
+        logger.warning("Go out of thread")
+        return errors
 
     def download(self, page: str, queue: Queue) -> None:
         """
@@ -181,19 +190,39 @@ class DownloadGn:
         # logger.info(self._config._query_strings)
         params.update(self._config.query_strings)
         logger.info(_("QueryStrings %s"), params)
-        pages = self._api_instance.page_list(kind="data", params=params)
-        if not pages:
+        pages = None
+        try:
+            pages = self._api_instance.page_list(kind="data", params=params)
+        except RetryError:
+            logger.error(_("Could not retrieve API data from source %s"), self._config.name)
             return
-        self._backend.download_log(
-            self._api_instance.controler,
-            self._api_instance.transfer_errors,
-            self._api_instance.http_status,
-        )
 
-        self.launch_treads(nb_threads=self._config.nb_threads, func=self.download, pages=pages)
+        try:
+            # input(f"FULL DOWNLOAD INPUT {self._config.name}")
+            if pages:
+                self._backend.download_log(
+                    self._api_instance.controler,
+                    self._api_instance.transfer_errors,
+                    self._api_instance.http_status,
+                )
 
-        # Log download timestamp to download.
+                self.launch_threads(
+                    nb_threads=self._config.nb_threads, func=self.download, pages=pages
+                )
+
+                # Log download timestamp to download.
+
+        except RetryError as e:
+            self.queue.put(("EXIT"))
+            logger.error(
+                "A problem occured on FULL DOWNLOAD process for source %s : %s",
+                self._config.name,
+                e,
+            )
+            return
+
         self._backend.increment_log(controler=self._api_instance.controler, last_ts=increment_ts)
+        return
 
     def update(self, since: Optional[str] = None, actions: Optional[list] = None) -> None:
         """[summary]
@@ -202,6 +231,7 @@ class DownloadGn:
             since (str): DateTime limit to update.
             actions (list): Actions list (Insert > I, Update > U, Delete > D)
         """
+
         # Update new or modified data from API
         logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
         # Get last update from increment log.
@@ -229,37 +259,51 @@ class DownloadGn:
             since,
         )
 
-        upsert_pages = self._api_instance.page_list(kind="data", params=params)
-
-        if upsert_pages is not None:
-            self.launch_treads(
-                nb_threads=self._config.nb_threads,
-                func=self.download,
-                pages=upsert_pages,
+        # Process UPDATE
+        try:
+            upsert_pages = self._api_instance.page_list(kind="data", params=params)
+            # input(f"UPDATE INPUT {self._config.name}")
+            if upsert_pages:
+                self.launch_threads(
+                    nb_threads=self._config.nb_threads,
+                    func=self.download,
+                    pages=upsert_pages,
+                )
+        except RetryError as e:
+            self.queue.put(("EXIT"))
+            logger.error(
+                "A problem occured on UPDATE process for source %s : %s", self._config.name, e
             )
-
-        # Delete data deleted from source
+            return
+        # Process DELETE
         logger.info(
-            _("Preparing data delete from source %s since %s"),
+            _("Getting deleted data from source %s since %s"),
             self._config.name,
             since,
         )
-
-        deleted_pages = self._api_instance.page_list(
-            kind="log",
-            params={
-                "meta_last_action_date": f"gte:{since}",
-                "limit": self._config.max_page_length,
-                "last_action": "D",
-            },
-        )
-
-        if deleted_pages:
-            self.launch_treads(
-                nb_threads=self._config.nb_threads,
-                func=self.delete,
-                pages=deleted_pages,
+        try:
+            deleted_pages = self._api_instance.page_list(
+                kind="log",
+                params={
+                    "meta_last_action_date": f"gte:{since}",
+                    "limit": self._config.max_page_length,
+                    "last_action": "D",
+                },
             )
+            # input(f"DELETE INPUT {self._config.name}")
+            if deleted_pages:
+                self.launch_threads(
+                    nb_threads=self._config.nb_threads,
+                    func=self.delete,
+                    pages=deleted_pages,
+                    store=False,
+                )
+        except RetryError as e:
+            self.queue.put(("EXIT"))
+            logger.error(
+                "A problem occured on DELETE process for source %s : %s", self._config.name, e
+            )
+            return
 
         self._backend.increment_log(controler=self._api_instance.controler, last_ts=increment_ts)
 

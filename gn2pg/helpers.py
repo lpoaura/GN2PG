@@ -115,14 +115,14 @@ def update_1source(ctrl, cfg):
     with StorePostgresql(cfg) as store_pg:
         downloader = ctrl(cfg, store_pg)
         logger.debug(
-            _("%s => Starting updating using controler %s"),
+            _("%s => Starting update (%s)"),
             cfg.source,
             downloader.name,
         )
         downloader.update()
         logger.info(
-            _("%s => Ending updating using controler %s"),
-            cfg.source,
+            _("%s => Ending update (%s)"),
+            cfg.name,
             downloader.name,
         )
 
@@ -138,8 +138,10 @@ def update(cfg_ctrl):
     logger.info(_("Defining full download jobs"))
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
-            logger.info(_("Starting update download for source %s"), source)
+            logger.info(_("Starting update for source %s"), source)
             update_1source(Data, cfg)
+            logger.info(_("Ending update for source %s"), source)
+
         else:
             logger.info(_("Source %s is disabled"), source)
 
