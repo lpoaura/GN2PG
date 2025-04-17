@@ -2,19 +2,17 @@
 """Outil d'import de données entre instances GeoNature (côté client)"""
 
 import gettext
+import importlib.metadata
 import logging
-from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from gn2pg import metadata
 
 try:
-    DIST_NAME = "gn2pg_client"
-    __version__ = version(DIST_NAME)
-except PackageNotFoundError:
-    __version__ = metadata.VERSION
-finally:
-    del version
+    __version__ = importlib.metadata.version("gn2pg_client")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
+
 
 __author__ = metadata.AUTHORS_STRING
 __license__ = metadata.LICENSE
