@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
+import psycopg2.errors
 from sqlalchemy import (
     Column,
     DateTime,
@@ -16,6 +17,7 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
     String,
     Table,
+    UniqueConstraint,
     create_engine,
     exc,
     func,
@@ -24,7 +26,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, StatementError
 from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
@@ -203,6 +205,7 @@ class PostgresqlUtils:
                 nullable=False,
             ),
             PrimaryKeyConstraint("id_data", "source", "type", name="pk_source_data"),
+            UniqueConstraint("uuid", name="unique_uuid"),
         )
 
     def create_json_tables(self) -> None:
@@ -302,6 +305,7 @@ class PostgresqlUtils:
             logger.info(
                 _("You choosed to use internal to_gnsynthese.sql script in schema %s"),
                 self._db_schema,
+                UniqueConstraint,
             )
         else:
             if Path(script).is_file():
@@ -402,10 +406,34 @@ class StorePostgresql:
                 set_={"item": elem, "update_ts": datetime.now()},
             )
             self._conn.execute(do_update_stmt)
+        except IntegrityError as error:
+            # Check if the original exception is a UniqueViolation
+            if isinstance(error.orig, psycopg2.errors.UniqueViolation):
+                self.error_log(controler, elem, str(error))
+                logger.warning(
+                    _(
+                        "A data with UUID %s from a different source already"
+                        " exists in Database: %s",
+                    ),
+                    elem[uuid_key_name],
+                    str(error),
+                )
+            else:
+                self.error_log(controler, elem, str(error))
+                logger.critical(
+                    _(
+                        "One error occurred for data from source %s "
+                        "with %s = %s. Error message is %s"
+                    ),
+                    self._config.std_name,
+                    id_key_name,
+                    elem[id_key_name],
+                    str(error),
+                )
         except exc.StatementError as error:
             self.error_log(controler, elem, str(error))
             logger.critical(
-                _("One error occured for data from source %s with %s = %s. Error message is %s"),
+                _("One error occurred for data from source %s with %s = %s. Error message is %s"),
                 self._config.std_name,
                 id_key_name,
                 elem[id_key_name],
@@ -439,7 +467,7 @@ class StorePostgresql:
                 # Convert to json
                 self.store_1_data(controler, elem, id_key_name, uuid_key_name)
 
-            except exc.StatementError as error:
+            except StatementError as error:
                 error_counter += 1
                 self.error_log(controler, elem, str(error))
                 logger.critical(

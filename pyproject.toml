@@ -112,6 +112,9 @@ include = '\.pyi?$'
 line-length = 99
 target-version = ['py37']
 
+[tool.pylint]
+ignored-modules = ["psycopg2.errors","psycopg2"]
+
 [tool.pylint.'MESSAGES CONTROL']
 max-line-length = 99
 disable = """

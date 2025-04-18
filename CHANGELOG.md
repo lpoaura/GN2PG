@@ -14,14 +14,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
     - `gn2pg_cli config`: Configuration management
     - `gn2pg_cli db`: Receiver database management
     - `gn2pg_cli download`: Download management
-- Add config commands to list/read/edit configuration files stored in `~/.gn2pg` directory, execute `gn2pg_cli config --help` for more informations
+- Add config commands to list/read/edit configuration files stored in `~/.gn2pg` directory, execute `gn2pg_cli config --help` for more informations.
+- File log output and stdout are now the same (fix #109).
+- Implement requests Retry on http 50x errors (fix #113, #108).
+- Move on to the next source after a failed download from a source. In the event of failure, the next update will resume at the last successful run.
+- The data integration process in GeoNature now uses the UUID as the data identifier (fix #112).
 
-### :bug: Fixes
-- File log output and stdout are now the same (fix #109)
-- Implement requests Retry on http 50x errors (fix #113)
-- Keep continue to next source after a download fail
+### :gift: Other changes
 
-## 1.7.0 - 2024-10-08
+- Documentation update (now using [Sphinx press theme](https://github.com/schettino72/sphinx_press_theme)).
+- Code cleanup.
+- Complete translations.
+
+### :point_down: Release note
+
+To do for update (only)
+
+- Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+```
+
+- Add a unique constraint on data_json.uuid table:
+
+```sql
+BEGIN;
+ALTER TABLE ONLY gn2pg_import.data_json
+    ADD CONSTRAINT unique_uuid UNIQUE (uuid);
+COMMIT;
+```
+
+
+- For users who use `GN2PG_client` to populate a GeoNature database, update SQL triggers.
+
+```bash
+gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
+```
+
+## 1.7.0 - 2025-02-24
 
 ### Fixes
 

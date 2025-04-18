@@ -254,7 +254,7 @@ class DownloadGn:
 
         logger.info(
             _("Getting new or update data from source %s since %s"),
-            self._config.source,
+            self._config.name,
             since,
         )
 
