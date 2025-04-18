@@ -1,6 +1,6 @@
 # GN2PG Client
 
-![https://www.python.org/](https://img.shields.io/badge/python-3.8+-yellowgreen)
+![https://www.python.org/](https://img.shields.io/badge/python-3.9+-yellowgreen)
 ![https://www.postgresql.org/](https://img.shields.io/badge/PostgreSQL-10+-blue)
 ![https://python-poetry.org/](https://img.shields.io/badge/packaging%20tool-poetry-important)
 ![https://github.com/psf/black](https://img.shields.io/badge/code%20style-black-black)
