@@ -12,7 +12,9 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.abspath("../.."))
 
-from gn2pg import metadata
+from gn2pg import __version__, __project__
+
+import importlib.metadata
 
 # -- General configuration ----------------------------------------------------
 
@@ -22,11 +24,13 @@ from gn2pg import metadata
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 
-project = metadata.PROJECT
-description = metadata.DESCRIPTION
-repo_url = metadata.URL
-author = metadata.AUTHORS_STRING
-version = release = metadata.VERSION
+pkg_metadata = importlib.metadata.metadata("GN2PG_client")
+
+project = __project__
+description = pkg_metadata.get("Summary")
+repo_url = ", ".join(pkg_metadata.get_all("Project-URL"))
+author = pkg_metadata.get("Author")
+version = release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -40,10 +44,18 @@ extensions = [
     "sphinx.ext.coverage",
     # "sphinx.ext.viewcode",
     "myst_parser",
-    "sphinx_rtd_theme",
 ]
 
+html_logo = "_static/src_gn2pg.png"
+
 source_suffix = {".md": "markdown", ".rst": "restructuredtext"}
+
+html_theme_options = {
+    "external_links": [
+        ("Github", "https://github.com/lpoaura/GN2PG"),
+        ("LPO Auvergne-Rhône-Alpes", "https://auvergne-rhone-alpes.lpo.fr/"),
+    ]
+}
 
 master_doc = "index"
 
@@ -54,20 +66,20 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
-html_theme_options = {
-    "display_version": True,
-    "logo_only": False,
-    "prev_next_buttons_location": "both",
-    "style_external_links": True,
-    "style_nav_header_background": "SteelBlue",
-    # Toc options
-    "collapse_navigation": True,
-    "includehidden": False,
-    "navigation_depth": 4,
-    "sticky_navigation": False,
-    "titles_only": False,
-}
+html_theme = "press"
+# html_theme_options = {
+#     "display_version": True,
+#     "logo_only": False,
+#     "prev_next_buttons_location": "both",
+#     "style_external_links": True,
+#     "style_nav_header_background": "SteelBlue",
+#     # Toc options
+#     "collapse_navigation": True,
+#     "includehidden": False,
+#     "navigation_depth": 4,
+#     "sticky_navigation": False,
+#     "titles_only": False,
+# }
 
 myst_enable_extensions = [
     "amsmath",
@@ -85,7 +97,7 @@ myst_substitutions = {
     "author": author,
     "date_update": datetime.now().strftime("%d %B %Y"),
     "description": description,
-    "repo_url": metadata.URL,
+    "repo_url": repo_url,
     "title": project,
     "version": version,
 }

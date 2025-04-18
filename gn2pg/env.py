@@ -4,8 +4,8 @@
 
 from pathlib import Path
 
-ENVDIR = Path.home() / ".gn2pg"
+CONFDIR = Path.home() / ".gn2pg"
 """Config system directory (~/.gn2pg/)"""
 
-LOGDIR = ENVDIR / "log"
-"""Log system directory (subdir of ENVDIR)"""
+LOGDIR = CONFDIR / "log"
+"""Log system directory (subdir of CONFDIR)"""

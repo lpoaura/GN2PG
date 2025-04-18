@@ -2,17 +2,21 @@
 # -*- coding: utf-8 -*-
 """TOML validation tools"""
 
+import copy
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
 from typing import Optional as TypeOptional
 
-from schema import Optional, Schema
+from schema import Optional, Schema, SchemaError
 from toml import load
 
 from gn2pg import _, __version__
-from gn2pg.env import ENVDIR
+
+# from gn2pg.logger import logger
 from gn2pg.utils import coalesce_in_dict, simplify
+
+from .env import CONFDIR
 
 logger = logging.getLogger(__name__)
 
@@ -348,17 +352,20 @@ class Gn2PgConf:
             file (str): [description]
         """
 
-        path = ENVDIR / file
-        if not path.is_file():
-            logger.critical(_("File %s does not exist"), file)
-            raise MissingConfigurationFile
+        path = CONFDIR / file
+        try:
+            if not path.is_file():
+                raise MissingConfigurationFile(_("File {} does not exist").format(file))
+        except MissingConfigurationFile as e:
+            logger.error(str(e))
+            raise
 
         try:
             logger.info(_("Loading TOML configuration %s"), file)
             self._config = load(path)
             _ConfSchema.validate(self._config)
-        except Exception as error:
-            logger.critical(
+        except SchemaError as error:
+            logger.error(
                 _("Incorrect content in YAML configuration %s : %s"),
                 file,
                 error,
@@ -388,7 +395,7 @@ class Gn2PgConf:
             logger.debug(
                 _("Settings for %s are : %s"),
                 source_name,
-                self._source_list[source_name].__dict__,
+                self.secure_dict(source_name),
             )
             i += 1
 
@@ -401,3 +408,10 @@ class Gn2PgConf:
     def source_list(self) -> _ConfType:
         """Return list of site configurations."""
         return self._source_list
+
+    def secure_dict(self, source_name) -> Dict:
+        """Secure sensitive data for logging"""
+        logging_dict = copy.deepcopy(self._source_list[source_name].__dict__)
+        logging_dict["_db"].password = "***"
+        logging_dict["_source"].user_password = "***"
+        return logging_dict

@@ -2,36 +2,22 @@
 """Outil d'import de données entre instances GeoNature (côté client)"""
 
 import gettext
+import importlib.metadata
 import logging
-import logging.config
-from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-import coloredlogs
-
-from gn2pg import metadata
+pkg_metadata = importlib.metadata.metadata("GN2PG_client")
 
 try:
-    DIST_NAME = "gn2pg_client"
-    __version__ = version(DIST_NAME)
-except PackageNotFoundError:
-    __version__ = metadata.VERSION
-finally:
-    del version
+    __version__ = importlib.metadata.version("GN2PG_client")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
 
-__author__ = metadata.AUTHORS_STRING
-__license__ = metadata.LICENSE
-
-coloredlogs.DEFAULT_FIELD_STYLES["module"] = {"color": "blue"}
+__project__ = "GeoNature 2 PostgreSQL Client application"
+__author__ = pkg_metadata.get("Author")
+__license__ = pkg_metadata.get("License")
 
 logger = logging.getLogger(__name__)
-
-coloredlogs.install(
-    level="DEBUG",
-    logger=logger,
-    milliseconds=True,
-    fmt="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
-)
 
 
 # Install gettext for any file in the application

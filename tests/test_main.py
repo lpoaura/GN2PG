@@ -6,7 +6,7 @@
 import pytest
 from pytest import raises
 
-from gn2pg import metadata
+from gn2pg import __project__, __version__
 from gn2pg.main import main
 
 parametrize = pytest.mark.parametrize
@@ -16,7 +16,7 @@ class TestMain(object):
     @parametrize("helparg", ["-h", "--help"])
     def test_help(self, helparg, capsys):
         with raises(SystemExit) as exc_info:
-            main(["GeoNature 2 PostgreSQL Client application", helparg])
+            main([helparg])
         out, err = capsys.readouterr()
         # Should have printed some sort of usage message. We don't
         # need to explicitly test the content of the message.
@@ -30,9 +30,9 @@ class TestMain(object):
     @parametrize("versionarg", ["-V", "--version"])
     def test_version(self, versionarg, capsys):
         with raises(SystemExit) as exc_info:
-            main(["GeoNature 2 PostgreSQL Client application", versionarg])
+            main([versionarg])
         out, err = capsys.readouterr()
         # Should pr"int out version.
-        assert all(elm in out for elm in [metadata.PROJECT, metadata.VERSION])
+        assert all(elm in out for elm in [__project__, __version__])
         # Should exit with zero return code.
         assert exc_info.value.code == 0

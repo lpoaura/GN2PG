@@ -36,7 +36,7 @@ msgid "API %s contains %s data in %s page(s)"
 msgstr ""
 
 #: gn2pg/api.py:208
-msgid "No data available from from %s"
+msgid "No data available from %s"
 msgstr ""
 
 #: gn2pg/check_conf.py:173

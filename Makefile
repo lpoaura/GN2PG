@@ -22,7 +22,7 @@ pylint:
 	poetry run pylint gn2pg
 
 trans-update-po:
-	pygettext3 -d base -o gn2pg/locale/gn2pg.pot gn2pg
+	xgettext -d base -o gn2pg/locale/gn2pg.pot --from-code=UTF-8 --language=Python gn2pg/*.py
 	msgmerge --update gn2pg/locale/fr_FR/LC_MESSAGES/gn2pg.po gn2pg/locale/gn2pg.pot
 
 trans-gen-mo:
@@ -43,3 +43,6 @@ test: # non-functional
 	# docker logs dbtestgn2pg | grep "database system is ready to accept connections"
 	poetry install
 	poetry run pytest --user=${GEONATURE_USER} --password=${GEONATURE_PASSWORD} --url=${GEONATURE_URL} --db-user=dbuser --db-password=dbpass --db-port=5234 --export-id=${GEONATURE_EXPORT_ID} --nb-threads=${GEONATURE_NB_THREADS} tests
+
+build-docs:
+	poetry run sphinx-build -b html -d docs/_build/cache -j auto docs docs/_build/html

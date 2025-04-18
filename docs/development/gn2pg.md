@@ -56,15 +56,6 @@
    :show-inheritance:
 ```
 
-## gn2pg.metadata module
-
-```{eval-rst}
-.. automodule:: gn2pg.metadata
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
 ## gn2pg.store_postgresql module
 
 ```{eval-rst}

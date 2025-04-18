@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Methods to store data to Postgresql database."""
-
 import importlib.resources
 import logging
 import sys
@@ -9,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
+import psycopg2.errors
 from sqlalchemy import (
     Column,
     DateTime,
@@ -17,6 +17,7 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
     String,
     Table,
+    UniqueConstraint,
     create_engine,
     exc,
     func,
@@ -25,10 +26,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
 from sqlalchemy.engine.url import URL
+from sqlalchemy.exc import IntegrityError, OperationalError, StatementError
 from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
 
+# from gn2pg.logger import logger
 logger = logging.getLogger(__name__)
 
 
@@ -113,10 +116,15 @@ class PostgresqlUtils:
         self._db_url = db_url(self._config)
         if self._config.database.querystring:
             self._db_url["query"] = self._config.database.querystring
+
         self._db = create_engine(URL.create(**self._db_url), echo=False)
         self._db_schema = self._config.database.schema_import
         self._metadata = MetaData(schema=self._db_schema)
-        self._metadata.reflect(self._db)
+        try:
+            self._metadata.reflect(self._db)
+        except OperationalError as e:
+            logger.critical(_("An error occured while trying to connect to database : %s"), e)
+            sys.exit(0)
 
     # ----------------
     # Internal methods
@@ -197,6 +205,7 @@ class PostgresqlUtils:
                 nullable=False,
             ),
             PrimaryKeyConstraint("id_data", "source", "type", name="pk_source_data"),
+            UniqueConstraint("uuid", name="unique_uuid"),
         )
 
     def create_json_tables(self) -> None:
@@ -205,53 +214,54 @@ class PostgresqlUtils:
             _("Connecting to %s database, to finalize creation"),
             self._config.database.name,
         )
-
-        with self._db.connect() as conn:
-            # Create extensions
-            try:
-                ext_queries = (
-                    'CREATE EXTENSION IF NOT EXISTS "pgcrypto";',
-                    'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
-                    'CREATE EXTENSION IF NOT EXISTS "postgis";',
-                )
-                for query in ext_queries:
+        try:
+            with self._db.connect() as conn:
+                # Create extensions
+                try:
+                    ext_queries = (
+                        'CREATE EXTENSION IF NOT EXISTS "pgcrypto";',
+                        'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
+                    )
+                    for query in ext_queries:
+                        logger.debug(_("Execute: %s"), query)
+                        conn.execute(text(query))
+                    logger.info("PostgreSQL extensions successfully created")
+                except exc.SQLAlchemyError as error:
+                    logger.critical(str(error))
+                # Create import schema
+                try:
+                    query = f"""
+                    CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_import}
+                    AUTHORIZATION {self._config.database.user};
+                    """  # noqa: E702
                     logger.debug(_("Execute: %s"), query)
                     conn.execute(text(query))
-                logger.info("PostgreSQL extensions successfully created")
-            except exc.SQLAlchemyError as error:
-                logger.critical(str(error))
-            # Create import schema
-            try:
-                query = f"""
-                CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_import}
-                AUTHORIZATION {self._config.database.user};
-                """  # noqa: E702
-                logger.debug(_("Execute: %s"), query)
-                conn.execute(text(query))
-                logger.info(
-                    (
-                        _("Schema %s owned by %s successfully created"),
-                        self._config.database.schema_import,
-                        self._config.database.user,
+                    logger.info(
+                        (
+                            _("Schema %s owned by %s successfully created"),
+                            self._config.database.schema_import,
+                            self._config.database.user,
+                        )
                     )
-                )
-            except exc.SQLAlchemyError as error:
-                logger.critical(
-                    _("Failed to create %s schema"),
-                    self._config.database.schema_import,
-                )
-                logger.critical(str(error))
-            # Set path to include VN import schema
+                except exc.SQLAlchemyError as error:
+                    logger.critical(
+                        _("Failed to create %s schema"),
+                        self._config.database.schema_import,
+                    )
+                    logger.critical(str(error))
+                # Set path to include VN import schema
 
-            # Check if tables exist or else create them
-            self._create_download_log()
-            self._create_increment_log()
-            self._create_error_log()
-            self._create_data_json()
+                # Check if tables exist or else create them
+                self._create_download_log()
+                self._create_increment_log()
+                self._create_error_log()
+                self._create_data_json()
 
-            conn.close()
+                conn.close()
 
-            self._db.dispose()
+                self._db.dispose()
+        except OperationalError as e:
+            logger.critical(_("An error occured while trying to connect to database : %s"), e)
 
     def count_json_data(self):
         """Count observations stored in json table, by source and type.
@@ -295,6 +305,7 @@ class PostgresqlUtils:
             logger.info(
                 _("You choosed to use internal to_gnsynthese.sql script in schema %s"),
                 self._db_schema,
+                UniqueConstraint,
             )
         else:
             if Path(script).is_file():
@@ -328,7 +339,11 @@ class StorePostgresql:
         self._db = create_engine(URL.create(**self._db_url), echo=False)
         self._db_schema = self._config.database.schema_import
         self._metadata = MetaData(schema=self._db_schema)
-        self._metadata.reflect(self._db)
+        try:
+            self._metadata.reflect(self._db)
+        except OperationalError as e:
+            logger.critical(_("An error occured while trying to connect to database : %s"), e)
+            sys.exit(0)
 
         self._conn = self._db.connect()
 
@@ -375,7 +390,7 @@ class StorePostgresql:
             uuid_key_name (str, optional): data UUID. Defaults to "id_perm_sinp".
         """
         metadata = self._table_defs[controler]["metadata"]
-        logger.debug(elem[id_key_name])
+        # logger.debug(elem[id_key_name])
         try:
             insert_stmt = insert(metadata).values(
                 id_data=elem[id_key_name],
@@ -391,10 +406,34 @@ class StorePostgresql:
                 set_={"item": elem, "update_ts": datetime.now()},
             )
             self._conn.execute(do_update_stmt)
+        except IntegrityError as error:
+            # Check if the original exception is a UniqueViolation
+            if isinstance(error.orig, psycopg2.errors.UniqueViolation):
+                self.error_log(controler, elem, str(error))
+                logger.warning(
+                    _(
+                        "A data with UUID %s from a different source already"
+                        " exists in Database: %s",
+                    ),
+                    elem[uuid_key_name],
+                    str(error),
+                )
+            else:
+                self.error_log(controler, elem, str(error))
+                logger.critical(
+                    _(
+                        "One error occurred for data from source %s "
+                        "with %s = %s. Error message is %s"
+                    ),
+                    self._config.std_name,
+                    id_key_name,
+                    elem[id_key_name],
+                    str(error),
+                )
         except exc.StatementError as error:
             self.error_log(controler, elem, str(error))
             logger.critical(
-                _("One error occured for data from source %s with %s = %s. Error message is %s"),
+                _("One error occurred for data from source %s with %s = %s. Error message is %s"),
                 self._config.std_name,
                 id_key_name,
                 elem[id_key_name],
@@ -428,7 +467,7 @@ class StorePostgresql:
                 # Convert to json
                 self.store_1_data(controler, elem, id_key_name, uuid_key_name)
 
-            except exc.StatementError as error:
+            except StatementError as error:
                 error_counter += 1
                 self.error_log(controler, elem, str(error))
                 logger.critical(
@@ -596,7 +635,7 @@ class StorePostgresql:
 
         return row[0] if row is not None else None
 
-    def error_log(
+    def error_log(  # pylint: disable=R0917
         self,
         controler: str,
         item: dict,

@@ -149,7 +149,7 @@ gn2pg_cli --custom-script to_gnsynthese <myconfigfile>
 
 ## Dashboard
 
-A simple web dashboard can be run following [dashboard docs](./docs/dashboard.rst).
+A simple web dashboard can be run following [dashboard docs](./docs/usage/dashboard.md).
 
 ![Dashboard_Home](./docs/_static/home_gn2pg_dashboard.png)
 
