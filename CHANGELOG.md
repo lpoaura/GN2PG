@@ -8,11 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## 1.8.1 - 2025-04-18
 
-### :bug: Fixes
+### :bug: Fixes
 
 - Fix wrongly deleted IF condition
 
-### :point_down: Release note
+### :point_down: Release note
 
 To do for update (only)
 
@@ -52,13 +52,13 @@ gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
 - Move on to the next source after a failed download from a source. In the event of failure, the next update will resume at the last successful run.
 - The data integration process in GeoNature now uses the UUID as the data identifier (fix #112).
 
-### :gift: Other changes
+### :gift: Other changes
 
 - Documentation update (now using [Sphinx press theme](https://github.com/schettino72/sphinx_press_theme)).
 - Code cleanup.
 - Complete translations.
 
-### :point_down: Release note
+### :point_down: Release note
 
 To do for update (only)
 
@@ -76,7 +76,6 @@ ALTER TABLE ONLY gn2pg_import.data_json
     ADD CONSTRAINT unique_uuid UNIQUE (uuid);
 COMMIT;
 ```
-
 
 - For users who use `GN2PG_client` to populate a GeoNature database, update SQL triggers.
 
