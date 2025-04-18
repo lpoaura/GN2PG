@@ -43,3 +43,6 @@ test: # non-functional
 	# docker logs dbtestgn2pg | grep "database system is ready to accept connections"
 	poetry install
 	poetry run pytest --user=${GEONATURE_USER} --password=${GEONATURE_PASSWORD} --url=${GEONATURE_URL} --db-user=dbuser --db-password=dbpass --db-port=5234 --export-id=${GEONATURE_EXPORT_ID} --nb-threads=${GEONATURE_NB_THREADS} tests
+
+build-docs:
+	poetry run sphinx-build -b html -d docs/_build/cache -j auto docs docs/_build/html

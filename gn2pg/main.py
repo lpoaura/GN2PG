@@ -11,7 +11,7 @@ import sys
 import coloredlogs
 from toml import TomlDecodeError
 
-from gn2pg import _, __version__, metadata
+from gn2pg import _, __project__, __version__, pkg_metadata
 from gn2pg.check_conf import Gn2PgConf
 from gn2pg.env import CONFDIR
 from gn2pg.helpers import full_download, init, manage_configs, update
@@ -133,15 +133,14 @@ def main(args) -> None:
     """
 
     epilog = f"""\
-{sh_col.color('okblue')}{sh_col.color('bold')}{metadata.PROJECT} \
+{sh_col.color('okblue')}{sh_col.color('bold')}{__project__} \
 {sh_col.color('endc')}{sh_col.color('endc')} \
 {sh_col.color('bold')}{sh_col.color('header')}{__version__} \
 {sh_col.color('endc')}{sh_col.color('endc')}
-{sh_col.color('bold')}LICENSE{sh_col.color('endc')}: {metadata.LICENSE}
-{sh_col.color('bold')}AUTHORS{sh_col.color('endc')}: {metadata.AUTHORS_STRING}
+{sh_col.color('bold')}LICENSE{sh_col.color('endc')}: {pkg_metadata.get('License')}
+{sh_col.color('bold')}AUTHORS{sh_col.color('endc')}: {pkg_metadata.get('Author')}
 
-{sh_col.color('bold')}URL{sh_col.color('endc')}: {metadata.URL}
-{sh_col.color('bold')}DOCS{sh_col.color('endc')}: {metadata.DOCS}
+{'\n'.join(pkg_metadata.get_all('Project-URL'))}
 """
     print(epilog)
 

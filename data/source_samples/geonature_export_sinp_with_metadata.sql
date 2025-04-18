@@ -218,7 +218,7 @@ WITH af_actors AS (
         tds.id_dataset
         , tds.id_acquisition_framework
         ,
-        --    tds.additional_data,
+        -- tds.additional_data,
         jsonb_build_object('uuid'
             , tds.unique_dataset_id
             , 'name'

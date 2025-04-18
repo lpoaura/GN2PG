@@ -6,16 +6,16 @@ import importlib.metadata
 import logging
 from pathlib import Path
 
-from gn2pg import metadata
+pkg_metadata = importlib.metadata.metadata("GN2PG_client")
 
 try:
-    __version__ = importlib.metadata.version("gn2pg_client")
+    __version__ = importlib.metadata.version("GN2PG_client")
 except importlib.metadata.PackageNotFoundError:
     __version__ = "unknown"
 
-
-__author__ = metadata.AUTHORS_STRING
-__license__ = metadata.LICENSE
+__project__ = "GeoNature 2 PostgreSQL Client application"
+__author__ = pkg_metadata.get("Author")
+__license__ = pkg_metadata.get("License")
 
 logger = logging.getLogger(__name__)
 

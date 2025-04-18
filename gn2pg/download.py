@@ -125,7 +125,6 @@ class DownloadGn:
             thread.map(partial(func, queue=self.queue), pages)
         # Will stop the report thread
         self.queue.put(("DONE"))
-        logger.warning("Go out of thread")
         return errors
 
     def download(self, page: str, queue: Queue) -> None:

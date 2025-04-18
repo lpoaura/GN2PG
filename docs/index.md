@@ -1,13 +1,15 @@
 # {{ title }} - Documentation
 
-> **Description:** {{ description }}  
-> **Author and contributors:** {{ author }}  
-> **Version:** {{ version }}  
-> **Source code:** {{ repo_url }}  
-> **Last documentation update:** {{ date_update }}
+**Description:** {{ description }}  
+**Author and contributors:** {{ author }}  
+**Version:** {{ version }}  
+**Urls:** {{ repo_url }}  
+**Last documentation update:** {{ date_update }}
+
 
 ```{image} ./_static/src_gn2pg.png
 :align: center
+:width: 300px
 :alt: Logo project
 ```
 

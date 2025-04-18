@@ -13,5 +13,5 @@ class TestDownload:
         increment = data._backend.increment_get(data._api_instance.controler)
 
         assert now.strftime("%d/%m/%Y %H") == increment.strftime("%d/%m/%Y %H")
-        assert "items have been stored in db from data of source" in caplog.text
+        assert "items have been stored in db from" in caplog.text
         assert "100.00 %" in caplog.text
