@@ -131,7 +131,7 @@ def main(args) -> None:
     Args:
       args ([str]): command line parameter list
     """
-
+    newline_char = "\n"
     epilog = f"""\
 {sh_col.color('okblue')}{sh_col.color('bold')}{__project__} \
 {sh_col.color('endc')}{sh_col.color('endc')} \
@@ -140,7 +140,7 @@ def main(args) -> None:
 {sh_col.color('bold')}LICENSE{sh_col.color('endc')}: {pkg_metadata.get('License')}
 {sh_col.color('bold')}AUTHORS{sh_col.color('endc')}: {pkg_metadata.get('Author')}
 
-{'\n'.join(pkg_metadata.get_all('Project-URL'))}
+{newline_char.join(pkg_metadata.get_all('Project-URL'))}
 """
     print(epilog)
 
