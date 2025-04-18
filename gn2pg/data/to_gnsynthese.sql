@@ -777,8 +777,23 @@ BEGIN
         NEW.uuid INTO the_unique_id_sinp;
     SELECT
         gn2pg_import.fct_c_get_or_insert_source (NEW.source) INTO the_id_source;
-    SELECT
-        find_srid ('gn_synthese' , 'synthese' , 'the_geom_local') INTO _local_srid;
+    -- Condition to upsert: Data do not exists or data exists from this source only
+    IF NOT EXISTS (
+        SELECT
+        FROM
+            gn_synthese.synthese
+        WHERE
+            unique_id_sinp = the_unique_id_sinp)
+        OR EXISTS (
+            SELECT
+            FROM
+                gn_synthese.synthese
+            WHERE
+                unique_id_sinp = the_unique_id_sinp
+                AND id_source = the_id_source) THEN
+        -- Proceed upsert
+        SELECT
+            find_srid ('gn_synthese' , 'synthese' , 'the_geom_local') INTO _local_srid;
     SELECT
         cast(NEW.item #>> '{id_perm_grp_sinp}' AS UUID) INTO the_unique_id_sinp_grp;
     SELECT
