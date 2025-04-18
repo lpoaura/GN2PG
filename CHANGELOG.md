@@ -6,11 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
-## 1.8.0 - 2025-0x-xx
+## 1.8.1 - 2025-04-18
+
+### :bug: Fixes
+
+- Fix wrongly deleted IF condition
+
+### :point_down: Release note
+
+To do for update (only)
+
+- Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+```
+
+- Add a unique constraint on data_json.uuid table (if not already added after upgrade to 1.8.0):
+
+```sql
+BEGIN;
+ALTER TABLE ONLY gn2pg_import.data_json
+    ADD CONSTRAINT unique_uuid UNIQUE (uuid);
+COMMIT;
+```
+
+- For users who use `GN2PG_client` to populate a GeoNature database, update SQL triggers.
+
+```bash
+gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
+```
+
+
+## 1.8.0 - 2025-04-18
 
 ### :rocket: New features
 
-- Restructuring of command line commands into 3 sub-commands:
+- :point_right: Restructure command line commands into 3 sub-commands :
     - `gn2pg_cli config`: Configuration management
     - `gn2pg_cli db`: Receiver database management
     - `gn2pg_cli download`: Download management
@@ -36,7 +68,7 @@ To do for update (only)
 pip install --upgrade gn2pg-client
 ```
 
-- Add a unique constraint on data_json.uuid table:
+- Add a unique constraint on data_json.uuid table (if not already added after upgrade to 1.8.0):
 
 ```sql
 BEGIN;
