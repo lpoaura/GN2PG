@@ -208,6 +208,26 @@ class PostgresqlUtils:
             UniqueConstraint("uuid", name="unique_uuid"),
         )
 
+    def _create_metadata_json(self) -> None:
+        """Create observations_json table if it does not exist."""
+        self._create_table(
+            "metadata_json",
+            Column("source", String, nullable=False),
+            Column("controler", String, nullable=False),
+            Column("type", String, nullable=False),
+            Column("level", String, nullable=False),
+            Column("uuid", UUID, index=True),
+            Column("item", JSONB, nullable=False),
+            Column(
+                "update_ts",
+                DateTime,
+                server_default=func.now(),
+                nullable=False,
+            ),
+            PrimaryKeyConstraint("uuid", "source", name="pk_source_metadata"),
+            UniqueConstraint("uuid", name="metadata_unique_uuid"),
+        )
+
     def create_json_tables(self) -> None:
         """Create all internal and jsonb tables."""
         logger.info(
@@ -256,6 +276,7 @@ class PostgresqlUtils:
                 self._create_increment_log()
                 self._create_error_log()
                 self._create_data_json()
+                self._create_metadata_json()
 
                 conn.close()
 
@@ -305,7 +326,6 @@ class PostgresqlUtils:
             logger.info(
                 _("You choosed to use internal to_gnsynthese.sql script in schema %s"),
                 self._db_schema,
-                UniqueConstraint,
             )
         else:
             if Path(script).is_file():
@@ -349,13 +369,19 @@ class StorePostgresql:
 
         # Map Import tables in a single dict for easy reference
         self._table_defs = {
-            "data": {"type": "data", "metadata": None},
-            "meta": {"type": "metadata", "metadata": None},
+            "data": {
+                "type": "data",
+                "metadata": self._metadata.tables[self._db_schema + ".data_json"],
+            },
+            "meta": {
+                "type": "metadata",
+                "metadata": self._metadata.tables[self._db_schema + ".metadata_json"],
+            },
         }
 
-        self._table_defs["data"]["metadata"] = self._metadata.tables[
-            self._db_schema + ".data_json"
-        ]
+        # self._table_defs["data"]["metadata"] = self._metadata.tables[
+        #     self._db_schema + ".data_json"
+        # ]
 
     def __enter__(self):
         logger.debug(_("Entry into StorePostgresql"))
@@ -374,6 +400,67 @@ class StorePostgresql:
     # ----------------
     # Internal methods
     # ----------------
+
+    def store_1_metadata(
+        self,
+        controler: str,
+        level: str,
+        elem: dict,
+        uuid_key_name: str = "uuid",
+    ):
+        """Store 1 metadata item in db (using upsert statement)"""
+
+        metadata = self._table_defs["meta"]["metadata"]
+        # logger.debug(elem[id_key_name])
+        try:
+            insert_stmt = insert(metadata).values(
+                controler=controler,
+                type=self._config.data_type,
+                level=level,
+                uuid=elem[uuid_key_name],
+                source=self._config.std_name,
+                item=elem,
+                update_ts=datetime.now(),
+            )
+            do_update_stmt = insert_stmt.on_conflict_do_update(
+                constraint=metadata.primary_key,
+                set_={"item": elem, "update_ts": datetime.now()},
+            )
+            self._conn.execute(do_update_stmt)
+        except IntegrityError as error:
+            # Check if the original exception is a UniqueViolation
+            if isinstance(error.orig, psycopg2.errors.UniqueViolation):
+                self.error_log(controler, elem, str(error))
+                logger.warning(
+                    _(
+                        "A metadata with UUID %s from a different source already"
+                        " exists in Database: %s",
+                    ),
+                    elem["uuid"],
+                    str(error),
+                )
+            else:
+                self.error_log(controler, elem, str(error))
+                logger.critical(
+                    _(
+                        "One error occurred for data from source %s "
+                        "with %s = %s. Error message is %s"
+                    ),
+                    self._config.std_name,
+                    "uuid",
+                    elem["uuid"],
+                    str(error),
+                )
+        except exc.StatementError as error:
+            self.error_log(controler, elem, str(error))
+            logger.critical(
+                _("One error occurred for data from source %s with %s = %s. Error message is %s"),
+                self._config.std_name,
+                "uuid",
+                elem["uuid"],
+                str(error),
+            )
+
     def store_1_data(
         self,
         controler: str,
@@ -391,7 +478,21 @@ class StorePostgresql:
         """
         metadata = self._table_defs[controler]["metadata"]
         # logger.debug(elem[id_key_name])
+        metadata_infos = {"ca_data": "acquisition framework", "jdd_data": "dataset"}
         try:
+            logger.debug("store_1_data type %s", self._config.data_type)
+            for key, value in metadata_infos.items():
+                if key in elem and isinstance(elem.get(key), dict):
+                    meta_data = elem.pop(key)
+                    elem[f"{key.rsplit('_', maxsplit=1)[0]}_uuid"] = meta_data[
+                        "uuid"
+                    ]  # Generate key "{ca,jdd}_uuid"
+                    if key == "jdd_data":
+                        meta_data["ca_uuid"] = (
+                            elem["ca_data"]["uuid"] if "ca_data" in elem else elem["ca_uuid"]
+                        )
+                    self.store_1_metadata(controler="metadata", level=value, elem=meta_data)
+
             insert_stmt = insert(metadata).values(
                 id_data=elem[id_key_name],
                 controler=controler,
