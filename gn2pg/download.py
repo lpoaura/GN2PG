@@ -129,9 +129,9 @@ class DownloadGn:
                     #     self.data_count_upserts = progress
 
                     if response.get("total_len", 0) > 0:
-                        msg = "Storing" if store else "Deleting"
+                        msg = _("Stores") if store else _("Deletes")
                         logger.info(
-                            "%s %d datas (%d/%d %.2f %%) from %s %s",
+                            _("%s %d datas (%d/%d %.2f %%) from %s %s"),
                             msg,
                             response["len_items"],
                             progress,
@@ -188,9 +188,7 @@ class DownloadGn:
             self.data_count_errors,
             self.metadata_count_upserts,
             self.metadata_count_errors,
-        ) = self._backend.store_data(
-            self._api_instance.controler, response["items"], self.import_log_id
-        )
+        ) = self._backend.store_data(self._api_instance.controler, response["items"])
         queue.put(response)
 
     def delete(self, page: str, queue: Queue) -> None:

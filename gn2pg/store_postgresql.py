@@ -222,7 +222,7 @@ class PostgresqlUtils:
             Column(
                 "import_id",
                 Integer,
-                ForeignKey("import_log.id", ondelete="CASCADE", onupdate="CASCADE"),
+                ForeignKey("import_log.id", onupdate="CASCADE"),
             ),
             PrimaryKeyConstraint("id_data", "source", "type", name="pk_source_data"),
             UniqueConstraint("uuid", name="unique_uuid"),
@@ -247,7 +247,7 @@ class PostgresqlUtils:
             Column(
                 "import_id",
                 Integer,
-                ForeignKey("import_log.id", ondelete="CASCADE", onupdate="CASCADE"),
+                ForeignKey("import_log.id", onupdate="CASCADE"),
             ),
             PrimaryKeyConstraint("uuid", "source", name="pk_source_metadata"),
             UniqueConstraint("uuid", name="metadata_unique_uuid"),
@@ -519,7 +519,7 @@ class StorePostgresql:
             uuid_key_name (str, optional): data UUID. Defaults to "id_perm_sinp".
         """
         metadata = self._table_defs[controler]["metadata"]
-        # logger.debug(elem[id_key_name])
+        logger.debug("elem[id_key_name] is %s, id_key_name is %s", elem[id_key_name], id_key_name)
         metadata_infos = {"ca_data": "acquisition framework", "jdd_data": "dataset"}
         try:
             logger.debug("store_1_data type %s", self._config.data_type)

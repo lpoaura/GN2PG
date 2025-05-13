@@ -47,6 +47,7 @@ class ImportView(ReadOnlyView):
         "xfer_filters": add_class_ctn_row_long_text_formatter,
         "comment": add_class_ctn_row_long_text_formatter,
     }
+    can_delete = True
 
 
 class ErrorView(ReadOnlyView):

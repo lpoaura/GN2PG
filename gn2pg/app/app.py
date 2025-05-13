@@ -18,6 +18,7 @@ def create_app(config=FlaskConfig):
     app.config.from_object(config)
     app.config["SQLALCHEMY_DATABASE_URI"] = config.sqlalchemy_database_uri
     app.config["APPLICATION_ROOT"] = config.application_root
+    app.config["SECRET_KEY"] = config.secret_key
     app.wsgi_app = ProxyFix(app.wsgi_app, x_host=1)
     db.init_app(app)
     app.config["db"] = db
