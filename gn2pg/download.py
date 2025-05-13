@@ -26,6 +26,7 @@ from gn2pg import _, __version__
 from gn2pg.api import DataAPI
 from gn2pg.check_conf import Gn2PgSourceConf
 from gn2pg.store_postgresql import StorePostgresql
+from gn2pg.utils import XferStatus
 
 # from gn2pg.logger import logger
 
@@ -74,7 +75,7 @@ class DownloadGn:
         # Init import log
         self.import_log_id = self._backend.import_log(
             controler=self._api_instance.controler,
-            values={"xfer_status": "init", "xfer_start_ts": datetime.now()},
+            values={"xfer_status": XferStatus.init, "xfer_start_ts": datetime.now()},
         )
 
     @property
@@ -257,10 +258,9 @@ class DownloadGn:
             if pages:
                 self._backend.import_log(
                     controler=self._api_instance.controler,
-                    id=self.import_log_id,
                     values={
                         "xfer_type": "full",
-                        "xfer_status": "import_data",
+                        "xfer_status": XferStatus.import_data,
                         "xfer_http_status": status_code,
                         "xfer_filters": json.dumps(params),
                     },
@@ -330,10 +330,9 @@ class DownloadGn:
             )
             self._backend.import_log(
                 controler=self._api_instance.controler,
-                id=self.import_log_id,
                 values={
                     "xfer_type": "update",
-                    "xfer_status": "import_data",
+                    "xfer_status": XferStatus.import_data,
                     "xfer_http_status": status_code,
                     "xfer_filters": json.dumps(params, default=str),
                 },
@@ -370,8 +369,7 @@ class DownloadGn:
             # input(f"DELETE INPUT {self._config.name}")
             self._backend.import_log(
                 controler=self._api_instance.controler,
-                id=self.import_log_id,
-                values={"xfer_status": "delete", "xfer_http_status": status_code},
+                values={"xfer_status": XferStatus.delete, "xfer_http_status": status_code},
             )
             if deleted_pages:
 
@@ -388,17 +386,10 @@ class DownloadGn:
             )
             return
 
-        self._backend.import_log(
-            controler=self._api_instance.controler,
-            id=self.import_log_id,
-            values={"xfer_status": "success"},
-        )
-
     def exit(self):
         """Final log on exit"""
         self._backend.import_log(
             controler=self._api_instance.controler,
-            id=self.import_log_id,
             values={
                 "xfer_end_ts": datetime.now(),
                 "api_count_items": self.api_count_items,
@@ -408,7 +399,7 @@ class DownloadGn:
                 "data_count_errors": self.data_count_errors,
                 "metadata_count_upserts": self.metadata_count_upserts,
                 "metadata_count_errors": self.metadata_count_errors,
-                "xfer_status": "success",
+                "xfer_status": XferStatus.success,
             },
         )
 

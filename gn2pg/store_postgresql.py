@@ -34,6 +34,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError, StatementError
 from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
+from gn2pg.utils import XferStatus
 
 # from gn2pg.logger import logger
 logger = logging.getLogger(__name__)
@@ -681,12 +682,11 @@ class StorePostgresql:
 
         return del_count
 
-    def import_log(self, controler: str, import_id: int = None, values: Optional[dict] = None):
+    def import_log(self, controler: str, values: Optional[dict] = None):
         """Write download log entries to database.
 
         Args:
             controler (str): Name of API controler.
-            import_id (int): Import pk
             values (dict, optional): Field values. Defaults to None
         """
         # Store to database, if enabled
@@ -695,7 +695,7 @@ class StorePostgresql:
         ]
         if values is None:
             values = {}
-        if not import_id:
+        if not self.import_id:
             stmt = (
                 metadata.insert()
                 .values(source=self._config.std_name, controler=controler, **values)
@@ -704,7 +704,7 @@ class StorePostgresql:
         else:
             stmt = (
                 metadata.update()
-                .where(metadata.c.id == import_id)
+                .where(metadata.c.id == self.import_id)
                 .values(**values)
                 .returning(metadata.c.id)
             )
@@ -729,7 +729,7 @@ class StorePostgresql:
                 and_(
                     metadata.c.source == self._config.std_name,
                     metadata.c.controler == controler,
-                    metadata.c.xfer_status == "success",
+                    metadata.c.xfer_status == XferStatus.success,
                 )
             )
             .order_by(metadata.c.xfer_start_ts.desc())
