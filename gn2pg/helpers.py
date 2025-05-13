@@ -86,6 +86,7 @@ def full_download_1source(ctrl, cfg):
             cfg.source,
             downloader.name,
         )
+        downloader.exit()
 
 
 def full_download(cfg_ctrl):
@@ -125,6 +126,7 @@ def update_1source(ctrl, cfg):
             cfg.name,
             downloader.name,
         )
+        downloader.exit()
 
 
 def update(cfg_ctrl):
