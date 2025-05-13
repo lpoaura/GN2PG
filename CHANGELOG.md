@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.9.0 - 2025-05-xx
+
+### :rocket: Features
+
+- Metadata is now stored separately for data from a synthese_with_metadata export.
+- Import history is now stored in a single table (`import_log`) containing execution information such as download type (full or update), import statistics for API, data and metadata (fix #111).
+- When an update is launched (`gn2pg_cli db --update`), if no import exists for a specific source, a complete download is launched for that source. it is no longer necessary to run a `--full` download after adding a new source.
+
+### :bug: Fixes
+
+- Fix log history API call using querystring `page` instead of `offset` (fix #117)
+
+### :point_down: Release note
+
+To do for update (only)
+
+- Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+gn2pg_cli db --json-tables-create <config file>
+```
+
+- Add a unique constraint on data_json.uuid table (if not already added after upgrade to 1.8.0):
+
+```sql
+BEGIN;
+
+--comming soon;
+
+COMMIT;
+```
+
+
 ## 1.8.1 - 2025-04-18
 
 ### :bug: Fixes
