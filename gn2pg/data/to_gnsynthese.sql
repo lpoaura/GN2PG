@@ -707,6 +707,67 @@ LANGUAGE plpgsql;
 COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata
     (jsonb , INTEGER , VARCHAR) IS 'function to basically create datasets';
 
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_get_af_id_from_uuid (_uuid UUID)
+    RETURNS INTEGER
+    AS $fct_get_af_id_from_uuid$
+DECLARE
+    the_id INT;
+BEGIN
+    SELECT
+        id_acquisition_framework INTO the_id
+    FROM
+        gn_meta.t_acquisition_frameworks
+    WHERE
+        unique_acquisition_framework_id = _uuid;
+    RETURN the_id;
+END
+$fct_get_af_id_from_uuid$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_get_dataset_id_from_uuid (_uuid UUID)
+    RETURNS INTEGER
+    AS $fct_get_af_id_from_uuid$
+DECLARE
+    the_id INT;
+BEGIN
+    SELECT
+        id_dataset INTO the_id
+    FROM
+        gn_meta.t_datasets
+    WHERE
+        unique_dataset_id = _uuid;
+    RETURN the_id;
+END
+$fct_get_af_id_from_uuid$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_tri_upsert_metadata_to_geonature ()
+    RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $fct_tri_upsert_metadata$
+BEGIN
+    IF NEW.level = 'acquisition framework' THEN
+        PERFORM
+            gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata (NEW.item , NEW.source);
+    ELSIF NEW.level = 'dataset' THEN
+        PERFORM
+	    gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata (NEW.item ,
+		gn2pg_import.fct_get_af_id_from_uuid (cast(NEW.item #>>
+		'{ca_uuid}' AS UUID)) , NEW.source);
+    END IF;
+    RETURN new;
+END;
+$fct_tri_upsert_metadata$;
+
+COMMENT ON FUNCTION gn2pg_import.fct_tri_upsert_metadata_to_geonature () IS 'Function to upsert metadata from gn2pg_import.metadata_json';
+
+DROP TRIGGER IF EXISTS tri_c_upsert_metadata_to_geonature ON gn2pg_import.metadata_json;
+
+CREATE TRIGGER tri_c_upsert_metadata_to_geonature
+    AFTER INSERT ON gn2pg_import.metadata_json
+    FOR EACH ROW
+    EXECUTE PROCEDURE gn2pg_import.fct_tri_upsert_metadata_to_geonature ();
+
 -- UPSERT
 CREATE OR REPLACE FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature ()
     RETURNS TRIGGER
@@ -801,8 +862,7 @@ BEGIN
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_metadata' THEN
-	    gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata (NEW.item #>
-		'{ca_data}' , NEW.source)
+            gn2pg_import.fct_get_af_id_from_uuid (cast(NEW.item #>> '{ca_uuid}' AS UUID))
         ELSE
 	    gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name
 		(cast(NEW.item #>> '{ca_uuid}' AS UUID) , NEW.item #>>
@@ -811,8 +871,7 @@ BEGIN
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_metadata' THEN
-	    gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata (NEW.item #>
-		'{jdd_data}' , the_id_af , NEW.source)
+            gn2pg_import.fct_get_dataset_id_from_uuid (cast(NEW.item #>> '{jdd_uuid}' AS UUID))
         ELSE
 	    gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name
 		(cast(NEW.item #>> '{jdd_uuid}' AS UUID) , NEW.item #>>
