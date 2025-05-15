@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-18 11:07+0200\n"
+"POT-Creation-Date: 2025-05-13 09:48+0200\n"
 "PO-Revision-Date: 2023-02-07 21:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -44,25 +44,22 @@ msgstr ""
 msgid "Find export module failed, %s"
 msgstr "La recherche du module d'exportation a échoué, %s"
 
-#: gn2pg/api.py:191
+#: gn2pg/api.py:199
+#, python-format
+msgid "API %s contains %s data in %s page(s)"
+msgstr ""
+
+#: gn2pg/api.py:219
 #, python-format
 msgid "Export seems to be unavailable : %s"
 msgstr "L'exportation semble être indisponible : %s"
 
-#: gn2pg/api.py:195
-#, python-format
-msgid "Defining page_list from %s with status code %s"
-msgstr "Définition de la page_list à partir de %s avec le code d'état %s"
-
-#: gn2pg/api.py:205
-#, python-formatAdd unique constraint on uuid
-
-#: gn2pg/api.py:231
+#: gn2pg/api.py:235
 #, python-format
 msgid "Download page %s"
 msgstr "Téléchargement de la page %s"
 
-#: gn2pg/api.py:237
+#: gn2pg/api.py:241
 #, python-format
 msgid "Download data from %s failed"
 msgstr "Le téléchargement des données depuis %s a échoué"
@@ -102,38 +99,47 @@ msgstr "Le nom de source #%s nommée \"%s\" (->%s) est déjà utilisé"
 msgid "Settings for %s are : %s"
 msgstr "Les paramètres de %s sont : %s"
 
-#: gn2pg/download.py:158
+#: gn2pg/download.py:206
 #, fuzzy, python-format
 msgid "No new deleted data from %s %s"
 msgstr "Pas de nouvelles données supprimées depuis %s %s"
 
-#: gn2pg/download.py:188
+#: gn2pg/download.py:236
 #, python-format
 msgid "Getting items from controler %s"
 msgstr "Récupération des éléments du contrôleur %s"
 
-#: gn2pg/download.py:191 gn2pg/download.py:253
+#: gn2pg/download.py:239 gn2pg/download.py:312
 #, python-format
 msgid "QueryStrings %s"
 msgstr "Chaînes de requête %s"
 
-#: gn2pg/download.py:196
+#: gn2pg/download.py:246
 #, fuzzy, python-format
 msgid "Could not retrieve API data from source %s"
 msgstr "Pas de nouvelles données supprimées depuis %s %s"
 
-#: gn2pg/download.py:235
+#: gn2pg/download.py:289
 #, python-format
 msgid "Updating items from controler %s"
 msgstr "Mise à jour des éléments du contrôleur %s"
 
-#: gn2pg/download.py:256
+#: gn2pg/download.py:302
+#, python-format
+msgid ""
+"No download exists in the import table for source %s, a complete download "
+"will be launched"
+msgstr ""
+"Aucun téléchargement n'existe dans la table des imports pour la source "
+"%s, Un téléchargement complet va être lancé"
+
+#: gn2pg/download.py:315
 #, python-format
 msgid "Getting new or update data from source %s since %s"
 msgstr ""
 "Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
 
-#: gn2pg/download.py:279
+#: gn2pg/download.py:350
 #, fuzzy, python-format
 msgid "Getting deleted data from source %s since %s"
 msgstr ""
@@ -148,10 +154,6 @@ msgstr "Dossier de configuration %s créée"
 #, python-format
 msgid "%s file already exists"
 msgstr "Le fichier %s existe déjà"
-
-#: gn2pg/helpers.py:53
-msgid "{sh_col.color('header')}Would you like to overwrite file "
-msgstr "{sh_col.color('header')}Voulez-vous écraser le fichier "
 
 #: gn2pg/helpers.py:61
 #, python-format
@@ -230,10 +232,6 @@ msgstr "Choississez une configuration à ouvrir : "
 msgid "Sorry, you must enter a number."
 msgstr "Désolé, vous devez entrer un nombre."
 
-#: gn2pg/helpers.py:176
-msgid "You must enter a number between 0 and {len(config_files)-1}"
-msgstr "Vous devez entrer un nombre entre 0 et {len(config_files)-1}"
-
 #: gn2pg/main.py:39
 msgid "Config management commands"
 msgstr "Commandes de gestion de la configuration"
@@ -264,7 +262,7 @@ msgstr "Réduire la verbosité de la sortie"
 msgid "Initialize the TOML configuration file"
 msgstr "Initialisation du fichier de configuration TOML"
 
-#: gn2pg/main.py:75 gn2pg/main.py:265
+#: gn2pg/main.py:75 gn2pg/main.py:233
 msgid "List config files"
 msgstr "Lister les configurations"
 
@@ -310,130 +308,126 @@ msgstr "Vous devez fournie un fichier de configuration"
 msgid "Incorrect content in TOML configuration %s : %s"
 msgstr "Contenu incorrect dans la configuration YAML %s : %s"
 
-#: gn2pg/main.py:222
+#: gn2pg/main.py:190
 #, fuzzy, python-format
 msgid "Configuration file %s does not exist"
 msgstr "Le fichier %s n'existe pas"
 
-#: gn2pg/main.py:225
+#: gn2pg/main.py:193
 #, fuzzy, python-format
 msgid "Getting configuration data from %s"
 msgstr "Chargement de la configuration TOML %s"
 
-#: gn2pg/main.py:228
+#: gn2pg/main.py:196
 #, fuzzy
 msgid "Perform full action"
 msgstr "Effectuer un téléchargement complet"
 
-#: gn2pg/main.py:232
+#: gn2pg/main.py:200
 msgid "Perform update action"
 msgstr "Effectuer une action de mise à jour"
 
-#: gn2pg/main.py:244
+#: gn2pg/main.py:212
 #, python-format
 msgid "config file have {len(cfg_source_list)} source(s) wich are : %s"
 msgstr ""
 "La configuration choisie a {len(cfg_source_list)} source(s) qui sont : %s"
 
-#: gn2pg/main.py:251
+#: gn2pg/main.py:219
 #, fuzzy
 msgid "Create, if not exists, json tables"
 msgstr "Créer ou recréer des tables json"
 
-#: gn2pg/main.py:254
+#: gn2pg/main.py:222
 #, python-format
 msgid "Execute custom script %s on db"
 msgstr "Exécution du script personnalisé %s sur la base de données"
 
-#: gn2pg/main.py:262
-#, fuzzy, python-brace-format
-msgid "Creating TOML configuration file {args.init}"
-msgstr "Chargement de la configuration TOML %s"
-
-#: gn2pg/main.py:268
+#: gn2pg/main.py:236
 #, fuzzy
 msgid "Read config"
 msgstr "Voir les configurations"
 
-#: gn2pg/main.py:271
+#: gn2pg/main.py:239
 #, fuzzy
 msgid "Edit config"
 msgstr "Voir les configurations"
 
-#: gn2pg/store_postgresql.py:126 gn2pg/store_postgresql.py:264
-#: gn2pg/store_postgresql.py:345
+#: gn2pg/store_postgresql.py:130 gn2pg/store_postgresql.py:308
+#: gn2pg/store_postgresql.py:390
 #, python-format
 msgid "An error occured while trying to connect to database : %s"
 msgstr ""
 "Une erreur s'est produite lors de la connexion à la base de données: %s"
 
-#: gn2pg/store_postgresql.py:214
+#: gn2pg/store_postgresql.py:258
 #, fuzzy, python-format
 msgid "Connecting to %s database, to finalize creation"
 msgstr "Connexion à la base de données %s"
 
-#: gn2pg/store_postgresql.py:226 gn2pg/store_postgresql.py:237
+#: gn2pg/store_postgresql.py:270 gn2pg/store_postgresql.py:281
 #, python-format
 msgid "Execute: %s"
 msgstr "Exécuter: %s"
 
-#: gn2pg/store_postgresql.py:241
+#: gn2pg/store_postgresql.py:285
 #, python-format
 msgid "Schema %s owned by %s successfully created"
 msgstr "Le schéma %s appartenant à %s a été créé avec succès."
 
-#: gn2pg/store_postgresql.py:248
+#: gn2pg/store_postgresql.py:292
 #, python-format
 msgid "Failed to create %s schema"
 msgstr "Échec de la création du schéma %s"
 
-#: gn2pg/store_postgresql.py:275
+#: gn2pg/store_postgresql.py:319
 msgid "Counting datas in database for all sources"
 msgstr "Comptage des données dans la base de données pour toutes les sources"
 
-#: gn2pg/store_postgresql.py:277
+#: gn2pg/store_postgresql.py:321
 #, python-format
 msgid "Connecting to database %s"
 msgstr "Connexion à la base de données %s"
 
-#: gn2pg/store_postgresql.py:297
+#: gn2pg/store_postgresql.py:341
 #, python-format
 msgid "Start to execute %s script"
 msgstr "Lancement de l'exécution du script %s"
 
-#: gn2pg/store_postgresql.py:306
+#: gn2pg/store_postgresql.py:350
 #, python-format
 msgid "You choosed to use internal to_gnsynthese.sql script in schema %s"
 msgstr ""
 "Vous avez choisi d'utiliser le script interne to_gnsynthese.sql dans le "
 "schéma %s"
 
-#: gn2pg/store_postgresql.py:312
+#: gn2pg/store_postgresql.py:355
 #, python-format
 msgid "file %s exists, continue"
 msgstr "le fichier %s existe, continuer"
 
-#: gn2pg/store_postgresql.py:315
+#: gn2pg/store_postgresql.py:358
 #, python-format
 msgid "file %s DO NOT EXISTS, exit"
 msgstr "le fichier %s N'EXISTE PAS, quitter"
 
-#: gn2pg/store_postgresql.py:325
+#: gn2pg/store_postgresql.py:368
 #, python-format
 msgid "script %s successfully applied"
 msgstr "script %s appliqué avec succès"
 
-#: gn2pg/store_postgresql.py:361
+#: gn2pg/store_postgresql.py:415
 msgid "Entry into StorePostgresql"
 msgstr "Entrée dans StorePostgresql"
 
-#: gn2pg/store_postgresql.py:415
-#, python-format
+#: gn2pg/store_postgresql.py:468
+#, fuzzy, python-format
 msgid ""
-"A data with UUID %s from a different source already exists in Database: %s"
+"A metadata with UUID %s from a different source already exists in Database: "
+"%s"
 msgstr "Une donnée avec l'UUID %s existe déjà avec une source différente: %s"
 
-#: gn2pg/store_postgresql.py:425 gn2pg/store_postgresql.py:436
+#: gn2pg/store_postgresql.py:478 gn2pg/store_postgresql.py:552
 #, fuzzy, python-format
 msgid ""
 "One error occurred for data from source %s with %s = %s. Error message is %s"
@@ -441,13 +435,19 @@ msgstr ""
 "Une erreur est survenue pour la source %s avec %s = %s.Le message d'erreur "
 "est %s"
 
-#: gn2pg/store_postgresql.py:474
+#: gn2pg/store_postgresql.py:542
+#, python-format
+msgid ""
+"A data with UUID %s from a different source already exists in Database: %s"
+msgstr "Une donnée avec l'UUID %s existe déjà avec une source différente: %s"
+
+#: gn2pg/store_postgresql.py:598
 #, fuzzy, python-format
 msgid "One error occurred for data from source %s with %s = %s"
 msgstr ""
 "Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
 
-#: gn2pg/store_postgresql.py:480
+#: gn2pg/store_postgresql.py:604
 #, python-format
 msgid ""
 "%s items have been stored in db from %s of source %s (%s error occurred)"
@@ -455,15 +455,29 @@ msgstr ""
 "%s éléments ont été stockés en base de donnée depuis %s de la source %s (%s "
 "erreurs)"
 
-#: gn2pg/store_postgresql.py:511
+#: gn2pg/store_postgresql.py:635
 #, fuzzy, python-format
-msgid "Api returned %s row to delete from from source %s (controler %s)"
+msgid "Api returned %s row to delete from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"
 
-#: gn2pg/store_postgresql.py:530
+#: gn2pg/store_postgresql.py:654
 #, fuzzy, python-format
 msgid "%s rows have been deleted from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"
+
+#, python-format
+#~ msgid "Defining page_list from %s with status code %s"
+#~ msgstr "Définition de la page_list à partir de %s avec le code d'état %s"
+
+#~ msgid "{sh_col.color('header')}Would you like to overwrite file "
+#~ msgstr "{sh_col.color('header')}Voulez-vous écraser le fichier "
+
+#~ msgid "You must enter a number between 0 and {len(config_files)-1}"
+#~ msgstr "Vous devez entrer un nombre entre 0 et {len(config_files)-1}"
+
+#, fuzzy, python-brace-format
+#~ msgid "Creating TOML configuration file {args.init}"
+#~ msgstr "Chargement de la configuration TOML %s"
 
 #~ msgid "Storing"
 #~ msgstr "Stockage de"

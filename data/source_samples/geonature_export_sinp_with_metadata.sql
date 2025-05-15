@@ -217,9 +217,8 @@ WITH af_actors AS (
     SELECT
         tds.id_dataset
         , tds.id_acquisition_framework
-        ,
         -- tds.additional_data,
-        jsonb_build_object('uuid'
+        , jsonb_build_object('uuid'
             , tds.unique_dataset_id
             , 'name'
             , tds.dataset_name
@@ -336,6 +335,10 @@ SELECT
     , n16.cd_nomenclature AS floutage_dee
     , n17.cd_nomenclature AS statut_source
     , n18.cd_nomenclature AS type_info_geo
+    , CASE WHEN l_areas.area_code IS NOT NULL THEN
+	jsonb_build_object('area_code' , l_areas.area_code ,
+	    'type_code' , bib_areas_types.type_code)
+    END area_attachment
     , n19.cd_nomenclature AS methode_determination
     , n20.cd_nomenclature AS statut_validation
     , coalesce(s.meta_update_date , s.meta_create_date) AS derniere_action
@@ -384,5 +387,8 @@ FROM
 	s.id_nomenclature_determination_method = n19.id_nomenclature
     LEFT JOIN ref_nomenclatures.t_nomenclatures n20 ON
 	s.id_nomenclature_valid_status = n20.id_nomenclature
+    LEFT JOIN (ref_geo.l_areas
+	JOIN ref_geo.bib_areas_types ON l_areas.id_type =
+	    bib_areas_types.id_type) ON s.id_area_attachment = l_areas.id_area
 ORDER BY
-    s.id_synthese;
+    s.id_synthese ASC;

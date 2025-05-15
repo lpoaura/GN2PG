@@ -183,38 +183,6 @@ def main(args) -> None:
             handle_download_commands(args, cfg_ctrl)
 
 
-# def setup_logging(args) -> None:
-#     """Init logging"""
-
-#     LOGDIR.mkdir(parents=True, exist_ok=True)
-#     loglevel = logging.INFO
-#     print(args)
-#     if args.verbose:
-#         loglevel = logging.DEBUG
-#     if args.quiet:
-#         loglevel = logging.WARNING
-#     # Set the custom logger class
-#     logging.basicConfig(
-#         level=loglevel,
-#         format="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
-#         handlers=[],
-#     )
-#     filehandler = TimedRotatingFileHandler(
-#         str(LOGDIR / ("gn2pg" + ".log")),
-#         when="midnight",
-#         interval=1,
-#         backupCount=100,
-#     )
-#     formatter = logging.Formatter(
-#         "%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s"
-#     )
-#     filehandler.setFormatter(formatter)
-
-#     # logging.addHandler(filehandler)
-#     logger.addHandler(filehandler)
-#     logger.propagate = False
-
-
 def handle_download_commands(args, cfg_ctrl) -> bool:
     """Handle commands that are not related to 'manage'."""
 

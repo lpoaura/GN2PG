@@ -166,13 +166,16 @@ class BaseAPI:
         self,
         params: dict,
         kind: str = "data",
-    ) -> Optional[List[str]]:
+        pagination_param: str = "offset",
+    ) -> tuple[Optional[List[str]], int]:
         """List offset pages to download data, based on API "total_filtered" and "limit" values
 
         :param params: Querystrings
         :type params: dict
         :param kind: kind of data, defaults to "data"
         :type kind: str, optional
+        :param pagination_param: Pagination parameter key
+        :type pagination_param: str, optional
         :return: url page list
         :rtype: Optional[List[str]]
         """
@@ -181,41 +184,44 @@ class BaseAPI:
 
         # Check kind value
         if self._url(kind) is None:
-            return None
+            return None, 0, None
 
         api_url = self._url(kind, params)
-
         try:
             response = session.get(url=api_url, params={**params})
+            status_code = response.status_code
+            if response.status_code == 200:
+                resp = response.json()
+                total_filtered = (
+                    resp["total_filtered"] if "total_filtered" in resp else resp["total"]
+                )
+                limit = resp["limit"]
+                total_pages = math.ceil(total_filtered / limit)
+                logger.debug(
+                    _("API %s contains %s data in %s page(s)"),
+                    api_url,
+                    total_filtered,
+                    total_pages,
+                )
+                if total_filtered > 0:
+                    page_list = list(
+                        self._url(
+                            kind,
+                            {
+                                **params,
+                                **{pagination_param: p + 1 if pagination_param == "page" else p},
+                            },
+                        )
+                        for p in range(total_pages)
+                    )
+                    return page_list, total_filtered, status_code
         except RetryError as e:
+            last_response = e.response
+            status_code = last_response.status_code
             logger.error(_("Export seems to be unavailable : %s"), e)
             raise RetryError from e
 
-        logger.debug(
-            _("Defining page_list from %s with status code %s"),
-            api_url,
-            response.status_code,
-        )
-        if response.status_code == 200:
-            resp = response.json()
-            total_filtered = resp["total_filtered"] if "total_filtered" in resp else resp["total"]
-            limit = resp["limit"]
-            total_pages = math.ceil(total_filtered / limit)
-            logger.debug(
-                _("API %s contains %s data in %s page(s)"),
-                api_url,
-                total_filtered,
-                total_pages,
-            )
-            if total_filtered > 0:
-                page_list = list(
-                    self._url(kind, {**params, **{"offset": p}}) for p in range(total_pages)
-                )
-                return page_list
-
-        logger.info(_("No data available from %s"), self._config.name)
-
-        return None
+        return None, 0, status_code
 
     def get_page(self, page_url: str) -> Optional[dict]:
         """Get data from one API page

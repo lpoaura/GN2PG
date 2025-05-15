@@ -19,23 +19,40 @@ class EditOnlyView(ReadOnlyView):
     can_edit = True
 
 
-class DownloadView(ReadOnlyView):
+class ImportView(ReadOnlyView):
     """Download log view"""
 
-    column_list = ("source", "controler", "download_ts", "error_count", "http_status")
-
-
-class IncrementView(EditOnlyView):
-    """Increment log view"""
-
-    column_list = ("source", "controler", "last_ts")
-    edit_modal = True
-    form_excluded_columns = ["source", "controler"]
+    column_list = (
+        "id",
+        "source",
+        "controler",
+        "xfer_type",
+        "xfer_status",
+        "xfer_start_ts",
+        "xfer_end_ts",
+        "api_count_items",
+        "api_count_errors",
+        "data_count_upserts",
+        "data_count_delete",
+        "data_count_errors",
+        "metadata_count_upserts",
+        "metadata_count_errors",
+        "xfer_http_status",
+        "xfer_filters",
+        "comment",
+    )
+    column_default_sort = ("id", True)
+    column_filters = ("source", "xfer_type")
+    column_formatters = {
+        "xfer_filters": add_class_ctn_row_long_text_formatter,
+        "comment": add_class_ctn_row_long_text_formatter,
+    }
+    can_delete = True
 
 
 class ErrorView(ReadOnlyView):
     """Error log view"""
 
-    column_list = ("source", "id_data", "controler", "last_ts", "item", "error")
+    column_list = ("source", "uuid", "controler", "last_ts", "item", "error", "import_id")
     column_formatters = {"item": json_formatter, "error": add_class_ctn_row_long_text_formatter}
-    column_filters = ["source", "id_data"]
+    column_filters = ["source", "uuid", "controler", "import_id"]

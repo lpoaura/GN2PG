@@ -48,6 +48,7 @@ DATABASES = {
 DEBUG = settings_config("DEBUG", default=False)
 ENV = settings_config("ENV", default="production")
 APPLICATION_ROOT = settings_config("APPLICATION_ROOT", default="/gn2pg")
+SECRET_KEY = settings_config("SECRET_KEY", default=None)
 
 
 class AppConfig:
@@ -62,6 +63,7 @@ class AppConfig:
     def __init__(self):
         self.env = ENV
         self.application_root = APPLICATION_ROOT
+        self.secret_key = SECRET_KEY
         self.debug = DEBUG
         self.database = DATABASES["default"]
         self.set_database_uri()

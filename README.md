@@ -12,11 +12,11 @@ Widely inspired from [ClientApiVN](https://framagit.org/lpo/Client_API_VN/)
 > [!WARNING]
 > The minimum version of the source GeoNature instance required for the incremental update must be a version 2.12.0
 
-![Project logo](./docs/source/_static/src_gn2pg.png)
+![Project logo](./docs/_static/src_gn2pg.png)
 
 ## Project Setup
 
-GN2PG Client can be installed by running `pip`. It requires Python 3.7.4 or above to run.
+GN2PG Client can be installed by running `pip`. It requires Python 3.9 or above to run.
 
 ```bash
 pip install gn2pg-client
@@ -39,7 +39,7 @@ gn2pg_cli --help
 This command init a TOML config file within `~/.gn2pg` hidden directory (in user `HOME` directory), named as you want. PLEASE DO NOT SPECIFY PATH!
 
 ```bash
-gn2pg_cli --init <myconfigfile>
+gn2pg_cli config --init <myconfigfile>
 ```
 
 Config file is structured as this. `[[source]]` block can be duplicate as many as needed (one block for each source).
@@ -103,7 +103,7 @@ data_type = "synthese_with_cd_nomenclature"
 To create json tables where datas will be stored, run :
 
 ```bash
-gn2pg_cli --json-tables-create <myconfigfile>
+gn2pg_cli db --json-tables-create <myconfigfile>
 ```
 
 ### Full download
@@ -111,7 +111,7 @@ gn2pg_cli --json-tables-create <myconfigfile>
 To download all datas from API, run :
 
 ```bash
-gn2pg_cli --full <myconfigfile>
+gn2pg_cli download --full <myconfigfile>
 ```
 
 ### Incremental download
@@ -119,13 +119,13 @@ gn2pg_cli --full <myconfigfile>
 To update data since last download, run :
 
 ```bash
-gn2pg_cli --update <myconfigfile>
+gn2pg_cli download --update <myconfigfile>
 ```
 
 To automate the launching of updates, you can write the cron task using the following command, for example every 30 minutes.
 
 ```cron
-*/30 * * * * /usr/bin/env bash -c "source <path to python environment>/bin/activate && gn2pg_cli --update <myconfigfile>" > /dev/null 2>&1
+*/30 * * * * /usr/bin/env bash -c "source <path to python environment>/bin/activate && gn2pg_cli download --update <myconfigfile>" > /dev/null 2>&1
 ```
 
 ### Debug mode
@@ -141,7 +141,7 @@ Log files are stored in `$HOME/.gn2pg/log` directory.
 Default script to auto populate GeoNature is called "to_gnsynthese".
 
 ```bash
-gn2pg_cli --custom-script to_gnsynthese <myconfigfile>
+gn2pg_cli db --custom-script to_gnsynthese <myconfigfile>
 ```
 
 > [!TIP]
@@ -182,16 +182,19 @@ poetry run gn2pg_cli <options>
 
 ## Team
 
-- [@lpofredc](https://github.com/lpofredc/) ([LPO Auvergne-Rhône-Alpes](https://github.com/lpoaura/)), main developer
+<a href="">
+<img height="100px" src="https://auvergne-rhone-alpes.lpo.fr/wp-content/uploads/LPO_AuRA.svg" title="DREAL AuRA">
+</a>
 
-![Logo LPOAuRA](https://raw.githubusercontent.com/lpoaura/biodivsport-widget/master/images/LPO_AuRA_l250px.png)
+[@lpofredc](https://github.com/lpofredc/) ([LPO Auvergne-Rhône-Alpes](https://github.com/lpoaura/)), lead developer
 
-- @ophdlv (Natural Solution), contributor
-- @mvergez (Natural Solution), contributor
-- @andriacap (Natural Solution), contributor
-- @Adrien-Pajot (Natural Solution), contributor
+---
 
-______________________________________________________________________
+<a href="https://github.com/lpoaura/GN2PG/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=lpoaura/GN2PG" />
+</a>
+
+---
 
 With the financial support of the [DREAL Auvergne-Rhône-Alpes](http://www.auvergne-rhone-alpes.developpement-durable.gouv.fr/) and the [Office français de la biodiversité](https://www.ofb.gouv.fr/).
 
