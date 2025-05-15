@@ -337,7 +337,7 @@ SELECT
     , n18.cd_nomenclature AS type_info_geo
     , CASE WHEN l_areas.area_code IS NOT NULL THEN
 	jsonb_build_object('area_code' , l_areas.area_code ,
-	    'area_type' , bib_areas_types.type_code)
+	    'type_code' , bib_areas_types.type_code)
     END area_attachment
     , n19.cd_nomenclature AS methode_determination
     , n20.cd_nomenclature AS statut_validation

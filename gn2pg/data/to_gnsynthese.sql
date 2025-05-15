@@ -1085,7 +1085,7 @@ BEGIN
     SELECT
         CASE WHEN NEW.item ? 'area_attachment'
             AND NEW.item -> 'area_attachment' != 'null'::JSONB THEN
-	    gn2pg_import.fct_c_get_id_area (item #>>
+	    gn2pg_import.fct_c_get_id_area (NEW.item #>>
 		'{area_attachment,type_code}' , NEW.item #>>
 		'{area_attachment,area_code}')
         END INTO the_id_area_attachment;
