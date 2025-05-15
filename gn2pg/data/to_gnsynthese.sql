@@ -215,7 +215,62 @@ COMMENT ON FUNCTION gn2pg_import.fct_c_get_or_insert_source (_source TEXT) IS
     'function to basically create new sources';
 
 
+/* Areas attachments */
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_id_area (_type_code CHARACTER
+    VARYING , _area_code CHARACTER VARYING);
+
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_id_area (_type_code CHARACTER
+    VARYING , _area_code CHARACTER VARYING)
+    RETURNS INTEGER IMMUTABLE
+    LANGUAGE plpgsql
+    AS $$
+--Function which return the id_area from area type code and area code
+DECLARE
+    the_id_area INTEGER;
+BEGIN
+    SELECT
+        id_area INTO the_id_area
+    FROM
+        ref_geo.l_areas la
+    WHERE
+        la.id_type = ref_geo.get_id_area_type (_type_code)
+        AND la.area_code = _area_code;
+    RETURN the_id_area;
+END;
+$$;
+
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_area (VARCHAR , VARCHAR) IS 'Custom function to get id_area from area type code and area code';
+
+
 /*  Nomenclatures */
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_id_nomenclature (_type TEXT ,
+    _cd_nomenclature TEXT);
+
+CREATE OR REPLACE FUNCTION gn2pg_import.fct_c_get_id_nomenclature (_type
+    CHARACTER VARYING , _cd_nomenclature CHARACTER VARYING)
+    RETURNS INTEGER IMMUTABLE
+    LANGUAGE plpgsql
+    AS $$
+--Function which return the id_nomenclature from an mnemonique_type and an
+-- cd_nomenclature
+DECLARE
+    the_id_nomenclature INTEGER;
+BEGIN
+    SELECT
+        id_nomenclature INTO the_id_nomenclature
+    FROM
+        ref_nomenclatures.t_nomenclatures n
+    WHERE
+        n.id_type = ref_nomenclatures.get_id_nomenclature_type (_type)
+        AND _cd_nomenclature = n.cd_nomenclature;
+    RETURN coalesce(the_id_nomenclature ,
+	ref_nomenclatures.get_default_nomenclature_value (_type));
+END;
+$$;
+
+COMMENT ON FUNCTION gn2pg_import.fct_c_get_id_nomenclature (VARCHAR , VARCHAR)
+    IS 'Custom function to get nomenclature with default value id possible';
+
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_id_nomenclature_from_label
     (_type TEXT , _label TEXT);
 
@@ -272,7 +327,7 @@ BEGIN
             RAISE DEBUG 'iterritory % %' , i , i.item;
 	    INSERT INTO gn_meta.cor_acquisition_framework_territory
 		(id_acquisition_framework , id_nomenclature_territory)
-                VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('TERRITOIRE' , i.item))
+                VALUES (_id_af , gn2pg_import.fct_c_get_id_nomenclature ('TERRITOIRE' , i.item))
             ON CONFLICT
                 DO NOTHING;
         END LOOP;
@@ -300,7 +355,7 @@ BEGIN
             RAISE DEBUG 'iobjective % %' , i , i.item;
 	    INSERT INTO gn_meta.cor_acquisition_framework_objectif
 		(id_acquisition_framework , id_nomenclature_objectif)
-                VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('CA_OBJECTIFS' , i.item))
+                VALUES (_id_af , gn2pg_import.fct_c_get_id_nomenclature ('CA_OBJECTIFS' , i.item))
             ON CONFLICT
                 DO NOTHING;
         END LOOP;
@@ -328,7 +383,7 @@ BEGIN
             RAISE DEBUG 'ithemes % %' , i , i.item;
 	    INSERT INTO gn_meta.cor_acquisition_framework_voletsinp
 		(id_acquisition_framework , id_nomenclature_voletsinp)
-                VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('VOLET_SINP' , i.item))
+                VALUES (_id_af , gn2pg_import.fct_c_get_id_nomenclature ('VOLET_SINP' , i.item))
             ON CONFLICT
                 DO NOTHING;
         END LOOP;
@@ -358,7 +413,7 @@ BEGIN
  RAISE DEBUG 'iterritory % %' , i , i.item;
  INSERT INTO gn_meta.sinp_datatype_publications
  (id_acquisition_framework , id_publication)
- VALUES (_id_af , ref_nomenclatures.get_id_nomenclature ('CA_OBJECTIFS' , i.item))
+ VALUES (_id_af , gn2pg_import.fct_c_get_id_nomenclature ('CA_OBJECTIFS' , i.item))
  ON CONFLICT
  DO NOTHING;
  END LOOP;
@@ -384,7 +439,7 @@ BEGIN
         LOOP
             RAISE DEBUG 'iterritory % %' , i , i.item;
             INSERT INTO gn_meta.cor_dataset_territory (id_dataset , id_nomenclature_territory)
-		VALUES (_id_ds , ref_nomenclatures.get_id_nomenclature
+		VALUES (_id_ds , gn2pg_import.fct_c_get_id_nomenclature
 		    ('TERRITOIRE' , coalesce(i.item , 'METROP')))
             ON CONFLICT
                 DO NOTHING;
@@ -454,7 +509,7 @@ BEGIN
 		    VALUES (_id_dataset ,
 			gn2pg_import.fct_c_get_or_create_actors_in_usershub
 			(i.item , _source) ,
-			ref_nomenclatures.get_id_nomenclature ('ROLE_ACTEUR' ,
+			gn2pg_import.fct_c_get_id_nomenclature ('ROLE_ACTEUR' ,
 			i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
@@ -464,7 +519,7 @@ BEGIN
 		    VALUES (_id_dataset ,
 			gn2pg_import.fct_c_get_or_create_actors_in_usershub
 			(i.item , _source) ,
-			ref_nomenclatures.get_id_nomenclature ('ROLE_ACTEUR' ,
+			gn2pg_import.fct_c_get_id_nomenclature ('ROLE_ACTEUR' ,
 			i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
@@ -494,7 +549,7 @@ BEGIN
 		    VALUES (_id_af ,
 			gn2pg_import.fct_c_get_or_create_actors_in_usershub
 			(i.item , _source) ,
-			ref_nomenclatures.get_id_nomenclature ('ROLE_ACTEUR' ,
+			gn2pg_import.fct_c_get_id_nomenclature ('ROLE_ACTEUR' ,
 			i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
@@ -505,7 +560,7 @@ BEGIN
 		    VALUES (_id_af ,
 			gn2pg_import.fct_c_get_or_create_actors_in_usershub
 			(i.item , _source) ,
-			ref_nomenclatures.get_id_nomenclature ('ROLE_ACTEUR' ,
+			gn2pg_import.fct_c_get_id_nomenclature ('ROLE_ACTEUR' ,
 			i.item ->> 'cd_nomenclature_actor_role'))
                 ON CONFLICT
                     DO NOTHING;
@@ -546,9 +601,9 @@ BEGIN
         , (_af_data #>> '{start_date}')::DATE
         , (_af_data #>> '{end_date}')::DATE
         , (_af_data #>> '{ecologic_or_geologic_target}')::VARCHAR
-	, (ref_nomenclatures.get_id_nomenclature ('TYPE_FINANCEMENT' , _af_data
-	    #>> '{financing_type}'))::INT
-	, (ref_nomenclatures.get_id_nomenclature ('NIVEAU_TERRITORIAL' ,
+	, (gn2pg_import.fct_c_get_id_nomenclature ('TYPE_FINANCEMENT' ,
+	    _af_data #>> '{financing_type}'))::INT
+	, (gn2pg_import.fct_c_get_id_nomenclature ('NIVEAU_TERRITORIAL' ,
 	    _af_data #>> '{territorial_level}'))::INT
         , (_af_data #>> '{initial_closing_date}')::TIMESTAMP
         , (_af_data #>> '{target_description}')::VARCHAR
@@ -656,17 +711,18 @@ BEGIN
         , coalesce((_ds_data #>> '{desc}')::VARCHAR , '...')
         , coalesce((_ds_data #>> '{marine_domain}')::BOOL , FALSE)
         , coalesce((_ds_data #>> '{terrestrial_domain}')::BOOL , FALSE)
-	, (ref_nomenclatures.get_id_nomenclature ('STATUT_SOURCE' , _ds_data
+	, (gn2pg_import.fct_c_get_id_nomenclature ('STATUT_SOURCE' , _ds_data
 	    #>> '{source_status}'))::INT
-	, (ref_nomenclatures.get_id_nomenclature ('RESOURCE_TYP' , _ds_data #>>
-	    '{resource_type}'))::INT
-	, (ref_nomenclatures.get_id_nomenclature ('JDD_OBJECTIFS' , _ds_data
+	, (gn2pg_import.fct_c_get_id_nomenclature ('RESOURCE_TYP' , _ds_data
+	    #>> '{resource_type}'))::INT
+	, (gn2pg_import.fct_c_get_id_nomenclature ('JDD_OBJECTIFS' , _ds_data
 	    #>> '{dataset_objectif}'))::INT
-	, (ref_nomenclatures.get_id_nomenclature ('DS_PUBLIQUE' , _ds_data #>>
+	, (gn2pg_import.fct_c_get_id_nomenclature ('DS_PUBLIQUE' , _ds_data #>>
 	    '{data_origin}'))::INT
-	, (ref_nomenclatures.get_id_nomenclature ('METHO_RECUEIL' , _ds_data
+	, (gn2pg_import.fct_c_get_id_nomenclature ('METHO_RECUEIL' , _ds_data
 	    #>> '{collecting_method}'))::INT
-        , (ref_nomenclatures.get_id_nomenclature ('DATA_TYP' , _ds_data #>> '{data_type}'))::INT
+	, (gn2pg_import.fct_c_get_id_nomenclature ('DATA_TYP' , _ds_data #>>
+	    '{data_type}'))::INT
         , (_ds_data #>> '{keywords}')::VARCHAR
         , now()
         , now()
@@ -784,6 +840,7 @@ DECLARE
     the_id_nomenclature_geo_object_nature INT;
     the_id_nomenclature_grp_typ INT;
     the_grp_method VARCHAR;
+    the_id_area_attachment INT;
     the_id_nomenclature_obs_technique INT;
     the_id_nomenclature_bio_status INT;
     the_id_nomenclature_bio_condition INT;
@@ -883,8 +940,8 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('NAT_OBJ_GEO' ,
 		NEW.item #>> '{nature_objet_geo}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('NAT_OBJ_GEO' , NEW.item #>>
-		'{nature_objet_geo}')
+	    gn2pg_import.fct_c_get_id_nomenclature ('NAT_OBJ_GEO' , NEW.item
+		#>> '{nature_objet_geo}')
         END AS id_nomenclature_geo_object_nature INTO the_id_nomenclature_geo_object_nature;
     SELECT
         CASE NEW.type
@@ -892,7 +949,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYP_GRP' ,
 		NEW.item #>> '{type_regroupement}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('TYP_GRP' , NEW.item #>> '{type_regroupement}')
+            gn2pg_import.fct_c_get_id_nomenclature ('TYP_GRP' , NEW.item #>> '{type_regroupement}')
         END AS id_nomenclature_grp_typ INTO the_id_nomenclature_grp_typ;
     SELECT
         NEW.item #>> '{methode_regroupement}' INTO the_grp_method;
@@ -902,7 +959,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('METH_OBS' ,
 		NEW.item #>> '{technique_obs}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('METH_OBS' , NEW.item #>> '{technique_obs}')
+            gn2pg_import.fct_c_get_id_nomenclature ('METH_OBS' , NEW.item #>> '{technique_obs}')
         END AS id_nomenclature_obs_technique INTO the_id_nomenclature_obs_technique;
     SELECT
         CASE NEW.type
@@ -910,7 +967,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('STATUT_BIO' ,
 		NEW.item #>> '{statut_biologique}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('STATUT_BIO' , NEW.item #>>
+	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_BIO' , NEW.item #>>
 		'{statut_biologique}')
         END AS id_nomenclature_bio_status INTO the_id_nomenclature_bio_status;
     SELECT
@@ -919,7 +976,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('ETA_BIO' ,
 		NEW.item #>> '{etat_biologique}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('ETA_BIO' , NEW.item #>> '{etat_biologique}')
+            gn2pg_import.fct_c_get_id_nomenclature ('ETA_BIO' , NEW.item #>> '{etat_biologique}')
         END AS id_nomenclature_bio_condition INTO the_id_nomenclature_bio_condition;
     SELECT
         CASE NEW.type
@@ -927,7 +984,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('NATURALITE' ,
 		NEW.item #>> '{naturalite}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('NATURALITE' , NEW.item #>> '{naturalite}')
+            gn2pg_import.fct_c_get_id_nomenclature ('NATURALITE' , NEW.item #>> '{naturalite}')
         END AS id_nomenclature_naturalness INTO the_id_nomenclature_naturalness;
     SELECT
         CASE NEW.type
@@ -935,7 +992,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('PREUVE_EXIST' ,
 		NEW.item #>> '{preuve_existante}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('PREUVE_EXIST' , NEW.item
+	    gn2pg_import.fct_c_get_id_nomenclature ('PREUVE_EXIST' , NEW.item
 		#>> '{preuve_existante}')
         END AS id_nomenclature_exist_proof INTO the_id_nomenclature_exist_proof;
     SELECT
@@ -944,7 +1001,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('STATUT_VALID' ,
 		NEW.item #>> '{statut_validation}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('STATUT_VALID' , NEW.item
+	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_VALID' , NEW.item
 		#>> '{statut_validation}')
         END AS id_nomenclature_valid_status INTO the_id_nomenclature_valid_status;
     SELECT
@@ -953,7 +1010,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('NIV_PRECIS' ,
 		NEW.item #>> '{precision_diffusion}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('NIV_PRECIS' , NEW.item #>>
+	    gn2pg_import.fct_c_get_id_nomenclature ('NIV_PRECIS' , NEW.item #>>
 		'{precision_diffusion}')
         END AS id_nomenclature_diffusion_level INTO the_id_nomenclature_diffusion_level;
     SELECT
@@ -962,14 +1019,14 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('STADE_VIE' ,
 		NEW.item #>> '{stade_vie}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('STADE_VIE' , NEW.item #>> '{stade_vie}')
+            gn2pg_import.fct_c_get_id_nomenclature ('STADE_VIE' , NEW.item #>> '{stade_vie}')
         END AS id_nomenclature_life_stage INTO the_id_nomenclature_life_stage;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
             gn2pg_import.fct_c_get_id_nomenclature_from_label ('SEXE' , NEW.item #>> '{sexe}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('SEXE' , NEW.item #>> '{sexe}')
+            gn2pg_import.fct_c_get_id_nomenclature ('SEXE' , NEW.item #>> '{sexe}')
         END AS id_nomenclature_sex INTO the_id_nomenclature_sex;
     SELECT
         CASE NEW.type
@@ -977,7 +1034,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('OBJ_DENBR' ,
 		NEW.item #>> '{objet_denombrement}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('OBJ_DENBR' , NEW.item #>>
+	    gn2pg_import.fct_c_get_id_nomenclature ('OBJ_DENBR' , NEW.item #>>
 		'{objet_denombrement}')
         END AS id_nomenclature_obj_count INTO the_id_nomenclature_obj_count;
     SELECT
@@ -986,7 +1043,8 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYP_DENBR' ,
 		NEW.item #>> '{type_denombrement}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('TYP_DENBR' , NEW.item #>> '{type_denombrement}')
+	    gn2pg_import.fct_c_get_id_nomenclature ('TYP_DENBR' , NEW.item #>>
+		'{type_denombrement}')
         END AS id_nomenclature_type_count INTO the_id_nomenclature_type_count;
     SELECT
         CASE NEW.type
@@ -994,8 +1052,8 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('SENSIBILITE' ,
 		NEW.item #>> '{niveau_sensibilite}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('SENSIBILITE' , NEW.item #>>
-		'{niveau_sensibilite}')
+	    gn2pg_import.fct_c_get_id_nomenclature ('SENSIBILITE' , NEW.item
+		#>> '{niveau_sensibilite}')
         END AS id_nomenclature_sensitivity INTO the_id_nomenclature_sensitivity;
     SELECT
         CASE NEW.type
@@ -1003,7 +1061,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('STATUT_OBS' ,
 		NEW.item #>> '{statut_observation}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('STATUT_OBS' , NEW.item #>>
+	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_OBS' , NEW.item #>>
 		'{statut_observation}')
         END AS id_nomenclature_observation_status INTO the_id_nomenclature_observation_status;
     SELECT
@@ -1012,7 +1070,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('DEE_FLOU' ,
 		NEW.item #>> '{floutage_dee}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('DEE_FLOU' , NEW.item #>> '{floutage_dee}')
+            gn2pg_import.fct_c_get_id_nomenclature ('DEE_FLOU' , NEW.item #>> '{floutage_dee}')
         END AS id_nomenclature_blurring INTO the_id_nomenclature_blurring;
     SELECT
         CASE NEW.type
@@ -1020,23 +1078,32 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('STATUT_SOURCE'
 		, NEW.item #>> '{statut_source}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('STATUT_SOURCE' , NEW.item #>> '{statut_source}')
+	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_SOURCE' , NEW.item
+		#>> '{statut_source}')
         END AS id_nomenclature_source_status INTO the_id_nomenclature_source_status;
+    -- Try to define the id_area_attachment if available
     SELECT
-        CASE NEW.type
-        WHEN 'synthese_with_label' THEN
-	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYP_INF_GEO' ,
-		NEW.item #>> '{type_info_geo}')
+        CASE WHEN NEW.item ? 'area_attachment'
+            AND NEW.item -> 'area_attachment' != 'null'::JSONB THEN
+	    gn2pg_import.fct_c_get_id_area (item #>>
+		'{area_attachment,type_code}' , NEW.item #>>
+		'{area_attachment,area_code}')
+        END INTO the_id_area_attachment;
+    -- If no area_attachment found in present db, type_info_geo is referencing, else
+    -- attachment
+    SELECT
+        CASE WHEN the_id_area_attachment IS NOT NULL THEN
+            gn2pg_import.fct_c_get_id_nomenclature ('TYP_INF_GEO' , '2')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('TYP_INF_GEO' , NEW.item #>> '{type_info_geo}')
-        END AS id_nomenclature_info_geo_type INTO the_id_nomenclature_info_geo_type;
+            gn2pg_import.fct_c_get_id_nomenclature ('TYP_INF_GEO' , '1')
+        END INTO the_id_nomenclature_info_geo_type;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label
 		('OCC_COMPORTEMENT' , NEW.item #>> '{comportement}')
         ELSE
-	    ref_nomenclatures.get_id_nomenclature ('OCC_COMPORTEMENT' ,
+	    gn2pg_import.fct_c_get_id_nomenclature ('OCC_COMPORTEMENT' ,
 		NEW.item #>> '{comportement}')
         END AS id_nomenclature_behaviour INTO the_id_nomenclature_behaviour;
     SELECT
@@ -1045,7 +1112,7 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('STAT_BIOGEO' ,
 		NEW.item #>> '{statut_biogeo}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('STAT_BIOGEO' , NEW.item #>> '{statut_biogeo}')
+            gn2pg_import.fct_c_get_id_nomenclature ('STAT_BIOGEO' , NEW.item #>> '{statut_biogeo}')
         END AS id_nomenclature_biogeo_status INTO the_id_nomenclature_biogeo_status;
     SELECT
         NEW.item #>> '{reference_biblio}' INTO the_reference_biblio;
@@ -1104,7 +1171,7 @@ BEGIN
         WHEN 'synthese_with_label' THEN
             gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYPE' , NEW.item #>> '{label}')
         ELSE
-            ref_nomenclatures.get_id_nomenclature ('TYPE' , NEW.item #>> '{label}')
+            gn2pg_import.fct_c_get_id_nomenclature ('TYPE' , NEW.item #>> '{label}')
 	END AS id_nomenclature_determination_method INTO
 	    the_id_nomenclature_determination_method;
     SELECT
@@ -1133,9 +1200,10 @@ BEGIN
 	reference_biblio , count_min , count_max , cd_nom , cd_hab , nom_cite ,
 	meta_v_taxref , sample_number_proof , digital_proof , non_digital_proof
 	, altitude_min , altitude_max , depth_min , depth_max , place_name ,
-	the_geom_4326 , the_geom_point , the_geom_local , precision , date_min
-	, date_max , validator , validation_comment , observers , determiner ,
-	id_digitiser , id_nomenclature_determination_method , comment_context ,
+	the_geom_4326 , the_geom_point , the_geom_local , precision ,
+	id_area_attachment , date_min , date_max , validator ,
+	validation_comment , observers , determiner , id_digitiser ,
+	id_nomenclature_determination_method , comment_context ,
 	comment_description , additional_data , meta_validation_date ,
 	last_action)
 	VALUES (the_unique_id_sinp , the_unique_id_sinp_grp , the_id_source ,
@@ -1158,11 +1226,12 @@ BEGIN
 	    the_digital_proof , the_non_digital_proof , the_altitude_min ,
 	    the_altitude_max , the_depth_min , the_depth_max , the_place_name ,
 	    _the_geom_4326 , _the_geom_point , _the_geom_local , the_precision
-	    , the_date_min , the_date_max , the_validator ,
-	    the_validation_comment , the_observers , the_determiner ,
-	    the_id_digitiser , the_id_nomenclature_determination_method ,
-	    the_comment_context , the_comment_description , the_additional_data
-	    , the_meta_validation_date , 'I')
+	    , the_id_area_attachment , the_date_min , the_date_max ,
+	    the_validator , the_validation_comment , the_observers ,
+	    the_determiner , the_id_digitiser ,
+	    the_id_nomenclature_determination_method , the_comment_context ,
+	    the_comment_description , the_additional_data ,
+	    the_meta_validation_date , 'I')
     ON CONFLICT (unique_id_sinp)
         DO UPDATE SET
             unique_id_sinp = the_unique_id_sinp
@@ -1210,6 +1279,7 @@ BEGIN
             , the_geom_point = _the_geom_point
             , the_geom_local = _the_geom_local
             , precision = the_precision
+            , id_area_attachment = the_id_area_attachment
             , date_min = the_date_min
             , date_max = the_date_max
             , validator = the_validator
