@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-18 10:59+0200\n"
+"POT-Creation-Date: 2025-04-18 11:07+0200\n"
 "PO-Revision-Date: 2023-02-07 21:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -55,14 +55,7 @@ msgid "Defining page_list from %s with status code %s"
 msgstr "Définition de la page_list à partir de %s avec le code d'état %s"
 
 #: gn2pg/api.py:205
-#, python-format
-msgid "API %s contains %s data in %s page(s)"
-msgstr "API %s contient %s données dans %s page(s)"
-
-#: gn2pg/api.py:216
-#, fuzzy, python-format
-msgid "No data available from %s"
-msgstr "Aucune donnée disponible à partir de %s"
+#, python-formatAdd unique constraint on uuid
 
 #: gn2pg/api.py:231
 #, python-format
@@ -438,10 +431,9 @@ msgstr "Entrée dans StorePostgresql"
 #, python-format
 msgid ""
 "A data with UUID %s from a different source already exists in Database: %s"
-msgstr ""
-"Une donnée avec l'UUID %s existe déjà avec une source différente: %s"
+msgstr "Une donnée avec l'UUID %s existe déjà avec une source différente: %s"
 
-#: gn2pg/store_postgresql.py:424 gn2pg/store_postgresql.py:434
+#: gn2pg/store_postgresql.py:425 gn2pg/store_postgresql.py:436
 #, fuzzy, python-format
 msgid ""
 "One error occurred for data from source %s with %s = %s. Error message is %s"
@@ -449,13 +441,13 @@ msgstr ""
 "Une erreur est survenue pour la source %s avec %s = %s.Le message d'erreur "
 "est %s"
 
-#: gn2pg/store_postgresql.py:472
+#: gn2pg/store_postgresql.py:474
 #, fuzzy, python-format
 msgid "One error occurred for data from source %s with %s = %s"
 msgstr ""
 "Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
 
-#: gn2pg/store_postgresql.py:478
+#: gn2pg/store_postgresql.py:480
 #, python-format
 msgid ""
 "%s items have been stored in db from %s of source %s (%s error occurred)"
@@ -463,12 +455,12 @@ msgstr ""
 "%s éléments ont été stockés en base de donnée depuis %s de la source %s (%s "
 "erreurs)"
 
-#: gn2pg/store_postgresql.py:509
+#: gn2pg/store_postgresql.py:511
 #, fuzzy, python-format
-msgid "Api returned %s row to delete from from source %s (controler %s)"
+msgid "Api returned %s row to delete from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"
 
-#: gn2pg/store_postgresql.py:528
+#: gn2pg/store_postgresql.py:530
 #, fuzzy, python-format
 msgid "%s rows have been deleted from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"

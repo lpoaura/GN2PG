@@ -5,6 +5,15 @@
 from typing import Any
 
 
+class XferStatus:
+    """List of transfer status"""
+
+    init = "init"
+    import_data = "importing data"
+    delete = "delete"
+    success = "success"
+
+
 class BColors:
     """Colors used for cli"""
 

@@ -6,20 +6,24 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import psycopg2.errors
+import sqlalchemy.engine.base
 from sqlalchemy import (
     Column,
     DateTime,
+    ForeignKey,
     Integer,
     MetaData,
     PrimaryKeyConstraint,
     String,
     Table,
+    Text,
     UniqueConstraint,
     create_engine,
     exc,
+    exists,
     func,
     select,
     text,
@@ -30,6 +34,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError, StatementError
 from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
+from gn2pg.utils import XferStatus
 
 # from gn2pg.logger import logger
 logger = logging.getLogger(__name__)
@@ -149,31 +154,35 @@ class PostgresqlUtils:
         else:
             logger.info("Table %s already exists => Keeping it", name)
 
-    def _create_download_log(self) -> None:
-        """Create download_log table if it does not exist."""
+    def _create_import_log(self) -> None:
+        """Create import_log table if it does not exist."""
         self._create_table(
-            "download_log",
+            "import_log",
+            Column("id", Integer, primary_key=True, autoincrement=True),
             Column("source", String, nullable=False, index=True),
             Column("controler", String, nullable=False),
+            Column("xfer_type", String, index=True, nullable=True),
+            Column("xfer_status", String, nullable=True),
             Column(
-                "download_ts",
+                "xfer_start_ts",
                 DateTime,
-                server_default=func.now(),
                 nullable=False,
             ),
-            Column("error_count", Integer, index=True),
-            Column("http_status", Integer, index=True),
-            Column("comment", String),
-        )
-
-    def _create_increment_log(self) -> None:
-        """Create increment_log table if it does not exist."""
-        self._create_table(
-            "increment_log",
-            Column("source", String, nullable=False),
-            Column("controler", String, nullable=False),
-            Column("last_ts", DateTime, server_default=func.now(), nullable=False),
-            PrimaryKeyConstraint("source", "controler", name="increment_log_pk"),
+            Column(
+                "xfer_end_ts",
+                DateTime,
+                nullable=True,
+            ),
+            Column("api_count_items", Integer, nullable=False, server_default="0"),
+            Column("api_count_errors", Integer, nullable=False, server_default="0"),
+            Column("data_count_upserts", Integer, nullable=False, server_default="0"),
+            Column("data_count_delete", Integer, nullable=False, server_default="0"),
+            Column("data_count_errors", Integer, nullable=False, server_default="0"),
+            Column("metadata_count_upserts", Integer, nullable=False, server_default="0"),
+            Column("metadata_count_errors", Integer, nullable=False, server_default="0"),
+            Column("xfer_http_status", Integer, index=True, nullable=True),
+            Column("xfer_filters", JSONB, server_default="{}"),
+            Column("comment", Text, nullable=True, default=None),
         )
 
     def _create_error_log(self) -> None:
@@ -181,11 +190,17 @@ class PostgresqlUtils:
         self._create_table(
             "error_log",
             Column("source", String, nullable=False),
-            Column("id_data", Integer, nullable=False, index=True),
+            Column("uuid", UUID, nullable=False, index=True),
             Column("controler", String, nullable=False),
             Column("last_ts", DateTime, server_default=func.now(), nullable=False),
             Column("item", JSONB),
             Column("error", String),
+            Column(
+                "import_id",
+                Integer,
+                ForeignKey("import_log.id", ondelete="CASCADE", onupdate="CASCADE"),
+                index=True,
+            ),
         )
 
     def _create_data_json(self) -> None:
@@ -203,6 +218,11 @@ class PostgresqlUtils:
                 DateTime,
                 server_default=func.now(),
                 nullable=False,
+            ),
+            Column(
+                "import_id",
+                Integer,
+                ForeignKey("import_log.id", onupdate="CASCADE"),
             ),
             PrimaryKeyConstraint("id_data", "source", "type", name="pk_source_data"),
             UniqueConstraint("uuid", name="unique_uuid"),
@@ -223,6 +243,11 @@ class PostgresqlUtils:
                 DateTime,
                 server_default=func.now(),
                 nullable=False,
+            ),
+            Column(
+                "import_id",
+                Integer,
+                ForeignKey("import_log.id", onupdate="CASCADE"),
             ),
             PrimaryKeyConstraint("uuid", "source", name="pk_source_metadata"),
             UniqueConstraint("uuid", name="metadata_unique_uuid"),
@@ -272,8 +297,7 @@ class PostgresqlUtils:
                 # Set path to include VN import schema
 
                 # Check if tables exist or else create them
-                self._create_download_log()
-                self._create_increment_log()
+                self._create_import_log()
                 self._create_error_log()
                 self._create_data_json()
                 self._create_metadata_json()
@@ -356,7 +380,9 @@ class StorePostgresql:
         self._db_url = db_url(self._config)
         if self._config.database.querystring:
             self._db_url["query"] = self._config.database.querystring
-        self._db = create_engine(URL.create(**self._db_url), echo=False)
+        self._db: sqlalchemy.engine.base.Engine = create_engine(
+            URL.create(**self._db_url), echo=False
+        )
         self._db_schema = self._config.database.schema_import
         self._metadata = MetaData(schema=self._db_schema)
         try:
@@ -366,6 +392,14 @@ class StorePostgresql:
             sys.exit(0)
 
         self._conn = self._db.connect()
+
+        self.total_errors: int = 0
+        self.count_data_upserts: int = 0
+        self.count_data_delete: int = 0
+        self.count_data_errors: int = 0
+        self.count_metadata_inserts: int = 0
+        self.count_metadata_errors: int = 0
+        self.import_id: int = None
 
         # Map Import tables in a single dict for easy reference
         self._table_defs = {
@@ -412,54 +446,62 @@ class StorePostgresql:
 
         metadata = self._table_defs["meta"]["metadata"]
         # logger.debug(elem[id_key_name])
-        try:
-            insert_stmt = insert(metadata).values(
-                controler=controler,
-                type=self._config.data_type,
-                level=level,
-                uuid=elem[uuid_key_name],
-                source=self._config.std_name,
-                item=elem,
-                update_ts=datetime.now(),
-            )
-            do_update_stmt = insert_stmt.on_conflict_do_update(
-                constraint=metadata.primary_key,
-                set_={"item": elem, "update_ts": datetime.now()},
-            )
-            self._conn.execute(do_update_stmt)
-        except IntegrityError as error:
-            # Check if the original exception is a UniqueViolation
-            if isinstance(error.orig, psycopg2.errors.UniqueViolation):
-                self.error_log(controler, elem, str(error))
-                logger.warning(
-                    _(
-                        "A metadata with UUID %s from a different source already"
-                        " exists in Database: %s",
-                    ),
-                    elem["uuid"],
-                    str(error),
+        exists_stmt = select(
+            [
+                exists().where(
+                    metadata.c.source == self._config.std_name,
+                    metadata.c.controler == controler,
+                    metadata.c.uuid == elem[uuid_key_name],
+                    metadata.c.import_id == self.import_id,
                 )
-            else:
-                self.error_log(controler, elem, str(error))
-                logger.critical(
-                    _(
-                        "One error occurred for data from source %s "
-                        "with %s = %s. Error message is %s"
-                    ),
-                    self._config.std_name,
-                    "uuid",
-                    elem["uuid"],
-                    str(error),
+            ]
+        )
+        if not self._conn.execute(exists_stmt).scalar():
+            try:
+                insert_stmt = insert(metadata).values(
+                    controler=controler,
+                    type=self._config.data_type,
+                    level=level,
+                    uuid=elem[uuid_key_name],
+                    source=self._config.std_name,
+                    item=elem,
+                    update_ts=datetime.now(),
+                    import_id=self.import_id,
                 )
-        except exc.StatementError as error:
-            self.error_log(controler, elem, str(error))
-            logger.critical(
-                _("One error occurred for data from source %s with %s = %s. Error message is %s"),
-                self._config.std_name,
-                "uuid",
-                elem["uuid"],
-                str(error),
-            )
+                do_update_stmt = insert_stmt.on_conflict_do_update(
+                    constraint=metadata.primary_key,
+                    set_={"item": elem, "update_ts": datetime.now(), "import_id": self.import_id},
+                )
+                result = self._conn.execute(do_update_stmt)
+                self.count_metadata_inserts += result.rowcount
+                self._conn.execute("COMMIT")
+            except (IntegrityError, exc.StatementError) as error:
+                # Check if the original exception is a UniqueViolation
+                self._conn.execute("ROLLBACK")
+                if isinstance(error.orig, psycopg2.errors.UniqueViolation):
+                    self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
+                    # if logger.getEffectiveLevel() >
+                    logger.warning(
+                        _(
+                            "A metadata with UUID %s from a different source already"
+                            " exists in Database: %s",
+                        ),
+                        elem["uuid"],
+                        str(error),
+                    )
+                else:
+                    self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
+                    logger.critical(
+                        _(
+                            "One error occurred for data from source %s "
+                            "with %s = %s. Error message is %s"
+                        ),
+                        self._config.std_name,
+                        "uuid",
+                        elem["uuid"],
+                        str(error),
+                    )
+                self.count_metadata_errors += 1
 
     def store_1_data(
         self,
@@ -477,7 +519,7 @@ class StorePostgresql:
             uuid_key_name (str, optional): data UUID. Defaults to "id_perm_sinp".
         """
         metadata = self._table_defs[controler]["metadata"]
-        # logger.debug(elem[id_key_name])
+        logger.debug("elem[id_key_name] is %s, id_key_name is %s", elem[id_key_name], id_key_name)
         metadata_infos = {"ca_data": "acquisition framework", "jdd_data": "dataset"}
         try:
             logger.debug("store_1_data type %s", self._config.data_type)
@@ -501,16 +543,20 @@ class StorePostgresql:
                 source=self._config.std_name,
                 item=elem,
                 update_ts=datetime.now(),
+                import_id=self.import_id,
             )
             do_update_stmt = insert_stmt.on_conflict_do_update(
                 constraint=metadata.primary_key,
-                set_={"item": elem, "update_ts": datetime.now()},
+                set_={"item": elem, "update_ts": datetime.now(), "import_id": self.import_id},
             )
-            self._conn.execute(do_update_stmt)
-        except IntegrityError as error:
+            result = self._conn.execute(do_update_stmt)
+            self.count_data_upserts += result.rowcount
+            self._conn.execute("COMMIT")
+        except (IntegrityError, exc.StatementError) as error:
             # Check if the original exception is a UniqueViolation
+            self._conn.execute("ROLLBACK")
             if isinstance(error.orig, psycopg2.errors.UniqueViolation):
-                self.error_log(controler, elem, str(error))
+                self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
                 logger.warning(
                     _(
                         "A data with UUID %s from a different source already"
@@ -520,7 +566,7 @@ class StorePostgresql:
                     str(error),
                 )
             else:
-                self.error_log(controler, elem, str(error))
+                self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
                 logger.critical(
                     _(
                         "One error occurred for data from source %s "
@@ -531,23 +577,16 @@ class StorePostgresql:
                     elem[id_key_name],
                     str(error),
                 )
-        except exc.StatementError as error:
-            self.error_log(controler, elem, str(error))
-            logger.critical(
-                _("One error occurred for data from source %s with %s = %s. Error message is %s"),
-                self._config.std_name,
-                id_key_name,
-                elem[id_key_name],
-                str(error),
-            )
+            self.count_data_errors += 1
 
     def store_data(
         self,
         controler: str,
-        items: list,
+        items: list[dict],
+        # import_log_id: int,
         id_key_name: str = "id_synthese",
         uuid_key_name: str = "id_perm_sinp",
-    ) -> int:
+    ) -> Tuple[int, int, int]:
         """Write items_dict to database.
 
         Args:
@@ -560,17 +599,18 @@ class StorePostgresql:
             int: items dict length
         """
         # Loop on data array to store each element to database
-        success_counter = 0
-        error_counter = 0
+        # self.import_id = import_log_id
         for elem in items:
             try:
-                success_counter += 1
                 # Convert to json
                 self.store_1_data(controler, elem, id_key_name, uuid_key_name)
-
             except StatementError as error:
-                error_counter += 1
-                self.error_log(controler, elem, str(error))
+                self.error_log(
+                    controler,
+                    elem,
+                    str(error),
+                    uuid=elem.get(uuid_key_name, None),
+                )
                 logger.critical(
                     _("One error occurred for data from source %s with %s = %s"),
                     self._config.std_name,
@@ -578,13 +618,19 @@ class StorePostgresql:
                     elem[id_key_name],
                 )
         logger.info(
-            _("%s items have been stored in db from %s of source %s (%s error occurred)"),
-            success_counter,
-            controler,
+            _("%s data and %s metadata have been stored in db from source %s (%s error occurred)"),
+            self.count_data_upserts,
+            self.count_metadata_inserts,
             self._config.std_name,
-            error_counter,
+            self.count_data_errors + self.count_metadata_errors,
         )
-        return len(items)
+        return (
+            len(items),
+            self.count_data_upserts,
+            self.count_data_errors,
+            self.count_metadata_inserts,
+            self.count_metadata_errors,
+        )
 
     # ----------------
     # External methods
@@ -609,7 +655,7 @@ class StorePostgresql:
         del_count = 0
         # Store to database, if enabled
         logger.debug(
-            _("Api returned %s row to delete from from source %s (controler %s)"),
+            _("Api returned %s row to delete from source %s (controler %s)"),
             str(len(items)),
             self._config.name,
             controler,
@@ -636,55 +682,37 @@ class StorePostgresql:
 
         return del_count
 
-    def download_log(
-        self,
-        controler: str,
-        error_count: int = 0,
-        http_status: int = 0,
-        comment: Optional[str] = None,
-    ):
+    def import_log(self, controler: str, values: Optional[dict] = None):
         """Write download log entries to database.
 
         Args:
             controler (str): Name of API controler.
-            error_count (int, optional): Number of errors during download. Defaults to 0.
-            http_status (int, optional):  HTTP status of latest download. Defaults to 0.
-            comment (str, optional): Optional comment, in free text.. Defaults to "".
+            values (dict, optional): Field values. Defaults to None
         """
         # Store to database, if enabled
-        metadata = self._metadata.tables[
-            self._config.database.schema_import + "." + "download_log"
+        metadata: Table = self._metadata.tables[
+            self._config.database.schema_import + "." + "import_log"
         ]
-        stmt = metadata.insert().values(
-            source=self._config.std_name,
-            controler=controler,
-            error_count=error_count,
-            http_status=http_status,
-            comment=comment,
-        )
-        self._conn.execute(stmt)
+        if values is None:
+            values = {}
+        if not self.import_id:
+            stmt = (
+                metadata.insert()
+                .values(source=self._config.std_name, controler=controler, **values)
+                .returning(metadata.c.id)
+            )
+        else:
+            stmt = (
+                metadata.update()
+                .where(metadata.c.id == self.import_id)
+                .values(**values)
+                .returning(metadata.c.id)
+            )
+        result = self._conn.execute(stmt)
+        self.import_id = result.scalar()
+        return self.import_id
 
-    def increment_log(self, controler: str, last_ts: datetime) -> None:
-        """Store last increment timestamp to database.
-
-        Args:
-            controler (str): controler name
-            last_ts (datetime): last increment timestamp
-        """
-        # Store to database, if enabled
-        metadata = self._metadata.tables[
-            self._config.database.schema_import + "." + "increment_log"
-        ]
-
-        insert_stmt = insert(metadata).values(
-            source=self._config.std_name, controler=controler, last_ts=last_ts
-        )
-        do_update_stmt = insert_stmt.on_conflict_do_update(
-            constraint=metadata.primary_key, set_={"last_ts": last_ts}
-        )
-        self._conn.execute(do_update_stmt)
-
-    def download_get(self, controler: str) -> Optional[str]:
+    def import_get(self, controler: str) -> Optional[str]:
         """Get last download timestamp from database.
 
         Args:
@@ -694,42 +722,17 @@ class StorePostgresql:
             Optional[str]: Return last increment timestamp if exists
         """
         row = None
-        metadata = self._metadata.tables[
-            self._config.database.schema_import + "." + "download_log"
-        ]
+        metadata = self._metadata.tables[self._config.database.schema_import + "." + "import_log"]
         stmt = (
-            select([metadata.c.download_ts])
+            select([metadata.c.xfer_start_ts])
             .where(
                 and_(
                     metadata.c.source == self._config.std_name,
                     metadata.c.controler == controler,
+                    metadata.c.xfer_status == XferStatus.success,
                 )
             )
-            .order_by(metadata.c.download_ts.desc())
-        )
-        result = self._conn.execute(stmt)
-        row = result.fetchone()
-
-        return row[0] if row is not None else None
-
-    def increment_get(self, controler: str) -> Optional[str]:
-        """Get last increment timestamp from database.
-
-        Args:
-            controler (str): Controler name
-
-        Returns:
-            Optional[str]: Return last increment timestamp if exists
-        """
-        row = None
-        metadata = self._metadata.tables[
-            self._config.database.schema_import + "." + "increment_log"
-        ]
-        stmt = select([metadata.c.last_ts]).where(
-            and_(
-                metadata.c.source == self._config.std_name,
-                metadata.c.controler == controler,
-            )
+            .order_by(metadata.c.xfer_start_ts.desc())
         )
         result = self._conn.execute(stmt)
         row = result.fetchone()
@@ -741,26 +744,39 @@ class StorePostgresql:
         controler: str,
         item: dict,
         error: str,
-        id_key_name: str = "id_synthese",
+        uuid: str = None,
         last_ts: datetime = datetime.now(),
     ) -> None:
         """Store errors in database
 
         Args:
             controler (str): Controler name
-            item (dict): [description]
-            error (str): [description]
-            id_key_name (str, optional): [description]. Defaults to "id_synthese".
+            item (dict): Item
+            error (str): SQLAlchemy Error
+            uuid (str, optional): Data or metadata UUID. Defaults to None.
             last_ts (datetime, optional): [description]. Defaults to datetime.now().
         """
 
         metadata = self._metadata.tables[self._config.database.schema_import + "." + "error_log"]
-        insert_stmt = insert(metadata).values(
-            source=self._config.std_name,
-            controler=controler,
-            id_data=item[id_key_name],
-            item=item,
-            last_ts=last_ts,
-            error=error,
+        exists_stmt = select(
+            [
+                exists().where(
+                    metadata.c.source == self._config.std_name,
+                    metadata.c.controler == controler,
+                    metadata.c.uuid == uuid,
+                    metadata.c.import_id == self.import_id,
+                )
+            ]
         )
-        self._conn.execute(insert_stmt)
+        print(exists_stmt)
+        if not self._conn.execute(exists_stmt).scalar():
+            insert_stmt = insert(metadata).values(
+                source=self._config.std_name,
+                controler=controler,
+                uuid=uuid,
+                item=item,
+                last_ts=last_ts,
+                error=error,
+                import_id=self.import_id,
+            )
+            self._conn.execute(insert_stmt)

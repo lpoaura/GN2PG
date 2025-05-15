@@ -6,6 +6,166 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.9.0 - 2025-05-15
+
+### :rocket: Features
+
+- For exports of type `synthese_with_metadata`, Metadata are now stored separately in `gn2pg_import.metadata_json` table (fix #116).
+- Import history is now stored in a single table (`import_log`) containing execution information such as download type (full or update), import statistics for API, data and metadata (fix #111).
+- When an update is launched (`gn2pg_cli db --update`), if no import exists for a specific source, a complete download is launched for that source. It is no longer necessary to run a `--full` download after adding a new source.
+- While inserting data into GeoNature, default nomenclature is used when no nomenclature is provided or if nomenclature is not matching current database (fix #107)
+- Add management if area_attachment. If no area is matching in destination db, `type_info_geo` is set to `Géoréférencement` else, to `Rattachement`(fix #106).
+
+### :bug: Fixes
+
+- Fix log history API call using parameter `page` instead of `offset` (fix #117)
+
+### :point_down: Release note
+
+To do for update (only)
+
+> [!WARNING]
+> Providers should update their export scripts as in sample to embed area_attachment informations: [geonature_export_sinp_with_metadata.sql](./data/geonature_export_sinp_with_metadata.sql)
+
+
+1. Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+gn2pg_cli db --json-tables-create <config file>
+```
+
+2. Add a unique constraint on data_json.uuid table (if not already added after upgrade to 1.8.0):
+
+```sql
+BEGIN;
+
+SET SESSION_REPLICATION_ROLE TO replica;
+
+ALTER TABLE gn2pg_import.data_json
+    ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE;
+
+ALTER TABLE gn2pg_import.error_log
+    ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE gn2pg_import.error_log
+    ADD uuid uuid;
+
+UPDATE gn2pg_import.error_log
+SET uuid = COALESCE(item ->> 'id_perm_sinp', item ->> 'uuid')::uuid;
+
+ALTER TABLE gn2pg_import.error_log
+    ALTER COLUMN uuid SET NOT NULL;
+
+UPDATE gn2pg_import.data_json
+SET import_id = import_log.id
+FROM gn2pg_import.import_log
+WHERE import_log.source = data_json.source;
+
+UPDATE gn2pg_import.error_log
+SET import_id = import_log.id
+FROM gn2pg_import.import_log
+WHERE import_log.source = error_log.source;
+
+WITH af AS (SELECT item -> 'ca_data' FROM gn2pg_import.data_json);
+
+WITH history AS (SELECT source
+                      , controler
+                      , download_ts AS xfer_start_ts
+                 FROM gn2pg_import.download_log
+                 UNION
+                 SELECT source
+                      , controler
+                      , last_ts AS xfer_start_ts
+                 FROM gn2pg_import.increment_log)
+   , hunion AS (SELECT source, controler, MAX(xfer_start_ts) xfer_start_ts FROM history GROUP BY source, controler)
+INSERT
+INTO gn2pg_import.import_log ( source, controler, xfer_type, xfer_status, xfer_start_ts, data_count_upserts
+                             , xfer_http_status, "comment")
+SELECT hunion.source
+     , hunion.controler
+     , 'full'             AS xfer_type
+     , 'success'          AS xfer_status
+     , hunion.xfer_start_ts
+     , COUNT(data_json.*) AS data_count_upserts
+     , '200'              AS xfer_http_status
+     , 'Line generated on upgrade to gn2pg 1.9 or above'
+FROM hunion
+         JOIN gn2pg_import.data_json ON (data_json.source, data_json.controler) = (hunion.source, hunion.controler)
+GROUP BY hunion.source, hunion.controler, hunion.xfer_start_ts
+ORDER BY xfer_start_ts ASC
+;
+
+INSERT INTO gn2pg_import.metadata_json(uuid, source, controler, type, level, item, import_id, update_ts)
+WITH af AS (SELECT data_json.item #>> '{ca_data,uuid}'                         uuid
+                 , source
+                 , 'metadata'                                               AS controler
+                 , data_json.type
+                 , 'acquisition framework'                                     level
+                 , (ARRAY_AGG(item -> 'ca_data' ORDER BY update_ts ASC))[1] AS item
+                 , (ARRAY_AGG(import_id ORDER BY update_ts ASC))[1]         AS import_id
+                 , (ARRAY_AGG(update_ts ORDER BY update_ts ASC))[1]         AS update_ts
+            FROM gn2pg_import.data_json
+            GROUP BY data_json.item #>> '{ca_data,uuid}', source, data_json.type)
+   , ds AS (SELECT data_json.item #>> '{jdd_data,uuid}'                         uuid
+                 , source
+                 , 'metadata'                                                AS controler
+                 , data_json.type
+                 , 'dataset'                                                    level
+                 , (ARRAY_AGG(item -> 'jdd_data' ORDER BY update_ts ASC))[1] AS item
+                 , (ARRAY_AGG(import_id ORDER BY update_ts ASC))[1]          AS import_id
+                 , (ARRAY_AGG(update_ts ORDER BY update_ts ASC))[1]          AS update_ts
+            FROM gn2pg_import.data_json
+            GROUP BY data_json.item #>> '{jdd_data,uuid}', source, data_json.type)
+   , metaunion AS (SELECT uuid
+                        , source
+                        , controler
+                        , type
+                        , level
+                        , item
+                        , import_id
+                        , update_ts
+                   FROM af
+                   UNION
+                   SELECT uuid
+                        , source
+                        , controler
+                        , type
+                        , level
+                        , item
+                        , import_id
+                        , update_ts
+                   FROM ds)
+SELECT uuid::uuid
+     , source
+     , controler
+     , type
+     , level
+     , item
+     , import_id
+     , update_ts
+FROM metaunion
+ORDER BY update_ts ASC
+ON CONFLICT (uuid) DO NOTHING;
+
+ALTER TABLE gn2pg_import.data_json
+    ALTER COLUMN import_id SET NOT NULL;
+
+ALTER TABLE gn2pg_import.error_log
+    ALTER COLUMN import_id SET NOT NULL;
+
+ALTER TABLE gn2pg_import.error_log
+    ALTER COLUMN uuid SET NOT NULL;
+
+ALTER TABLE gn2pg_import.error_log
+    DROP COLUMN id_data;
+
+DROP TABLE gn2pg_import.download_log;
+DROP TABLE gn2pg_import.increment_log;
+
+COMMIT;
+```
+
 ## 1.8.1 - 2025-04-18
 
 ### :bug: Fixes
