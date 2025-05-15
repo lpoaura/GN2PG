@@ -25,17 +25,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 To do for update (only)
 
 > [!WARNING]
-> Provider should update their export scripts as in sample to embed area_attachment informations: [geonature_export_sinp_with_metadata.sql](./data/geonature_export_sinp_with_metadata.sql)
+> Providers should update their export scripts as in sample to embed area_attachment informations: [geonature_export_sinp_with_metadata.sql](./data/geonature_export_sinp_with_metadata.sql)
 
 
-- Update the app
+1. Update the app
 
 ```bash
 pip install --upgrade gn2pg-client
 gn2pg_cli db --json-tables-create <config file>
 ```
 
-- Add a unique constraint on data_json.uuid table (if not already added after upgrade to 1.8.0):
+2. Add a unique constraint on data_json.uuid table (if not already added after upgrade to 1.8.0):
 
 ```sql
 BEGIN;
@@ -164,7 +164,6 @@ DROP TABLE gn2pg_import.download_log;
 DROP TABLE gn2pg_import.increment_log;
 
 COMMIT;
-
 ```
 
 ## 1.8.1 - 2025-04-18
