@@ -43,31 +43,21 @@ BEGIN;
 SET SESSION_REPLICATION_ROLE TO replica;
 
 ALTER TABLE gn2pg_import.data_json
-    ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE;
+  ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE;
 
 ALTER TABLE gn2pg_import.error_log
-    ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE ON DELETE CASCADE;
+  ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE gn2pg_import.error_log
-    ADD uuid uuid;
+  ADD uuid uuid;
 
 UPDATE gn2pg_import.error_log
 SET uuid = COALESCE(item ->> 'id_perm_sinp', item ->> 'uuid')::uuid;
 
 ALTER TABLE gn2pg_import.error_log
-    ALTER COLUMN uuid SET NOT NULL;
+  ALTER COLUMN uuid SET NOT NULL;
 
-UPDATE gn2pg_import.data_json
-SET import_id = import_log.id
-FROM gn2pg_import.import_log
-WHERE import_log.source = data_json.source;
-
-UPDATE gn2pg_import.error_log
-SET import_id = import_log.id
-FROM gn2pg_import.import_log
-WHERE import_log.source = error_log.source;
-
-WITH af AS (SELECT item -> 'ca_data' FROM gn2pg_import.data_json);
+/* Populate import_log table from download/increment_log tables */
 
 WITH history AS (SELECT source
                       , controler
@@ -91,11 +81,23 @@ SELECT hunion.source
      , '200'              AS xfer_http_status
      , 'Line generated on upgrade to gn2pg 1.9 or above'
 FROM hunion
-         JOIN gn2pg_import.data_json ON (data_json.source, data_json.controler) = (hunion.source, hunion.controler)
+       JOIN gn2pg_import.data_json ON (data_json.source, data_json.controler) = (hunion.source, hunion.controler)
 GROUP BY hunion.source, hunion.controler, hunion.xfer_start_ts
 ORDER BY xfer_start_ts ASC
 ;
 
+
+UPDATE gn2pg_import.data_json
+SET import_id = import_log.id
+FROM gn2pg_import.import_log
+WHERE import_log.source = data_json.source;
+
+UPDATE gn2pg_import.error_log
+SET import_id = import_log.id
+FROM gn2pg_import.import_log
+WHERE import_log.source = error_log.source;
+
+/* Populate metadata_json table */
 INSERT INTO gn2pg_import.metadata_json(uuid, source, controler, type, level, item, import_id, update_ts)
 WITH af AS (SELECT data_json.item #>> '{ca_data,uuid}'                         uuid
                  , source
@@ -148,17 +150,22 @@ FROM metaunion
 ORDER BY update_ts ASC
 ON CONFLICT (uuid) DO NOTHING;
 
+UPDATE gn2pg_import.data_json
+SET item = JSONB_INSERT(JSONB_INSERT(((item - 'jdd_data') - 'ca_data'), '{ca_uuid}', item #> '{ca_data,uuid}'),
+                        '{jdd_uuid}', item #> '{jdd_data,uuid}')
+WHERE item ?& ARRAY ['ca_data','jdd_data'];
+
 ALTER TABLE gn2pg_import.data_json
-    ALTER COLUMN import_id SET NOT NULL;
+  ALTER COLUMN import_id SET NOT NULL;
 
 ALTER TABLE gn2pg_import.error_log
-    ALTER COLUMN import_id SET NOT NULL;
+  ALTER COLUMN import_id SET NOT NULL;
 
 ALTER TABLE gn2pg_import.error_log
-    ALTER COLUMN uuid SET NOT NULL;
+  ALTER COLUMN uuid SET NOT NULL;
 
 ALTER TABLE gn2pg_import.error_log
-    DROP COLUMN id_data;
+  DROP COLUMN id_data;
 
 DROP TABLE gn2pg_import.download_log;
 DROP TABLE gn2pg_import.increment_log;

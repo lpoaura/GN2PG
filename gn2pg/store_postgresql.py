@@ -282,11 +282,9 @@ class PostgresqlUtils:
                     logger.debug(_("Execute: %s"), query)
                     conn.execute(text(query))
                     logger.info(
-                        (
-                            _("Schema %s owned by %s successfully created"),
-                            self._config.database.schema_import,
-                            self._config.database.user,
-                        )
+                        _("Schema %s owned by %s successfully created"),
+                        self._config.database.schema_import,
+                        self._config.database.user,
                     )
                 except exc.SQLAlchemyError as error:
                     logger.critical(

@@ -209,7 +209,8 @@ def handle_database_commands(args, cfg_ctrl) -> None:
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
     logger.info(
-        _("config file have {len(cfg_source_list)} source(s) wich are : %s"),
+        _("config file have %s source(s) wich are : %s"),
+        len(cfg_source_list),
         ", ".join(cfg_source_list.keys()),
     )
 
