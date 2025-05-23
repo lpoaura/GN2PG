@@ -2,7 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres
+to [Semantic Versioning](https://semver.org/).
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
@@ -10,11 +11,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### :rocket: Features
 
-- For exports of type `synthese_with_metadata`, Metadata are now stored separately in `gn2pg_import.metadata_json` table (fix #116).
-- Import history is now stored in a single table (`import_log`) containing execution information such as download type (full or update), import statistics for API, data and metadata (fix #111).
-- When an update is launched (`gn2pg_cli db --update`), if no import exists for a specific source, a complete download is launched for that source. It is no longer necessary to run a `--full` download after adding a new source.
-- While inserting data into GeoNature, default nomenclature is used when no nomenclature is provided or if nomenclature is not matching current database (fix #107)
-- Add management if area_attachment. If no area is matching in destination db, `type_info_geo` is set to `Géoréférencement` else, to `Rattachement`(fix #106).
+- For exports of type `synthese_with_metadata`, Metadata are now stored separately in `gn2pg_import.metadata_json`
+  table (fix #116).
+- Import history is now stored in a single table (`import_log`) containing execution information such as download type (
+  full or update), import statistics for API, data and metadata (fix #111).
+- When an update is launched (`gn2pg_cli db --update`), if no import exists for a specific source, a complete download
+  is launched for that source. It is no longer necessary to run a `--full` download after adding a new source.
+- While inserting data into GeoNature, default nomenclature is used when no nomenclature is provided or if nomenclature
+  is not matching current database (fix #107)
+- Add management if area_attachment. If no area is matching in destination db, `type_info_geo` is set to
+  `Géoréférencement` else, to `Rattachement`(fix #106).
 
 ### :bug: Fixes
 
@@ -25,8 +31,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 To do for update (only)
 
 > [!WARNING]
-> Providers should update their export scripts as in sample to embed area_attachment informations: [geonature_export_sinp_with_metadata.sql](./data/geonature_export_sinp_with_metadata.sql)
-
+> Providers should update their export scripts as in sample to embed area_attachment
+> informations: [geonature_export_sinp_with_metadata.sql](./data/geonature_export_sinp_with_metadata.sql)
 
 1. Update the app
 
@@ -43,19 +49,19 @@ BEGIN;
 SET SESSION_REPLICATION_ROLE TO replica;
 
 ALTER TABLE gn2pg_import.data_json
-  ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE;
+    ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE;
 
 ALTER TABLE gn2pg_import.error_log
-  ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD import_id INT REFERENCES gn2pg_import.import_log ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE gn2pg_import.error_log
-  ADD uuid uuid;
+    ADD uuid uuid;
 
 UPDATE gn2pg_import.error_log
 SET uuid = COALESCE(item ->> 'id_perm_sinp', item ->> 'uuid')::uuid;
 
 ALTER TABLE gn2pg_import.error_log
-  ALTER COLUMN uuid SET NOT NULL;
+    ALTER COLUMN uuid SET NOT NULL;
 
 /* Populate import_log table from download/increment_log tables */
 
@@ -81,7 +87,7 @@ SELECT hunion.source
      , '200'              AS xfer_http_status
      , 'Line generated on upgrade to gn2pg 1.9 or above'
 FROM hunion
-       JOIN gn2pg_import.data_json ON (data_json.source, data_json.controler) = (hunion.source, hunion.controler)
+         JOIN gn2pg_import.data_json ON (data_json.source, data_json.controler) = (hunion.source, hunion.controler)
 GROUP BY hunion.source, hunion.controler, hunion.xfer_start_ts
 ORDER BY xfer_start_ts ASC
 ;
@@ -97,57 +103,41 @@ SET import_id = import_log.id
 FROM gn2pg_import.import_log
 WHERE import_log.source = error_log.source;
 
+CREATE INDEX tmp_ca_data
+    ON gn2pg_import.data_json
+        ((data_json.item #>> '{ca_data,uuid}'), update_ts);
+
+CREATE INDEX tmp_jdd_data
+    ON gn2pg_import.data_json
+        ((data_json.item #>> '{jdd_data,uuid}'), update_ts);
+
 /* Populate metadata_json table */
+
 INSERT INTO gn2pg_import.metadata_json(uuid, source, controler, type, level, item, import_id, update_ts)
-WITH af AS (SELECT data_json.item #>> '{ca_data,uuid}'                         uuid
-                 , source
-                 , 'metadata'                                               AS controler
-                 , data_json.type
-                 , 'acquisition framework'                                     level
-                 , (ARRAY_AGG(item -> 'ca_data' ORDER BY update_ts ASC))[1] AS item
-                 , (ARRAY_AGG(import_id ORDER BY update_ts ASC))[1]         AS import_id
-                 , (ARRAY_AGG(update_ts ORDER BY update_ts ASC))[1]         AS update_ts
-            FROM gn2pg_import.data_json
-            GROUP BY data_json.item #>> '{ca_data,uuid}', source, data_json.type)
-   , ds AS (SELECT data_json.item #>> '{jdd_data,uuid}'                         uuid
-                 , source
-                 , 'metadata'                                                AS controler
-                 , data_json.type
-                 , 'dataset'                                                    level
-                 , (ARRAY_AGG(item -> 'jdd_data' ORDER BY update_ts ASC))[1] AS item
-                 , (ARRAY_AGG(import_id ORDER BY update_ts ASC))[1]          AS import_id
-                 , (ARRAY_AGG(update_ts ORDER BY update_ts ASC))[1]          AS update_ts
-            FROM gn2pg_import.data_json
-            GROUP BY data_json.item #>> '{jdd_data,uuid}', source, data_json.type)
-   , metaunion AS (SELECT uuid
-                        , source
-                        , controler
-                        , type
-                        , level
-                        , item
-                        , import_id
-                        , update_ts
-                   FROM af
-                   UNION
-                   SELECT uuid
-                        , source
-                        , controler
-                        , type
-                        , level
-                        , item
-                        , import_id
-                        , update_ts
-                   FROM ds)
-SELECT uuid::uuid
-     , source
-     , controler
-     , type
-     , level
-     , item
-     , import_id
-     , update_ts
-FROM metaunion
-ORDER BY update_ts ASC
+SELECT DISTINCT ON (data_json.item #>> '{ca_data,uuid}') CAST(data_json.item #>> '{ca_data,uuid}' AS uuid) AS uuid
+                                                       , source
+                                                       , 'metadata'                                        AS controller
+                                                       , data_json.type
+                                                       , 'acquisition framework'                           AS level
+                                                       , item -> 'ca_data'                                 AS ca_data
+                                                       , import_id
+                                                       , update_ts
+FROM gn2pg_import.data_json
+ORDER BY data_json.item #>> '{ca_data,uuid}', update_ts ASC
+ON CONFLICT (uuid) DO NOTHING;
+
+
+INSERT INTO gn2pg_import.metadata_json(uuid, source, controler, type, level, item, import_id, update_ts)
+SELECT DISTINCT ON (data_json.item #>> '{jdd_data,uuid}') CAST(data_json.item #>> '{jdd_data,uuid}' AS uuid) AS uuid
+                                                        , source
+                                                        , 'metadata'                                         AS controller
+                                                        , data_json.type
+                                                        , 'dataset'                                          AS level
+                                                        , item -> 'jdd_data'                                 AS ca_data
+                                                        , import_id
+                                                        , update_ts
+FROM gn2pg_import.data_json
+ORDER BY data_json.item #>> '{jdd_data,uuid}', update_ts ASC
 ON CONFLICT (uuid) DO NOTHING;
 
 UPDATE gn2pg_import.data_json
@@ -156,22 +146,34 @@ SET item = JSONB_INSERT(JSONB_INSERT(((item - 'jdd_data') - 'ca_data'), '{ca_uui
 WHERE item ?& ARRAY ['ca_data','jdd_data'];
 
 ALTER TABLE gn2pg_import.data_json
-  ALTER COLUMN import_id SET NOT NULL;
+    ALTER COLUMN import_id SET NOT NULL;
 
 ALTER TABLE gn2pg_import.error_log
-  ALTER COLUMN import_id SET NOT NULL;
+    ALTER COLUMN import_id SET NOT NULL;
 
 ALTER TABLE gn2pg_import.error_log
-  ALTER COLUMN uuid SET NOT NULL;
+    ALTER COLUMN uuid SET NOT NULL;
 
 ALTER TABLE gn2pg_import.error_log
-  DROP COLUMN id_data;
+    DROP COLUMN id_data;
+
+DROP INDEX IF EXISTS gn2pg_import.tmp_ca_data;
+DROP INDEX IF EXISTS gn2pg_import.tmp_jdd_data;
+
 
 DROP TABLE gn2pg_import.download_log;
 DROP TABLE gn2pg_import.increment_log;
 
 COMMIT;
 ```
+
+> [!WARNING]
+> This upgrade will rewrite each rows of table data_json. For large tables, we recommend following this update with a
+VACUUM.
+>
+>```sql
+>VACUUM FULL ANALYZE gn2pg_import.data_json;
+>```
 
 ## 1.8.1 - 2025-04-18
 
@@ -204,7 +206,6 @@ COMMIT;
 gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
 ```
 
-
 ## 1.8.0 - 2025-04-18
 
 ### :rocket: New features
@@ -213,10 +214,12 @@ gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
     - `gn2pg_cli config`: Configuration management
     - `gn2pg_cli db`: Receiver database management
     - `gn2pg_cli download`: Download management
-- Add config commands to list/read/edit configuration files stored in `~/.gn2pg` directory, execute `gn2pg_cli config --help` for more informations.
+- Add config commands to list/read/edit configuration files stored in `~/.gn2pg` directory, execute
+  `gn2pg_cli config --help` for more informations.
 - File log output and stdout are now the same (fix #109).
 - Implement requests Retry on http 50x errors (fix #113, #108).
-- Move on to the next source after a failed download from a source. In the event of failure, the next update will resume at the last successful run.
+- Move on to the next source after a failed download from a source. In the event of failure, the next update will resume
+  at the last successful run.
 - The data integration process in GeoNature now uses the UUID as the data identifier (fix #112).
 
 ### :gift: Other changes
@@ -271,7 +274,8 @@ gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
 
 ### Fixes
 
-- Populate `additional_data` (if column exists) on `gn_meta.t_datasets`, `gn_meta.t_acquisition_frameworks` and `gn_synthese.t_sources`,fix #87
+- Populate `additional_data` (if column exists) on `gn_meta.t_datasets`, `gn_meta.t_acquisition_frameworks` and
+  `gn_synthese.t_sources`,fix #87
 - Replace module `pkg_resouces` by native `importlib`, fix #88
 - Add default values for missing many to many relations on acquisition frameworks, fix #92
 
@@ -324,19 +328,23 @@ gn2pg_cli --custom-script=to_gnsynthese myconfig.toml
 ## 1.6.0 - 2023-09-27
 
 ### What's Changed
+
 * fix email conflict error on t_roles by not populating email by @lpofredc in https://github.com/lpoaura/GN2PG/pull/46
 * fix Erreur en fin d'update sur 'total_filtered' https://github.com/lpoaura/GN2PG/issues/49
 
-### ❗  Caution
+### ❗ Caution
 
-If GeoNature sources are on latest versions (v2.13.x), ensure that Utils-Flask-SQLAlchemy is version 0.3.6+ as mentionned in https://github.com/lpoaura/GN2PG/issues/48.
+If GeoNature sources are on latest versions (v2.13.x), ensure that Utils-Flask-SQLAlchemy is version 0.3.6+ as
+mentionned in https://github.com/lpoaura/GN2PG/issues/48.
 
-### 📝  Update
+### 📝 Update
 
 ```bash
 pip install --upgrade gn2pg-client
 ```
+
 If client database is a GeoNature DB, apply last SQL Scripts
+
 ```bash
 gn2pg_cli --custom-script to_gnsynthese <myconfigfile>
 ```
@@ -357,19 +365,19 @@ DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature_with_cd_nomenclature ON gn
 DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature_with_metadata ON gn2pg_import.data_json;
 DROP TRIGGER IF EXISTS tri_c_delete_data_from_geonature ON gn2pg_import.data_json;
 
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid UUID, _name TEXT);
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid UUID, _name TEXT, _id_af INT);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name(_uuid uuid, _name TEXT);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name(_uuid uuid, _name TEXT, _id_af INT);
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_source(_source TEXT);
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_id_nomenclature_from_label(_type TEXT, _label TEXT);
 DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_nomenclature_label();
 DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_cd_nomenclature();
 DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_delete_data_from_geonature();
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories(_id_ds INTEGER, _territories JSONB) ;
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_create_actors_in_usershub(_actor_role JSONB, _source CHARACTER VARYING) ;
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_dataset_actor(_id_dataset INTEGER, _actor_roles JSONB, _source CHARACTER VARYING);
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_actors(_id_af INTEGER, _actor_roles JSONB, _source CHARACTER VARYING) ;
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata(_af_data JSONB, _source CHARACTER VARYING);
-DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata(_ds_data JSONB, _id_af INTEGER, _source CHARACTER VARYING);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_ds_territories(_id_ds INTEGER, _territories jsonb);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_create_actors_in_usershub(_actor_role jsonb, _source CHARACTER VARYING);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_dataset_actor(_id_dataset INTEGER, _actor_roles jsonb, _source CHARACTER VARYING);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_insert_af_actors(_id_af INTEGER, _actor_roles jsonb, _source CHARACTER VARYING);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_af_from_af_jsondata(_af_data jsonb, _source CHARACTER VARYING);
+DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_dataset_from_jsondata(_ds_data jsonb, _id_af INTEGER, _source CHARACTER VARYING);
 DROP FUNCTION IF EXISTS gn2pg_import.fct_c_get_or_insert_source(_source TEXT);
 DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_upsert_data_to_geonature_with_metadata();
 DROP FUNCTION IF EXISTS gn2pg_import.fct_tri_c_delete_data_from_geonature();
@@ -413,7 +421,8 @@ With the financial support of [Office français de la biodiversité](https://www
 
 ## version 1.1.2
 
-- Fix null value in `gn_synthese.synthese.the_geom_local` caused by null SRID value while getting SRID from first data in `gn_synthese.synthese`.
+- Fix null value in `gn_synthese.synthese.the_geom_local` caused by null SRID value while getting SRID from first data
+  in `gn_synthese.synthese`.
 
 ## version 1.1.1
 
@@ -421,7 +430,10 @@ With the financial support of [Office français de la biodiversité](https://www
 
 ## version 1.1.0
 
-- New SQL scripts for geonature 2 geonature imports which provide triggers to insert data in synthese and populate most of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source query sample is provided in file [geonature_export_sinp_with_metadata.sql](https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql)
+- New SQL scripts for geonature 2 geonature imports which provide triggers to insert data in synthese and populate most
+  of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source
+  query sample is provided in
+  file [geonature_export_sinp_with_metadata.sql](https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql)
 
 ## version 1.0.1
 
@@ -435,11 +447,13 @@ With the financial support of [Office français de la biodiversité](https://www
 
 ## version 0.1.2-dev
 
-- Fix `error_count` type. cf. issue [gn2pg_import - error_count donnée en entrée invalide #18](https://github.com/lpoaura/GN2PG/issues/18)
+- Fix `error_count` type. cf.
+  issue [gn2pg_import - error_count donnée en entrée invalide #18](https://github.com/lpoaura/GN2PG/issues/18)
 
 ## version 0.1.1-dev
 
-- Fix wrong log function name (previously renamed download_log). cf. issue [StorePostgresql object has no attribute log #17](https://github.com/lpoaura/GN2PG/issues/17).
+- Fix wrong log function name (previously renamed download_log). cf.
+  issue [StorePostgresql object has no attribute log #17](https://github.com/lpoaura/GN2PG/issues/17).
 
 ## version 0.1.0-dev
 
