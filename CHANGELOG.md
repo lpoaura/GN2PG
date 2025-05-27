@@ -7,7 +7,7 @@ to [Semantic Versioning](https://semver.org/).
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
-## 1.9.0.dev - 2025-05-15
+## 1.9.0 - 2025-05-15
 
 ### :rocket: Features
 
