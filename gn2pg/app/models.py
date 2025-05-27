@@ -19,7 +19,6 @@ class ImportLog(db.Model):
     )
     xfer_type = db.Column(db.String, index=True)
     xfer_status = db.Column(db.String, index=True)
-    xfer_http_status = db.Column(db.String, index=True)
     xfer_filters = db.Column(JSONB, server_default="{}")
     xfer_start_ts = db.Column(
         db.DateTime(timezone=True),

@@ -22,7 +22,7 @@ from urllib.parse import urlencode
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from requests.exceptions import RetryError
+from requests.exceptions import HTTPError, RetryError
 
 from gn2pg import _, __version__
 
@@ -31,10 +31,6 @@ logger = logging.getLogger(__name__)
 
 class APIException(Exception):
     """An exception occurred while handling your request."""
-
-
-class HTTPError(APIException):
-    """An HTTP error occurred."""
 
 
 class BaseAPI:
@@ -65,36 +61,41 @@ class BaseAPI:
             status_forcelist=[500, 501, 502, 503, 504],
         )
         self._session.mount("https://", HTTPAdapter(max_retries=retries))
-        self._session.headers = {"Content-Type": "application/json"}
+        self._session.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*",
+        }
         auth_payload = {
             "login": config.user_name,
             "password": config.user_password,
         }
-        login = self._session.post(
-            self._api_url + "auth/login",
-            json=auth_payload,
-        )
+
+        # logger.debug(
+        #     "login.status_code %s, login.content %s, payload.auth_payload %s",
+        #     login.status_code,
+        #     login.content,
+        #     auth_payload,
+        # )
         try:
+            login = self._session.post(
+                self._api_url + "auth/login",
+                json=auth_payload,
+            )
+            login.raise_for_status()
             if login.status_code == 200:
                 logger.info(
-                    "Successfully logged in into GeoNature named %s",
+                    _("Successfully logged in into GeoNature named %s"),
                     self._config.name,
                 )
-            else:
-                logger.critical(
-                    (
-                        "Log in GeoNature named %s failed with status code %s, cause: %s",
-                        self._config.name,
-                        login.status_code,
-                        json.loads(login.content)["msg"],
-                    )
-                )
-
-        except Exception as error:
+        except HTTPError as error:
             logger.critical(
-                "Session failed (%s), HTTP status code is %s", error, login.status_code
+                # _("Session failed (%s), HTTP status code is %s"), e, e.response.status_code
+                _("Login into GeoNature from source %s failed with status code %s, message: %s"),
+                self._config.name,
+                error.response.status_code,
+                error.response.json(),
             )
-            raise HTTPError(login.status_code) from error
+            raise error
 
         #  Find exports api path
         try:
@@ -104,6 +105,7 @@ class BaseAPI:
                 modules_list.status_code,
                 modules_list.url,
             )
+            modules_list.raise_for_status()
             if modules_list.status_code == 200 and "login?next=" not in modules_list.url:
                 modules = json.loads(modules_list.content)
                 for item in modules:
@@ -118,9 +120,11 @@ class BaseAPI:
                     json.loads(modules_list.content)["msg"],
                 )
 
-        except Exception as error:
-            logger.critical(_("Find export module failed, %s"), error)
-            raise HTTPError(login.status_code) from error
+        except HTTPError as error:
+            logger.critical(
+                _("Looking for export module failed for source %s , %s"), self._config.name, error
+            )
+            raise error
 
     @property
     def version(self) -> str:
@@ -217,9 +221,8 @@ class BaseAPI:
                     return page_list, total_filtered, status_code
         except RetryError as e:
             last_response = e.response
-            status_code = last_response.status_code
-            logger.error(_("Export seems to be unavailable : %s"), e)
-            raise RetryError from e
+            status_code = last_response.status_code if last_response is not None else None
+            raise e
 
         return None, 0, status_code
 

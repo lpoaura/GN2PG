@@ -77,14 +77,13 @@ WITH history AS (SELECT source
    , hunion AS (SELECT source, controler, MAX(xfer_start_ts) xfer_start_ts FROM history GROUP BY source, controler)
 INSERT
 INTO gn2pg_import.import_log ( source, controler, xfer_type, xfer_status, xfer_start_ts, data_count_upserts
-                             , xfer_http_status, "comment")
+                             , "comment")
 SELECT hunion.source
      , hunion.controler
      , 'full'             AS xfer_type
      , 'success'          AS xfer_status
      , hunion.xfer_start_ts
      , COUNT(data_json.*) AS data_count_upserts
-     , '200'              AS xfer_http_status
      , 'Line generated on upgrade to gn2pg 1.9 or above'
 FROM hunion
          JOIN gn2pg_import.data_json ON (data_json.source, data_json.controler) = (hunion.source, hunion.controler)

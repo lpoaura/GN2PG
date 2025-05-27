@@ -74,19 +74,24 @@ def full_download_1source(ctrl, cfg):
 
     logger.debug(cfg)
     with StorePostgresql(cfg) as store_pg:
-        downloader = ctrl(cfg, store_pg)
-        logger.debug(
-            _("%s => Starting download using controler %s"),
-            cfg.source,
-            downloader.name,
-        )
-        downloader.store()
-        logger.info(
-            _("%s => Ending download using controler %s"),
-            cfg.source,
-            downloader.name,
-        )
-        downloader.exit()
+        try:
+
+            downloader = ctrl(cfg, store_pg)
+            logger.debug(
+                _("%s => Starting download using controler %s"),
+                cfg.source,
+                downloader.name,
+            )
+            downloader.store()
+            logger.info(
+                _("%s => Ending download using controler %s"),
+                cfg.source,
+                downloader.name,
+            )
+            downloader.exit()
+        except AttributeError:
+            logger.critical(_("An error occured when trying to download data from %s"), cfg.name)
+            return
 
 
 def full_download(cfg_ctrl):
@@ -114,19 +119,23 @@ def update_1source(ctrl, cfg):
     logger.debug(_("config source name %s"), cfg.name)
     logger.debug(_("controler %s"), ctrl)
     with StorePostgresql(cfg) as store_pg:
-        downloader = ctrl(cfg, store_pg)
-        logger.debug(
-            _("%s => Starting update (%s)"),
-            cfg.source,
-            downloader.name,
-        )
-        downloader.update()
-        logger.info(
-            _("%s => Ending update (%s)"),
-            cfg.name,
-            downloader.name,
-        )
-        downloader.exit()
+        try:
+            downloader = ctrl(cfg, store_pg)
+            logger.debug(
+                _("%s => Starting update (%s)"),
+                cfg.source,
+                downloader.name,
+            )
+            downloader.update()
+            logger.info(
+                _("%s => Ending update (%s)"),
+                cfg.name,
+                downloader.name,
+            )
+            downloader.exit()
+        except AttributeError:
+            logger.critical(_("An error occured when trying to download data from %s"), cfg.name)
+            return
 
 
 def update(cfg_ctrl):

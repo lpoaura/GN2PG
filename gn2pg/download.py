@@ -20,7 +20,8 @@ from multiprocessing.pool import ThreadPool
 from threading import Thread
 from typing import Callable, List, Optional
 
-from requests.exceptions import RetryError
+from requests.exceptions import HTTPError, RetryError
+from urllib3.exceptions import ResponseError
 
 from gn2pg import _, __version__
 from gn2pg.api import DataAPI
@@ -49,6 +50,7 @@ class DownloadGn:
         self, config: Gn2PgSourceConf, api_instance: DataAPI, backend: StorePostgresql
     ) -> None:
         self._config = config
+
         self._api_instance = api_instance
         self._backend = backend
         max_retry = config.max_retry
@@ -66,6 +68,8 @@ class DownloadGn:
         self.metadata_count_errors = 0
         self.xfer_type = ""
         self.xfer_filters = {}
+        self.xfer_status = XferStatus.init
+        self.xfer_comment = None
 
         self._limits = {
             "max_retry": max_retry,
@@ -75,7 +79,7 @@ class DownloadGn:
         # Init import log
         self.import_log_id = self._backend.import_log(
             controler=self._api_instance.controler,
-            values={"xfer_status": XferStatus.init, "xfer_start_ts": datetime.now()},
+            values={"xfer_status": self.xfer_status, "xfer_start_ts": datetime.now()},
         )
 
     @property
@@ -147,28 +151,15 @@ class DownloadGn:
         # The Queue enables the report thread to get the progress from other threads
         self.queue: Queue = Queue()
         errors: List[Exception] = []
+
         # Initialize and start the report thread
         thread = Thread(target=report, args=[self.queue])
         thread.start()
+
         # Start the worker threads
         with ThreadPool(nb_threads) as thread:
             thread.map(partial(func, queue=self.queue), pages)
-        # Will stop the report thread
-        # self._backend.import_log(
-        #     controler=self._api_instance.controler,
-        #     id=self.import_log_id,
-        #     values={
-        #         "xfer_end_ts": datetime.now(),
-        #         "api_count_items": self.api_count_items,
-        #         "api_count_errors": self.api_count_errors,
-        #         "data_count_upserts": self.data_count_upserts,
-        #         "data_count_delete": self.data_count_delete,
-        #         "data_count_errors": self.data_count_errors,
-        #         "metadata_count_upserts": self.metadata_count_upserts,
-        #         "metadata_count_errors": self.metadata_count_errors,
-        #         "xfer_status": "success",
-        #     },
-        # )
+
         self.queue.put(("DONE"))
         return errors
 
@@ -244,34 +235,41 @@ class DownloadGn:
         logger.info(_("QueryStrings %s"), params)
         pages = None
         try:
-            pages, self.api_count_items, status_code = self._api_instance.page_list(
+            pages, self.api_count_items, _xfer_http_status = self._api_instance.page_list(
                 kind="data", params=params
             )
-        except RetryError:
+        except (RetryError, ResponseError) as e:
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(e)
+            logger.critical("%s %s %s", e, e.response, dir(e))
             logger.error(_("Could not retrieve API data from source %s"), self._config.name)
             return
 
         try:
             # input(f"FULL DOWNLOAD INPUT {self._config.name}")
             if pages:
+                self.xfer_status = XferStatus.import_data
+                self.xfer_type = "full"
+                self.xfer_filters = (json.dumps(params, default=str),)
                 self._backend.import_log(
                     controler=self._api_instance.controler,
                     values={
-                        "xfer_type": "full",
-                        "xfer_status": XferStatus.import_data,
-                        "xfer_http_status": status_code,
-                        "xfer_filters": json.dumps(params),
+                        "xfer_type": self.xfer_type,
+                        "xfer_status": self.xfer_status,
+                        "xfer_filters": self.xfer_filters,
                     },
                 )
 
                 self.launch_threads(
                     nb_threads=self._config.nb_threads, func=self.download, pages=pages
                 )
-
+                self.xfer_status = XferStatus.success
                 # Log download timestamp to download.
 
-        except RetryError as e:
+        except (RetryError, ResponseError) as e:
             self.queue.put(("EXIT"))
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(e)
             logger.error(
                 "A problem occured on FULL DOWNLOAD process for source %s : %s",
                 self._config.name,
@@ -279,7 +277,7 @@ class DownloadGn:
             )
             return
 
-        return
+        self.xfer_status = XferStatus.success
 
     def update(self, since: Optional[str] = None, actions: Optional[list] = None) -> None:
         """[summary]
@@ -323,16 +321,19 @@ class DownloadGn:
 
         # Process UPDATE
         try:
-            upsert_pages, self.api_count_items, status_code = self._api_instance.page_list(
+            upsert_pages, self.api_count_items, _xfer_http_status = self._api_instance.page_list(
                 kind="data", params=params
             )
+            self.xfer_type = "update"
+            self.xfer_status = XferStatus.import_data
+            self.xfer_filters = (json.dumps(params, default=str),)
+
             self._backend.import_log(
                 controler=self._api_instance.controler,
                 values={
                     "xfer_type": "update",
-                    "xfer_status": XferStatus.import_data,
-                    "xfer_http_status": status_code,
-                    "xfer_filters": json.dumps(params, default=str),
+                    "xfer_status": self.xfer_status,
+                    "xfer_filters": self.xfer_filters,
                 },
             )
             # input(f"UPDATE INPUT {self._config.name}")
@@ -342,10 +343,14 @@ class DownloadGn:
                     func=self.download,
                     pages=upsert_pages,
                 )
-        except RetryError as e:
+
+        except (RetryError, ResponseError) as e:
             self.queue.put(("EXIT"))
+            logger.critical("%s %s %s %s", dir(e), type(e), e.args, str(e))
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(e)
             logger.error(
-                "A problem occured on UPDATE process for source %s : %s", self._config.name, e
+                _("A problem occured on UPDATE process for source %s : %s"), self._config.name, e
             )
             return
         # Process DELETE
@@ -355,7 +360,7 @@ class DownloadGn:
             since,
         )
         try:
-            deleted_pages, _total_len, status_code = self._api_instance.page_list(
+            deleted_pages, _total_len, _xfer_http_status = self._api_instance.page_list(
                 kind="log",
                 params={
                     "meta_last_action_date": f"gte:{since}",
@@ -365,24 +370,31 @@ class DownloadGn:
                 pagination_param="page",
             )
             # input(f"DELETE INPUT {self._config.name}")
+            self.xfer_status = XferStatus.delete
             self._backend.import_log(
                 controler=self._api_instance.controler,
-                values={"xfer_status": XferStatus.delete, "xfer_http_status": status_code},
+                values={
+                    "xfer_status": self.xfer_status,
+                },
             )
             if deleted_pages:
-
                 self.launch_threads(
                     nb_threads=self._config.nb_threads,
                     func=self.delete,
                     pages=deleted_pages,
                     store=False,
                 )
-        except RetryError as e:
+
+        except (RetryError, ResponseError) as e:
             self.queue.put(("EXIT"))
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(e)
             logger.error(
                 "A problem occured on DELETE process for source %s : %s", self._config.name, e
             )
             return
+
+        self.xfer_status = XferStatus.success
 
     def exit(self):
         """Final log on exit"""
@@ -397,7 +409,8 @@ class DownloadGn:
                 "data_count_errors": self.data_count_errors,
                 "metadata_count_upserts": self.metadata_count_upserts,
                 "metadata_count_errors": self.metadata_count_errors,
-                "xfer_status": XferStatus.success,
+                "xfer_status": self.xfer_status,
+                "comment": self.xfer_comment,
             },
         )
 
@@ -411,4 +424,7 @@ class Data(DownloadGn):
     """
 
     def __init__(self, config, backend):
-        super().__init__(config, DataAPI(config), backend)
+        try:
+            super().__init__(config, DataAPI(config), backend)
+        except HTTPError as e:
+            logger.critical(e)

@@ -12,6 +12,7 @@ class XferStatus:
     import_data = "importing data"
     delete = "delete"
     success = "success"
+    failed = "failed"
 
 
 class BColors:

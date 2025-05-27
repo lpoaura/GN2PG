@@ -180,7 +180,6 @@ class PostgresqlUtils:
             Column("data_count_errors", Integer, nullable=False, server_default="0"),
             Column("metadata_count_upserts", Integer, nullable=False, server_default="0"),
             Column("metadata_count_errors", Integer, nullable=False, server_default="0"),
-            Column("xfer_http_status", Integer, index=True, nullable=True),
             Column("xfer_filters", JSONB, server_default="{}"),
             Column("comment", Text, nullable=True, default=None),
         )
