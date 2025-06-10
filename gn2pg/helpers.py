@@ -13,6 +13,8 @@ from os.path import isfile, join
 from pathlib import Path
 from typing import Optional
 
+from requests.exceptions import InvalidSchema
+
 from gn2pg import _
 from gn2pg.download import Data
 from gn2pg.env import CONFDIR
@@ -89,8 +91,10 @@ def full_download_1source(ctrl, cfg):
                 downloader.name,
             )
             downloader.exit()
-        except AttributeError:
-            logger.critical(_("An error occured when trying to download data from %s"), cfg.name)
+        except (AttributeError, InvalidSchema) as e:
+            logger.critical(
+                _("An error occured when trying to download data from %s: %s"), cfg.name, e
+            )
             return
 
 
@@ -133,8 +137,10 @@ def update_1source(ctrl, cfg):
                 downloader.name,
             )
             downloader.exit()
-        except AttributeError:
-            logger.critical(_("An error occured when trying to download data from %s"), cfg.name)
+        except AttributeError as e:
+            logger.critical(
+                _("An error occured when trying to download data from %s: %s"), cfg.name, e
+            )
             return
 
 

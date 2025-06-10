@@ -20,11 +20,11 @@ from multiprocessing.pool import ThreadPool
 from threading import Thread
 from typing import Callable, List, Optional
 
-from requests.exceptions import HTTPError, RetryError
+from requests.exceptions import HTTPError, InvalidSchema, RetryError
 from urllib3.exceptions import ResponseError
 
 from gn2pg import _, __version__
-from gn2pg.api import DataAPI
+from gn2pg.api import DataAPI, ExportModuleNotFoundError
 from gn2pg.check_conf import Gn2PgSourceConf
 from gn2pg.store_postgresql import StorePostgresql
 from gn2pg.utils import XferStatus
@@ -426,5 +426,5 @@ class Data(DownloadGn):
     def __init__(self, config, backend):
         try:
             super().__init__(config, DataAPI(config), backend)
-        except HTTPError as e:
+        except (HTTPError, ExportModuleNotFoundError, InvalidSchema) as e:
             logger.critical(e)
