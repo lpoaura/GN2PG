@@ -22,9 +22,10 @@ from urllib.parse import urlencode
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from requests.exceptions import RetryError
+from requests.exceptions import HTTPError, InvalidSchema, RetryError
 
 from gn2pg import _, __version__
+from gn2pg.check_conf import Gn2PgSourceConf
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +34,8 @@ class APIException(Exception):
     """An exception occurred while handling your request."""
 
 
-class HTTPError(APIException):
-    """An HTTP error occurred."""
+class ExportModuleNotFoundError(Exception):
+    """Custom exception raised when the EXPORTS module is not found."""
 
 
 class BaseAPI:
@@ -43,10 +44,10 @@ class BaseAPI:
 
     def __init__(
         self,
-        config,
-        controler,
+        config: Gn2PgSourceConf,
+        controler: str,
     ):
-        self._config = config
+        self._config: Gn2PgSourceConf = config
         max_retry = config.max_retry
         max_requests = config.max_requests
         retry_delay = config.retry_delay
@@ -65,38 +66,42 @@ class BaseAPI:
             status_forcelist=[500, 501, 502, 503, 504],
         )
         self._session.mount("https://", HTTPAdapter(max_retries=retries))
-        self._session.headers = {"Content-Type": "application/json"}
+        self._session.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*",
+        }
         auth_payload = {
             "login": config.user_name,
             "password": config.user_password,
         }
-        login = self._session.post(
-            self._api_url + "auth/login",
-            json=auth_payload,
-        )
+
         try:
+            login = self._session.post(
+                self._api_url + "auth/login",
+                json=auth_payload,
+            )
+            login.raise_for_status()
             if login.status_code == 200:
                 logger.info(
-                    "Successfully logged in into GeoNature named %s",
+                    _("Successfully logged in into GeoNature named %s"),
                     self._config.name,
                 )
-            else:
-                logger.critical(
-                    (
-                        "Log in GeoNature named %s failed with status code %s, cause: %s",
-                        self._config.name,
-                        login.status_code,
-                        json.loads(login.content)["msg"],
-                    )
-                )
-
-        except Exception as error:
+        except HTTPError as error:
             logger.critical(
-                "Session failed (%s), HTTP status code is %s", error, login.status_code
+                _("Login into GeoNature from source %s failed with status code %s, message: %s"),
+                self._config.name,
+                error.response.status_code,
+                error.response.json(),
             )
-            raise HTTPError(login.status_code) from error
+            raise error
+        except InvalidSchema as error:
+            logger.critical(
+                _("There is probably an error on source URL for %s , %s"), self._config.name, error
+            )
+            raise error
 
         #  Find exports api path
+        self._export_api_path = None  # Initialize the variable
         try:
             modules_list = self._session.get(self._api_url + "gn_commons/modules")
             logger.info(
@@ -104,6 +109,7 @@ class BaseAPI:
                 modules_list.status_code,
                 modules_list.url,
             )
+            modules_list.raise_for_status()
             if modules_list.status_code == 200 and "login?next=" not in modules_list.url:
                 modules = json.loads(modules_list.content)
                 for item in modules:
@@ -111,6 +117,16 @@ class BaseAPI:
                         self._export_api_path = item["module_path"]
                         logger.debug(_("Export api path is %s"), self._export_api_path)
                         break
+                if self._export_api_path is None:
+                    logger.critical(
+                        _(
+                            "EXPORTS module not found in the modules list for export %s. "
+                            "User %s may not have required permissions on module."
+                        ),
+                        self._config.name,
+                        self._config.user_name,
+                    )
+                    raise ExportModuleNotFoundError("Module not found")
             else:
                 logger.critical(
                     _("Get GeoNature modules failed with status code %s, cause: %s"),
@@ -118,9 +134,11 @@ class BaseAPI:
                     json.loads(modules_list.content)["msg"],
                 )
 
-        except Exception as error:
-            logger.critical(_("Find export module failed, %s"), error)
-            raise HTTPError(login.status_code) from error
+        except HTTPError as error:
+            logger.critical(
+                _("Looking for export module failed for source %s , %s"), self._config.name, error
+            )
+            raise error
 
     @property
     def version(self) -> str:
@@ -217,9 +235,8 @@ class BaseAPI:
                     return page_list, total_filtered, status_code
         except RetryError as e:
             last_response = e.response
-            status_code = last_response.status_code
-            logger.error(_("Export seems to be unavailable : %s"), e)
-            raise RetryError from e
+            status_code = last_response.status_code if last_response is not None else None
+            raise e
 
         return None, 0, status_code
 

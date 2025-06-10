@@ -19,13 +19,11 @@ class TestApi:
         api_url = base_api._url(params=params)
         r = base_api._session.get(url=api_url)
         resp = r.json()
-        total_filtered = resp["total_filtered"]
         limit = resp["limit"]
+
+        page_list, total_filtered, status_code = base_api.page_list(params=params)
         total_pages = math.ceil(total_filtered / limit)
 
-        page_gen = base_api.page_list(params=params)
-
-        page_list = list(page_gen)
         assert len(page_list) == total_pages
         for i, page in enumerate(page_list):
             assert urlencode(params) in page

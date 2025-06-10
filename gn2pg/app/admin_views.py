@@ -37,7 +37,6 @@ class ImportView(ReadOnlyView):
         "data_count_errors",
         "metadata_count_upserts",
         "metadata_count_errors",
-        "xfer_http_status",
         "xfer_filters",
         "comment",
     )

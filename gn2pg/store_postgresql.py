@@ -180,7 +180,6 @@ class PostgresqlUtils:
             Column("data_count_errors", Integer, nullable=False, server_default="0"),
             Column("metadata_count_upserts", Integer, nullable=False, server_default="0"),
             Column("metadata_count_errors", Integer, nullable=False, server_default="0"),
-            Column("xfer_http_status", Integer, index=True, nullable=True),
             Column("xfer_filters", JSONB, server_default="{}"),
             Column("comment", Text, nullable=True, default=None),
         )
@@ -282,11 +281,9 @@ class PostgresqlUtils:
                     logger.debug(_("Execute: %s"), query)
                     conn.execute(text(query))
                     logger.info(
-                        (
-                            _("Schema %s owned by %s successfully created"),
-                            self._config.database.schema_import,
-                            self._config.database.user,
-                        )
+                        _("Schema %s owned by %s successfully created"),
+                        self._config.database.schema_import,
+                        self._config.database.user,
                     )
                 except exc.SQLAlchemyError as error:
                     logger.critical(
@@ -612,17 +609,28 @@ class StorePostgresql:
                     uuid=elem.get(uuid_key_name, None),
                 )
                 logger.critical(
-                    _("One error occurred for data from source %s with %s = %s"),
-                    self._config.std_name,
-                    id_key_name,
-                    elem[id_key_name],
+                    _(
+                        "One error occurred for data from source %(std_name)s "
+                        "with %(id_key_name)s = %(id)s"
+                    ),
+                    {
+                        "std_name": self._config.std_name,
+                        "id_key_name": id_key_name,
+                        "id": elem[id_key_name],
+                    },
                 )
         logger.info(
-            _("%s data and %s metadata have been stored in db from source %s (%s error occurred)"),
-            self.count_data_upserts,
-            self.count_metadata_inserts,
-            self._config.std_name,
-            self.count_data_errors + self.count_metadata_errors,
+            _(
+                "%(count_data_upserts)s data and %(count_metadata_inserts)s metadata "
+                "have been stored in db from source %(std_name)s (%(count_data_errors)s "
+                "error occurred)"
+            ),
+            {
+                "count_data_upserts": self.count_data_upserts,
+                "count_metadata_inserts": self.count_metadata_inserts,
+                "std_name": self._config.std_name,
+                "count_data_errors": self.count_data_errors + self.count_metadata_errors,
+            },
         )
         return (
             len(items),
