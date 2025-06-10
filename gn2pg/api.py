@@ -22,9 +22,10 @@ from urllib.parse import urlencode
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from requests.exceptions import HTTPError, RetryError
+from requests.exceptions import HTTPError, InvalidSchema, RetryError
 
 from gn2pg import _, __version__
+from gn2pg.check_conf import Gn2PgSourceConf
 
 logger = logging.getLogger(__name__)
 
@@ -33,16 +34,20 @@ class APIException(Exception):
     """An exception occurred while handling your request."""
 
 
+class ExportModuleNotFoundError(Exception):
+    """Custom exception raised when the EXPORTS module is not found."""
+
+
 class BaseAPI:
     """Top class, not for direct use.
     Provides internal and template methods to use GeoNature API."""
 
     def __init__(
         self,
-        config,
-        controler,
+        config: Gn2PgSourceConf,
+        controler: str,
     ):
-        self._config = config
+        self._config: Gn2PgSourceConf = config
         max_retry = config.max_retry
         max_requests = config.max_requests
         retry_delay = config.retry_delay
@@ -70,12 +75,6 @@ class BaseAPI:
             "password": config.user_password,
         }
 
-        # logger.debug(
-        #     "login.status_code %s, login.content %s, payload.auth_payload %s",
-        #     login.status_code,
-        #     login.content,
-        #     auth_payload,
-        # )
         try:
             login = self._session.post(
                 self._api_url + "auth/login",
@@ -89,15 +88,20 @@ class BaseAPI:
                 )
         except HTTPError as error:
             logger.critical(
-                # _("Session failed (%s), HTTP status code is %s"), e, e.response.status_code
                 _("Login into GeoNature from source %s failed with status code %s, message: %s"),
                 self._config.name,
                 error.response.status_code,
                 error.response.json(),
             )
             raise error
+        except InvalidSchema as error:
+            logger.critical(
+                _("There is probably an error on source URL for %s , %s"), self._config.name, error
+            )
+            raise error
 
         #  Find exports api path
+        self._export_api_path = None  # Initialize the variable
         try:
             modules_list = self._session.get(self._api_url + "gn_commons/modules")
             logger.info(
@@ -113,6 +117,16 @@ class BaseAPI:
                         self._export_api_path = item["module_path"]
                         logger.debug(_("Export api path is %s"), self._export_api_path)
                         break
+                if self._export_api_path is None:
+                    logger.critical(
+                        _(
+                            "EXPORTS module not found in the modules list for export %s. "
+                            "User %s may not have required permissions on module."
+                        ),
+                        self._config.name,
+                        self._config.user_name,
+                    )
+                    raise ExportModuleNotFoundError("Module not found")
             else:
                 logger.critical(
                     _("Get GeoNature modules failed with status code %s, cause: %s"),

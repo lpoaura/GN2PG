@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-05-27 15:19+0200\n"
+"POT-Creation-Date: 2025-06-10 14:57+0200\n"
 "PO-Revision-Date: 2023-02-07 21:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -17,56 +17,72 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 "X-Generator: Poedit 3.0.1\n"
 
-#: gn2pg/api.py:53
+#: gn2pg/api.py:58
 #, python-format
 msgid "controler is %s"
 msgstr "Le controlleur est %s"
 
-#: gn2pg/api.py:87
+#: gn2pg/api.py:86
 #, python-format
 msgid "Successfully logged in into GeoNature named %s"
 msgstr "La connexion au GeoNature nommé %s réussie"
 
-#: gn2pg/api.py:93
+#: gn2pg/api.py:91
 #, fuzzy, python-format
 msgid ""
 "Login into GeoNature from source %s failed with status code %s, message: %s"
 msgstr ""
-"La connexion à GeoNature à partir de la source %s a échoué avec le code HTTP %s, message : %s
+"La connexion à GeoNature à partir de la source %s a échoué avec le code HTTP "
+"%s, message : %s"
 
-#: gn2pg/api.py:104
+#: gn2pg/api.py:99
+#, python-format
+msgid "There is probably an error on source URL for %s , %s"
+msgstr "Il y a probablement une erreur d'URL pour la source %s, %s"
+
+#: gn2pg/api.py:108
 #, python-format
 msgid "Modules API status code is %s for url %s"
 msgstr "Le code d'état de l'API des modules est %s pour l'url %s"
 
-#: gn2pg/api.py:114
+#: gn2pg/api.py:118
 #, python-format
 msgid "Export api path is %s"
 msgstr "Le chemin d'export API est %s"
 
-#: gn2pg/api.py:118
+#: gn2pg/api.py:123
+#, python-format
+msgid ""
+"EXPORTS module not found in the modules list for export %s. User %s may not "
+"have required permissions on module."
+msgstr ""
+"Le module EXPORTS n'a pas été trouvé dans la liste des modules pour "
+"l'exportation %s. L'utilisateur %s n'a sans doute pas les permissions "
+"requises sur le module."
+
+#: gn2pg/api.py:132
 #, python-format
 msgid "Get GeoNature modules failed with status code %s, cause: %s"
 msgstr ""
 "La récupération des modules GeoNature a échoué avec le code d'état %s, "
 "cause : %s"
 
-#: gn2pg/api.py:125
+#: gn2pg/api.py:139
 #, fuzzy, python-format
 msgid "Looking for export module failed for source %s , %s"
 msgstr "La recherche du module d'exportation a échoué, %s"
 
-#: gn2pg/api.py:205
+#: gn2pg/api.py:219
 #, python-format
 msgid "API %s contains %s data in %s page(s)"
 msgstr ""
 
-#: gn2pg/api.py:240
+#: gn2pg/api.py:254
 #, python-format
 msgid "Download page %s"
 msgstr "Téléchargement de la page %s"
 
-#: gn2pg/api.py:246
+#: gn2pg/api.py:260
 #, python-format
 msgid "Download data from %s failed"
 msgstr "Le téléchargement des données depuis %s a échoué"
@@ -164,104 +180,104 @@ msgstr ""
 #: gn2pg/download.py:353
 #, python-format
 msgid "A problem occured on UPDATE process for source %s : %s"
-msgstr "Un problème est survenu dans le processus UPDATE pour la source %s : %s"
+msgstr ""
+"Un problème est survenu dans le processus UPDATE pour la source %s : %s"
 
 #: gn2pg/download.py:358
 #, fuzzy, python-format
 msgid "Getting deleted data from source %s since %s"
-msgstr ""
-"Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
+msgstr "Obtention des données supprimées de la source %s depuis %s"
 
-#: gn2pg/helpers.py:48
+#: gn2pg/helpers.py:50
 #, python-format
 msgid "Conf directory %s created"
 msgstr "Dossier de configuration %s créée"
 
-#: gn2pg/helpers.py:49
+#: gn2pg/helpers.py:51
 #, python-format
 msgid "%s file already exists"
 msgstr "Le fichier %s existe déjà"
 
-#: gn2pg/helpers.py:61
+#: gn2pg/helpers.py:63
 #, python-format
 msgid "File %s will be preserved"
 msgstr "Le fichier %s sera conservé"
 
-#: gn2pg/helpers.py:64
+#: gn2pg/helpers.py:66
 #, python-format
 msgid "file %s will be overwritten"
 msgstr "Le fichier %s sera remplacé"
 
-#: gn2pg/helpers.py:66
+#: gn2pg/helpers.py:68
 #, fuzzy, python-format
 msgid "Creating TOML configuration file %s, from %s"
 msgstr "Création de la configuration TOML %s depuis %s"
 
-#: gn2pg/helpers.py:81
+#: gn2pg/helpers.py:83
 #, python-format
 msgid "%s => Starting download using controler %s"
 msgstr "%s => Démarrage du téléchargement à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:87
+#: gn2pg/helpers.py:89
 #, python-format
 msgid "%s => Ending download using controler %s"
 msgstr "%s => Fin du téléchargement en utilisant le contrôleur %s"
 
-#: gn2pg/helpers.py:93 gn2pg/helpers.py:137
+#: gn2pg/helpers.py:96 gn2pg/helpers.py:142
 #, fuzzy, python-format
-msgid "An error occured when trying to download data from %s"
+msgid "An error occured when trying to download data from %s: %s"
 msgstr ""
-"Une erreur s'est produite lors de la connexion à la base de données: %s"
+"Une erreur s'est produite lors du téléchargement des données de %s : %s"
 
-#: gn2pg/helpers.py:103 gn2pg/helpers.py:149
+#: gn2pg/helpers.py:107 gn2pg/helpers.py:155
 msgid "Defining full download jobs"
 msgstr "Définition des tâches de téléchargement complet"
 
-#: gn2pg/helpers.py:106
+#: gn2pg/helpers.py:110
 #, python-format
 msgid "Starting full download for source %s"
 msgstr "Démarrage du téléchargement complet de la source %s"
 
-#: gn2pg/helpers.py:109 gn2pg/helpers.py:157
+#: gn2pg/helpers.py:113 gn2pg/helpers.py:163
 #, python-format
 msgid "Source %s is disabled"
 msgstr "La source %s est désactivée"
 
-#: gn2pg/helpers.py:119
+#: gn2pg/helpers.py:123
 #, python-format
 msgid "config source name %s"
 msgstr "Le nom de la source de configuration est %s"
 
-#: gn2pg/helpers.py:120
+#: gn2pg/helpers.py:124
 #, python-format
 msgid "controler %s"
 msgstr "Controlleur %s"
 
-#: gn2pg/helpers.py:125
+#: gn2pg/helpers.py:129
 #, fuzzy, python-format
 msgid "%s => Starting update (%s)"
 msgstr "%s => Démarrage de la mise à jour à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:131
+#: gn2pg/helpers.py:135
 #, fuzzy, python-format
 msgid "%s => Ending update (%s)"
 msgstr "%s => Fin de la mise à jour à l'aide du contrôleur %s"
 
-#: gn2pg/helpers.py:152
+#: gn2pg/helpers.py:158
 #, fuzzy, python-format
 msgid "Starting update for source %s"
 msgstr "Démarrage du téléchargement de la mise à jour pour la source %s"
 
-#: gn2pg/helpers.py:154
+#: gn2pg/helpers.py:160
 #, fuzzy, python-format
 msgid "Ending update for source %s"
-msgstr "Démarrage du téléchargement de la mise à jour pour la source %s"
+msgstr "Fin du téléchargement de la mise à jour pour la source %s"
 
-#: gn2pg/helpers.py:182
+#: gn2pg/helpers.py:188
 msgid "choose config to open : "
 msgstr "Choississez une configuration à ouvrir : "
 
-#: gn2pg/helpers.py:185
+#: gn2pg/helpers.py:191
 msgid "Sorry, you must enter a number."
 msgstr "Désolé, vous devez entrer un nombre."
 
@@ -474,27 +490,32 @@ msgid ""
 "A data with UUID %s from a different source already exists in Database: %s"
 msgstr "Une donnée avec l'UUID %s existe déjà avec une source différente: %s"
 
-#: gn2pg/store_postgresql.py:612
-#, fuzzy, python-format
-msgid "One error occurred for data from source %s with %s = %s"
-msgstr ""
-"Obtention de données nouvelles ou mises à jour de la source %s depuis %s"
-
-#: gn2pg/store_postgresql.py:618
+#: gn2pg/store_postgresql.py:613
 #, fuzzy, python-format
 msgid ""
-"%s data and %s metadata have been stored in db from source %s (%s error "
+"One error occurred for data from source %(std_name)s with %(id_key_name)s = "
+"%(id)s"
+msgstr ""
+"Une erreur s'est produite pour les données de la source %(std_name)s avec "
+"%(id_key_name)s = %(id)s"
+
+#: gn2pg/store_postgresql.py:624
+#, fuzzy, python-format
+msgid ""
+"%(count_data_upserts)s data and %(count_metadata_inserts)s metadata have "
+"been stored in db from source %(std_name)s (%(count_data_errors)s error "
 "occurred)"
 msgstr ""
-"%s éléments ont été stockés en base de donnée depuis %s de la source %s (%s "
-"erreurs)"
+"%(count_data_upserts)s données et %(count_metadata_inserts)s métadonnées ont "
+"été stockées dans la base de données à partir de la source %(std_name)s "
+"(%(count_data_errors)s erreurs se sont produite)"
 
-#: gn2pg/store_postgresql.py:655
+#: gn2pg/store_postgresql.py:666
 #, fuzzy, python-format
 msgid "Api returned %s row to delete from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"
 
-#: gn2pg/store_postgresql.py:674
+#: gn2pg/store_postgresql.py:685
 #, fuzzy, python-format
 msgid "%s rows have been deleted from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"

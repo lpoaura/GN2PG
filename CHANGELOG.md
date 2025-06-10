@@ -7,6 +7,21 @@ to [Semantic Versioning](https://semver.org/).
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+## 1.9.1 - 2025-06-10
+
+### :bug: Fixes
+
+- Avoid application crashes if the GeoNature user does not have sufficient permissions to access the export module or if GeoNature schema URL is wrong (fix #120).
+
+### :point_down: Release note
+
+1. Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+```
+
+
 ## 1.9.0 - 2025-05-15
 
 ### :rocket: Features
