@@ -1,9 +1,65 @@
+from pathlib import Path
+
+from toml import loads
+
 import gn2pg.check_conf as check_conf
+from gn2pg import __version__
 
 
 class TestCheckConf:
     def test_gn2pg_conf(self, gn2pg_conf):
         assert gn2pg_conf
+
+    def test_complete_example_configuration(self, monkeypatch):
+        config_dir = Path(check_conf.__file__).parent / "data"
+        config_file = config_dir / "gn2pgconfig.toml"
+        expected = loads(config_file.read_text(encoding="utf-8"))
+        monkeypatch.setattr(check_conf, "CONFDIR", config_dir)
+
+        config = check_conf.Gn2PgConf(file=config_file.name)
+
+        assert config.version == __version__
+        assert len(config.source_list) == len(expected["source"])
+
+        expected_db = expected["db"]
+        expected_tuning = expected["tuning"]
+        for index, (source_name, source) in enumerate(config.source_list.items()):
+            expected_source = expected["source"][index]
+            expected_export_id = expected_source.get(
+                "data_export_id", expected_source.get("export_id")
+            )
+
+            assert source.source == index
+            assert source.name == expected_source["name"]
+            assert source.std_name == source_name
+            assert source.user_name == expected_source["user_name"]
+            assert source.user_password == expected_source["user_password"]
+            assert source.url == expected_source["url"]
+            assert source.export_id == expected_export_id
+            assert source.data_type == expected_source["data_type"]
+            assert source.id_application == expected_source.get("id_application", 3)
+            assert source.enable == expected_source.get("enable", True)
+            assert source.query_strings == expected_source.get("query_strings", {})
+
+            assert source.database.host == expected_db["db_host"]
+            assert source.database.port == expected_db["db_port"]
+            assert source.database.user == expected_db["db_user"]
+            assert source.database.password == expected_db["db_password"]
+            assert source.database.name == expected_db["db_name"]
+            assert source.database.schema_import == expected_db["db_schema_import"]
+            assert source.database.querystring == expected_db.get("db_querystring", {})
+
+            assert source.max_page_length == expected_tuning.get("max_page_length", 1000)
+            assert source.max_retry == expected_tuning.get("max_retry", 5)
+            assert source.max_requests == expected_tuning.get("max_requests", 0)
+            assert source.retry_delay == expected_tuning.get("retry_delay", 5)
+            assert source.unavailable_delay == expected_tuning.get("unavailable_delay", 600)
+            assert source.lru_maxsize == expected_tuning.get("lru_maxsize", 32)
+            assert source.nb_threads == expected_tuning.get("nb_threads", 1)
+
+            secure_config = config.secure_dict(source_name)
+            assert secure_config["_source"].user_password == "***"
+            assert secure_config["_db"].password == "***"
 
     def test_data_export_id_alias(self, tmp_path, monkeypatch, toml_conf):
         config_file = tmp_path / "data_export_id.toml"
