@@ -59,6 +59,7 @@ user_password = "<monPwd>"
 # GeoNature source URL
 url = "<http://geonature1/>"
 # GeoNature source Export id
+# `data_export_id` is an accepted alias for `export_id`
 export_id = 1
 data_type = "synthese_with_metadata"
 # GeoNature ID application (default is 3)
@@ -86,8 +87,17 @@ You can add variable in source block `enable = false` to disable a source
 :::
 
 :::{tip}
+
 Default `data_type` (if not defined) is `synthese_with_cd_nomenclature`, this type is used to conditioning triggers to populate `gn_synthese.synthese`. This value can be customized for each source with key `data_type`.
-Provided `data_type` are `synthese_with_label` for standard GeoNature export, `synthese_with_cd_nomenclature` for a standard export using `cd_nomenclature`, `synthese_with_metadata` for and advanced export included metadata
+Provided `data_type` are :
+
+* `synthese_with_label` for standard GeoNature export 
+* `synthese_with_cd_nomenclature` for a standard export using `cd_nomenclature`
+* `synthese_with_metadata` for and advanced export included metadata
+* `synthese_with_separated_metadata` for advanced and optimized exports where metadata are provided in a distinct export.
+
+The recommended method for data exchange is `synthese_with_separated_metadata`.
+
 :::
 
 :::{tip}

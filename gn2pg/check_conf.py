@@ -7,6 +7,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
 from typing import Optional as TypeOptional
+from typing import TypeAlias
 
 from schema import Optional, Schema, SchemaError
 from toml import load
@@ -33,9 +34,9 @@ class IncorrectParameter(Gn2PgConfException):
     """Incorrect or missing parameter."""
 
 
-_ConfType = Dict[str, Any]
+_ConfType: TypeAlias = Dict[str, Any]
 
-_ConfSchema = Schema(
+_CONF_SCHEMA = Schema(
     {
         "db": {
             "db_host": str,
@@ -363,7 +364,14 @@ class Gn2PgConf:
         try:
             logger.info(_("Loading TOML configuration %s"), file)
             self._config = load(path)
-            _ConfSchema.validate(self._config)
+            for source in self._config.get("source", []):
+                if "data_export_id" in source:
+                    if "export_id" in source and source["export_id"] != source["data_export_id"]:
+                        raise SchemaError(
+                            _("export_id and data_export_id must have the same value")
+                        )
+                    source["export_id"] = source.pop("data_export_id")
+            _CONF_SCHEMA.validate(self._config)
         except SchemaError as error:
             logger.error(
                 _("Incorrect content in YAML configuration %s : %s"),

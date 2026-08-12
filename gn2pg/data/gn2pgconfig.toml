@@ -26,8 +26,8 @@ user_name = "<monuser>"
 user_password = "<monPwd>"
 # GeoNature source URL
 url = "<http://geonature1/>"
-# GeoNature source Export id
-export_id = 1
+# GeoNature source data Export id ("export_id" is also accepted)
+data_export_id = 1
 # Data type (used to distinct datas and to conditionning triggers)
 data_type = "synthese_with_metadata"
 # GeoNature ID application (default is 3)
