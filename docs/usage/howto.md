@@ -58,9 +58,8 @@ user_name = "<monuser>"
 user_password = "<monPwd>"
 # GeoNature source URL
 url = "<http://geonature1/>"
-# GeoNature source Export id
-# `data_export_id` is an accepted alias for `export_id`
-export_id = 1
+# GeoNature source data export ID (`export_id` is deprecated but still accepted)
+data_export_id = 1
 data_type = "synthese_with_metadata"
 # GeoNature ID application (default is 3)
 id_application = 1
@@ -74,7 +73,7 @@ name = "Source2"
 user_name = "<monuser>"
 user_password = "<monPwd>"
 url = "<http://geonature2/>"
-export_id = 1
+data_export_id = 1
 
 # Optional values
 [tuning]

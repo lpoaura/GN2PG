@@ -53,7 +53,7 @@ _CONF_SCHEMA = Schema(
                 "user_name": str,
                 "user_password": str,
                 "url": str,
-                "export_id": int,
+                "data_export_id": int,
                 Optional("metadata_export_id"): int,
                 Optional("id_application"): int,
                 Optional("enable"): bool,
@@ -96,7 +96,7 @@ class Source:
     user_name: str
     user_password: str
     url: str
-    export_id: int
+    data_export_id: int
     data_type: str
     metadata_export_id: TypeOptional[int] = None
     id_application: int = 3
@@ -137,7 +137,7 @@ class Gn2PgSourceConf:
                     "synthese_with_cd_nomenclature",
                 ),
                 query_strings=coalesce_in_dict(config["source"][source], "query_strings", {}),
-                export_id=config["source"][source]["export_id"],
+                data_export_id=config["source"][source]["data_export_id"],
                 metadata_export_id=config["source"][source].get("metadata_export_id"),
                 enable=(
                     True
@@ -236,13 +236,13 @@ class Gn2PgSourceConf:
         return self._source.id_application
 
     @property
-    def export_id(self) -> int:
-        """Return export id, used to access to export
+    def data_export_id(self) -> int:
+        """Return the data export ID used to access the export.
 
         Returns:
-            int: GeoNature export_id
+            int: GeoNature data export ID
         """
-        return self._source.export_id
+        return self._source.data_export_id
 
     @property
     def metadata_export_id(self) -> TypeOptional[int]:
@@ -373,12 +373,21 @@ class Gn2PgConf:
             logger.info(_("Loading TOML configuration %s"), file)
             self._config = load(path)
             for source in self._config.get("source", []):
-                if "data_export_id" in source:
-                    if "export_id" in source and source["export_id"] != source["data_export_id"]:
+                if "export_id" in source:
+                    logger.warning(
+                        _(
+                            "The export_id configuration parameter is deprecated and "
+                            "will be removed in a future version; use data_export_id instead."
+                        )
+                    )
+                    if (
+                        "data_export_id" in source
+                        and source["export_id"] != source["data_export_id"]
+                    ):
                         raise SchemaError(
                             _("export_id and data_export_id must have the same value")
                         )
-                    source["export_id"] = source.pop("data_export_id")
+                    source["data_export_id"] = source.pop("export_id")
                 data_type = source.get("data_type")
                 if (
                     isinstance(data_type, str)

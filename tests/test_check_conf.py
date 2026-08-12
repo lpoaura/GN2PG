@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import pytest
@@ -27,17 +28,13 @@ class TestCheckConf:
         expected_tuning = expected["tuning"]
         for index, (source_name, source) in enumerate(config.source_list.items()):
             expected_source = expected["source"][index]
-            expected_export_id = expected_source.get(
-                "data_export_id", expected_source.get("export_id")
-            )
-
             assert source.source == index
             assert source.name == expected_source["name"]
             assert source.std_name == source_name
             assert source.user_name == expected_source["user_name"]
             assert source.user_password == expected_source["user_password"]
             assert source.url == expected_source["url"]
-            assert source.export_id == expected_export_id
+            assert source.data_export_id == expected_source["data_export_id"]
             assert source.metadata_export_id == expected_source.get("metadata_export_id")
             assert source.data_type == expected_source["data_type"]
             assert source.id_application == expected_source.get("id_application", 3)
@@ -64,17 +61,18 @@ class TestCheckConf:
             assert secure_config["_source"].user_password == "***"
             assert secure_config["_db"].password == "***"
 
-    def test_data_export_id_alias(self, tmp_path, monkeypatch, toml_conf):
-        config_file = tmp_path / "data_export_id.toml"
-        config_file.write_text(toml_conf.replace("export_id =", "data_export_id ="))
+    def test_deprecated_export_id_alias(self, tmp_path, monkeypatch, toml_conf, caplog):
+        config_file = tmp_path / "deprecated_export_id.toml"
+        config_file.write_text(toml_conf.replace("data_export_id =", "export_id ="))
         monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
 
-        config = check_conf.Gn2PgConf(file=config_file.name)
+        with caplog.at_level(logging.WARNING):
+            config = check_conf.Gn2PgConf(file=config_file.name)
 
         source = next(iter(config.source_list.values()))
-        assert source.export_id == int(
-            toml_conf.split("export_id =", maxsplit=1)[1].splitlines()[0]
-        )
+        expected_id = int(toml_conf.split("data_export_id =", maxsplit=1)[1].splitlines()[0])
+        assert source.data_export_id == expected_id
+        assert "export_id configuration parameter is deprecated" in caplog.text
 
     def test_metadata_export_id_for_separated_metadata(self, tmp_path, monkeypatch, toml_conf):
         config_file = tmp_path / "metadata_export_id.toml"

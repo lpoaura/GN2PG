@@ -170,7 +170,10 @@ class BaseAPI:
             str: export API URL.
         """
         if kind == "data":
-            url = f"{self._api_url}{self._export_api_path}/api/{str(self._config.export_id)}"
+            url = (
+                f"{self._api_url}{self._export_api_path}/api/"
+                f"{str(self._config.data_export_id)}"
+            )
         elif kind == "log":
             url = f"{self._api_url}synthese/log"
         else:

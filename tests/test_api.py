@@ -1,5 +1,6 @@
 import math
 import re
+from types import SimpleNamespace
 from urllib.parse import urlencode
 
 from gn2pg.api import BaseAPI
@@ -13,6 +14,14 @@ class TestApi:
         base_api = BaseAPI(config=gn2pg_conf_one_source, controler=None)
 
         assert base_api._api_url.endswith("/")
+
+    def test_data_export_url(self):
+        base_api = object.__new__(BaseAPI)
+        base_api._api_url = "https://geonature.example/api/"
+        base_api._export_api_path = "exports"
+        base_api._config = SimpleNamespace(data_export_id=17)
+
+        assert base_api._url() == "https://geonature.example/api/exports/api/17"
 
     def test_page_list(self, base_api):
         params = {"limit": 10}
