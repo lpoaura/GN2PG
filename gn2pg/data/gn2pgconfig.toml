@@ -28,6 +28,8 @@ user_password = "<monPwd>"
 url = "<http://geonature1/>"
 # GeoNature source data Export id ("export_id" is also accepted)
 data_export_id = 1
+# GeoNature source metadata Export id (optional, only required if `data_type` is `synthese_with_metadata_separated`)
+#metadata_export_id = 2
 # Data type (used to distinct datas and to conditionning triggers)
 data_type = "synthese_with_metadata"
 # GeoNature ID application (default is 3)

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+from schema import SchemaError
 from toml import loads
 
 import gn2pg.check_conf as check_conf
@@ -36,6 +38,7 @@ class TestCheckConf:
             assert source.user_password == expected_source["user_password"]
             assert source.url == expected_source["url"]
             assert source.export_id == expected_export_id
+            assert source.metadata_export_id == expected_source.get("metadata_export_id")
             assert source.data_type == expected_source["data_type"]
             assert source.id_application == expected_source.get("id_application", 3)
             assert source.enable == expected_source.get("enable", True)
@@ -72,3 +75,37 @@ class TestCheckConf:
         assert source.export_id == int(
             toml_conf.split("export_id =", maxsplit=1)[1].splitlines()[0]
         )
+
+    def test_metadata_export_id_for_separated_metadata(self, tmp_path, monkeypatch, toml_conf):
+        config_file = tmp_path / "metadata_export_id.toml"
+        config_file.write_text(
+            toml_conf.replace(
+                'data_type = "synthese_with_metadata"',
+                'data_type = "synthese_with_metadata_separated"\n' "    metadata_export_id = 2",
+            )
+        )
+        monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
+
+        config = check_conf.Gn2PgConf(file=config_file.name)
+
+        source = next(iter(config.source_list.values()))
+        assert source.metadata_export_id == 2
+
+    def test_metadata_export_id_is_optional_for_other_data_types(self, gn2pg_conf):
+        source = next(iter(gn2pg_conf.source_list.values()))
+        assert source.metadata_export_id is None
+
+    def test_metadata_export_id_is_required_for_separated_metadata(
+        self, tmp_path, monkeypatch, toml_conf
+    ):
+        config_file = tmp_path / "missing_metadata_export_id.toml"
+        config_file.write_text(
+            toml_conf.replace(
+                'data_type = "synthese_with_metadata"',
+                'data_type = "synthese_with_metadata_separated"',
+            )
+        )
+        monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
+
+        with pytest.raises(SchemaError, match="metadata_export_id is required"):
+            check_conf.Gn2PgConf(file=config_file.name)

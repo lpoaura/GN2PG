@@ -54,6 +54,7 @@ _CONF_SCHEMA = Schema(
                 "user_password": str,
                 "url": str,
                 "export_id": int,
+                Optional("metadata_export_id"): int,
                 Optional("id_application"): int,
                 Optional("enable"): bool,
                 Optional("data_type"): str,
@@ -97,6 +98,7 @@ class Source:
     url: str
     export_id: int
     data_type: str
+    metadata_export_id: TypeOptional[int] = None
     id_application: int = 3
     enable: bool = True
     last_action_date: TypeOptional[str] = None
@@ -136,6 +138,7 @@ class Gn2PgSourceConf:
                 ),
                 query_strings=coalesce_in_dict(config["source"][source], "query_strings", {}),
                 export_id=config["source"][source]["export_id"],
+                metadata_export_id=config["source"][source].get("metadata_export_id"),
                 enable=(
                     True
                     if "enable" not in config["source"][source]
@@ -240,6 +243,11 @@ class Gn2PgSourceConf:
             int: GeoNature export_id
         """
         return self._source.export_id
+
+    @property
+    def metadata_export_id(self) -> TypeOptional[int]:
+        """Return the metadata export ID when the source uses a separate export."""
+        return self._source.metadata_export_id
 
     @property
     def data_type(self) -> str:
@@ -371,6 +379,18 @@ class Gn2PgConf:
                             _("export_id and data_export_id must have the same value")
                         )
                     source["export_id"] = source.pop("data_export_id")
+                data_type = source.get("data_type")
+                if (
+                    isinstance(data_type, str)
+                    and data_type.lower() == "synthese_with_metadata_separated"
+                    and "metadata_export_id" not in source
+                ):
+                    raise SchemaError(
+                        _(
+                            "metadata_export_id is required when data_type is "
+                            "synthese_with_metadata_separated"
+                        )
+                    )
             _CONF_SCHEMA.validate(self._config)
         except SchemaError as error:
             logger.error(
