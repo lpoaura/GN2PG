@@ -415,8 +415,6 @@ class StorePostgresql:
             logger.critical(_("An error occured while trying to connect to database : %s"), e)
             sys.exit(0)
 
-        self._conn = self._db.connect()
-
         self.total_errors: int = 0
         self.count_data_upserts: int = 0
         self.count_data_delete: int = 0
@@ -447,8 +445,8 @@ class StorePostgresql:
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Finalize connections."""
-        logger.debug("Closing database connection at exit from StorePostgresql")
-        self._conn.close()
+        logger.debug("Disposing database engine at exit from StorePostgresql")
+        self._db.dispose()
 
     @property
     def version(self):
@@ -468,6 +466,46 @@ class StorePostgresql:
     ):
         """Store 1 metadata item in db (using upsert statement)"""
 
+        try:
+            with self._db.begin() as conn:
+                rowcount = self._store_1_metadata(
+                    conn, controler, level, elem, uuid_key_name=uuid_key_name
+                )
+            self.count_metadata_inserts += rowcount
+        except (IntegrityError, exc.StatementError) as error:
+            self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
+            if isinstance(error.orig, psycopg2.errors.UniqueViolation):
+                logger.warning(
+                    _(
+                        "A metadata with UUID %s from a different source already"
+                        " exists in Database: %s",
+                    ),
+                    elem[uuid_key_name],
+                    str(error),
+                )
+            else:
+                logger.critical(
+                    _(
+                        "One error occurred for data from source %s "
+                        "with %s = %s. Error message is %s"
+                    ),
+                    self._config.std_name,
+                    "uuid",
+                    elem[uuid_key_name],
+                    str(error),
+                )
+            self.count_metadata_errors += 1
+
+    def _store_1_metadata(
+        self,
+        conn: sqlalchemy.engine.base.Connection,
+        controler: str,
+        level: str,
+        elem: dict,
+        uuid_key_name: str = "uuid",
+    ) -> int:
+        """Store one metadata item using the caller's transaction."""
+
         metadata = self._table_defs["meta"]["metadata"]
         # logger.debug(elem[id_key_name])
         exists_stmt = select(
@@ -480,52 +518,24 @@ class StorePostgresql:
                 )
             ]
         )
-        if not self._conn.execute(exists_stmt).scalar():
-            try:
-                insert_stmt = insert(metadata).values(
-                    controler=controler,
-                    type=self._config.data_type,
-                    level=level,
-                    uuid=elem[uuid_key_name],
-                    source=self._config.std_name,
-                    item=elem,
-                    update_ts=datetime.now(),
-                    import_id=self.import_id,
-                )
-                do_update_stmt = insert_stmt.on_conflict_do_update(
-                    constraint=metadata.primary_key,
-                    set_={"item": elem, "update_ts": datetime.now(), "import_id": self.import_id},
-                )
-                result = self._conn.execute(do_update_stmt)
-                self.count_metadata_inserts += result.rowcount
-                self._conn.execute("COMMIT")
-            except (IntegrityError, exc.StatementError) as error:
-                # Check if the original exception is a UniqueViolation
-                self._conn.execute("ROLLBACK")
-                if isinstance(error.orig, psycopg2.errors.UniqueViolation):
-                    self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
-                    # if logger.getEffectiveLevel() >
-                    logger.warning(
-                        _(
-                            "A metadata with UUID %s from a different source already"
-                            " exists in Database: %s",
-                        ),
-                        elem["uuid"],
-                        str(error),
-                    )
-                else:
-                    self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
-                    logger.critical(
-                        _(
-                            "One error occurred for data from source %s "
-                            "with %s = %s. Error message is %s"
-                        ),
-                        self._config.std_name,
-                        "uuid",
-                        elem["uuid"],
-                        str(error),
-                    )
-                self.count_metadata_errors += 1
+        if conn.execute(exists_stmt).scalar():
+            return 0
+
+        insert_stmt = insert(metadata).values(
+            controler=controler,
+            type=self._config.data_type,
+            level=level,
+            uuid=elem[uuid_key_name],
+            source=self._config.std_name,
+            item=elem,
+            update_ts=datetime.now(),
+            import_id=self.import_id,
+        )
+        do_update_stmt = insert_stmt.on_conflict_do_update(
+            constraint=metadata.primary_key,
+            set_={"item": elem, "update_ts": datetime.now(), "import_id": self.import_id},
+        )
+        return conn.execute(do_update_stmt).rowcount
 
     def store_1_data(
         self,
@@ -544,41 +554,42 @@ class StorePostgresql:
         """
         metadata = self._table_defs[controler]["metadata"]
         logger.debug("elem[id_key_name] is %s, id_key_name is %s", elem[id_key_name], id_key_name)
-        metadata_infos = {"ca_data": "acquisition framework", "jdd_data": "dataset"}
         try:
-            logger.debug("store_1_data type %s", self._config.data_type)
-            for key, value in metadata_infos.items():
-                if key in elem and isinstance(elem.get(key), dict):
-                    meta_data = elem.pop(key)
-                    elem[f"{key.rsplit('_', maxsplit=1)[0]}_uuid"] = meta_data[
-                        "uuid"
-                    ]  # Generate key "{ca,jdd}_uuid"
-                    if key == "jdd_data":
-                        meta_data["ca_uuid"] = (
-                            elem["ca_data"]["uuid"] if "ca_data" in elem else elem["ca_uuid"]
+            metadata_inserts = 0
+            with self._db.begin() as conn:
+                logger.debug("store_1_data type %s", self._config.data_type)
+                for key, value in (
+                    ("ca_data", "acquisition framework"),
+                    ("jdd_data", "dataset"),
+                ):
+                    if key in elem and isinstance(elem.get(key), dict):
+                        meta_data = elem.pop(key)
+                        elem[f"{key.rsplit('_', maxsplit=1)[0]}_uuid"] = meta_data["uuid"]
+                        if key == "jdd_data":
+                            meta_data["ca_uuid"] = elem["ca_uuid"]
+                        metadata_inserts += self._store_1_metadata(
+                            conn, controler="metadata", level=value, elem=meta_data
                         )
-                    self.store_1_metadata(controler="metadata", level=value, elem=meta_data)
 
-            insert_stmt = insert(metadata).values(
-                id_data=elem[id_key_name],
-                controler=controler,
-                type=self._config.data_type,
-                uuid=elem[uuid_key_name],
-                source=self._config.std_name,
-                item=elem,
-                update_ts=datetime.now(),
-                import_id=self.import_id,
-            )
-            do_update_stmt = insert_stmt.on_conflict_do_update(
-                constraint=metadata.primary_key,
-                set_={"item": elem, "update_ts": datetime.now(), "import_id": self.import_id},
-            )
-            result = self._conn.execute(do_update_stmt)
-            self.count_data_upserts += result.rowcount
-            self._conn.execute("COMMIT")
+                insert_stmt = insert(metadata).values(
+                    id_data=elem[id_key_name],
+                    controler=controler,
+                    type=self._config.data_type,
+                    uuid=elem[uuid_key_name],
+                    source=self._config.std_name,
+                    item=elem,
+                    update_ts=datetime.now(),
+                    import_id=self.import_id,
+                )
+                do_update_stmt = insert_stmt.on_conflict_do_update(
+                    constraint=metadata.primary_key,
+                    set_={"item": elem, "update_ts": datetime.now(), "import_id": self.import_id},
+                )
+                data_upserts = conn.execute(do_update_stmt).rowcount
+            self.count_metadata_inserts += metadata_inserts
+            self.count_data_upserts += data_upserts
         except (IntegrityError, exc.StatementError) as error:
-            # Check if the original exception is a UniqueViolation
-            self._conn.execute("ROLLBACK")
+            # The transaction has already been rolled back before logging the error.
             if isinstance(error.orig, psycopg2.errors.UniqueViolation):
                 self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
                 logger.warning(
@@ -750,18 +761,19 @@ class StorePostgresql:
             controler,
         )
         keys = [item[id_key_name] for item in items]
-        deleted_data = self._conn.execute(
-            self._table_defs["data"]["metadata"]
-            .delete()
-            .where(
-                and_(
-                    self._table_defs["data"]["metadata"].c.id_data.in_(keys),
-                    self._table_defs["data"]["metadata"].c.controler == controler,
-                    self._table_defs["data"]["metadata"].c.source == self._config.std_name,
+        with self._db.begin() as conn:
+            deleted_data = conn.execute(
+                self._table_defs["data"]["metadata"]
+                .delete()
+                .where(
+                    and_(
+                        self._table_defs["data"]["metadata"].c.id_data.in_(keys),
+                        self._table_defs["data"]["metadata"].c.controler == controler,
+                        self._table_defs["data"]["metadata"].c.source == self._config.std_name,
+                    )
                 )
             )
-        )
-        del_count += deleted_data.rowcount
+            del_count += deleted_data.rowcount
         logger.debug(
             _("%s rows have been deleted from source %s (controler %s)"),
             str(del_count),
@@ -797,8 +809,9 @@ class StorePostgresql:
                 .values(**values)
                 .returning(metadata.c.id)
             )
-        result = self._conn.execute(stmt)
-        self.import_id = result.scalar()
+        with self._db.begin() as conn:
+            result = conn.execute(stmt)
+            self.import_id = result.scalar()
         return self.import_id
 
     def import_get(self, controler: str) -> Optional[str]:
@@ -823,8 +836,9 @@ class StorePostgresql:
             )
             .order_by(metadata.c.xfer_start_ts.desc())
         )
-        result = self._conn.execute(stmt)
-        row = result.fetchone()
+        with self._db.connect() as conn:
+            result = conn.execute(stmt)
+            row = result.fetchone()
 
         return row[0] if row is not None else None
 
@@ -846,6 +860,19 @@ class StorePostgresql:
             last_ts (datetime, optional): [description]. Defaults to datetime.now().
         """
 
+        with self._db.begin() as conn:
+            self._error_log(conn, controler, item, error, uuid=uuid, last_ts=last_ts)
+
+    def _error_log(  # pylint: disable=R0917
+        self,
+        conn: sqlalchemy.engine.base.Connection,
+        controler: str,
+        item: dict,
+        error: str,
+        uuid: str = None,
+        last_ts: datetime = datetime.now(),
+    ) -> None:
+        """Store an error using the caller's transaction."""
         metadata = self._metadata.tables[self._config.database.schema_import + "." + "error_log"]
         exists_stmt = select(
             [
@@ -857,8 +884,7 @@ class StorePostgresql:
                 )
             ]
         )
-        print(exists_stmt)
-        if not self._conn.execute(exists_stmt).scalar():
+        if not conn.execute(exists_stmt).scalar():
             insert_stmt = insert(metadata).values(
                 source=self._config.std_name,
                 controler=controler,
@@ -868,4 +894,4 @@ class StorePostgresql:
                 error=error,
                 import_id=self.import_id,
             )
-            self._conn.execute(insert_stmt)
+            conn.execute(insert_stmt)
