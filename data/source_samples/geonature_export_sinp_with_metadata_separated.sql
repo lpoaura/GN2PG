@@ -328,21 +328,23 @@ WITH af_actors AS (
 , ds_protocols AS (
     SELECT
         cdp.id_dataset
-        , jsonb_build_object('uuid'
-            , sdp.unique_protocol_id
-            , 'name'
-            , sdp.protocol_name
-            , 'desc'
-            , sdp.protocol_desc
-            , 'url'
-            , sdp.protocol_url
-            , 'type'
-            , t_nomenclatures.cd_nomenclature) AS protocols
+        , jsonb_agg(jsonb_build_object('uuid'
+                , sdp.unique_protocol_id
+                , 'name'
+                , sdp.protocol_name
+                , 'desc'
+                , sdp.protocol_desc
+                , 'url'
+                , sdp.protocol_url
+                , 'type'
+                , t_nomenclatures.cd_nomenclature)) AS protocols
     FROM
         gn_meta.cor_dataset_protocol cdp
         JOIN gn_meta.sinp_datatype_protocols sdp ON cdp.id_protocol = sdp.id_protocol
 	LEFT JOIN ref_nomenclatures.t_nomenclatures ON
 	    sdp.id_nomenclature_protocol_type = t_nomenclatures.id_nomenclature
+    GROUP BY
+        1
 )
 , ds AS (
     SELECT
