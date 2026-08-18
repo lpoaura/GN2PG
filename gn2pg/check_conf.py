@@ -53,7 +53,7 @@ _CONF_SCHEMA = Schema(
                 "user_name": str,
                 "user_password": str,
                 "url": str,
-                "data_export_id": int,
+                Optional("data_export_id"): int,
                 Optional("metadata_export_id"): int,
                 Optional("id_application"): int,
                 Optional("enable"): bool,
@@ -96,7 +96,7 @@ class Source:
     user_name: str
     user_password: str
     url: str
-    data_export_id: int
+    data_export_id: TypeOptional[int]
     data_type: str
     metadata_export_id: TypeOptional[int] = None
     id_application: int = 3
@@ -137,7 +137,7 @@ class Gn2PgSourceConf:
                     "synthese_with_cd_nomenclature",
                 ),
                 query_strings=coalesce_in_dict(config["source"][source], "query_strings", {}),
-                data_export_id=config["source"][source]["data_export_id"],
+                data_export_id=config["source"][source].get("data_export_id"),
                 metadata_export_id=config["source"][source].get("metadata_export_id"),
                 enable=(
                     True
@@ -236,7 +236,7 @@ class Gn2PgSourceConf:
         return self._source.id_application
 
     @property
-    def data_export_id(self) -> int:
+    def data_export_id(self) -> TypeOptional[int]:
         """Return the data export ID used to access the export.
 
         Returns:
@@ -388,17 +388,27 @@ class Gn2PgConf:
                             _("export_id and data_export_id must have the same value")
                         )
                     source["data_export_id"] = source.pop("export_id")
-                data_type = source.get("data_type")
+                data_type = source.get("data_type", "synthese_with_cd_nomenclature")
+                normalized_data_type = (
+                    data_type.lower() if isinstance(data_type, str) else data_type
+                )
                 if (
-                    isinstance(data_type, str)
-                    and data_type.lower() == "synthese_with_metadata_separated"
+                    normalized_data_type
+                    in (
+                        "metadata_only",
+                        "synthese_with_metadata_separated",
+                    )
                     and "metadata_export_id" not in source
                 ):
                     raise SchemaError(
                         _(
-                            "metadata_export_id is required when data_type is "
-                            "synthese_with_metadata_separated"
+                            "metadata_export_id is required when data_type is metadata_only "
+                            "or synthese_with_metadata_separated"
                         )
+                    )
+                if normalized_data_type != "metadata_only" and "data_export_id" not in source:
+                    raise SchemaError(
+                        _("data_export_id is required unless data_type is metadata_only")
                     )
             _CONF_SCHEMA.validate(self._config)
         except SchemaError as error:

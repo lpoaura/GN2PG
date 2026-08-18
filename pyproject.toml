@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "gn2pg_client"
 packages = [{ include = "gn2pg" }]
-version = "1.9.1"
+version = "1.10.0"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = [
   "Collectif",
@@ -110,7 +110,7 @@ exclude = '''
 '''
 include = '\.pyi?$'
 line-length = 99
-target-version = ['py37']
+target-version = ['py310']
 
 [tool.pylint]
 ignored-modules = ["psycopg2.errors","psycopg2"]

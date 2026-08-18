@@ -23,6 +23,14 @@ class TestApi:
 
         assert base_api._url() == "https://geonature.example/api/exports/api/17"
 
+    def test_metadata_export_url(self):
+        base_api = object.__new__(BaseAPI)
+        base_api._api_url = "https://geonature.example/api/"
+        base_api._export_api_path = "exports"
+        base_api._config = SimpleNamespace(metadata_export_id=23)
+
+        assert base_api._url(kind="metadata") == "https://geonature.example/api/exports/api/23"
+
     def test_page_list(self, base_api):
         params = {"limit": 10}
         api_url = base_api._url(params=params)

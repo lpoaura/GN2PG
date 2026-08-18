@@ -93,9 +93,10 @@ Provided `data_type` are :
 * `synthese_with_label` for standard GeoNature export 
 * `synthese_with_cd_nomenclature` for a standard export using `cd_nomenclature`
 * `synthese_with_metadata` for and advanced export included metadata
-* `synthese_with_separated_metadata` for advanced and optimized exports where metadata are provided in a distinct export.
+* `synthese_with_metadata_separated` for advanced and optimized exports where metadata are provided in a distinct export. It requires `metadata_export_id`; metadata are imported before observations.
+* `metadata_only` to import only the dedicated metadata export. It requires `metadata_export_id` and does not require `data_export_id`.
 
-The recommended method for data exchange is `synthese_with_separated_metadata`.
+The recommended method for data exchange is `synthese_with_metadata_separated`.
 
 :::
 

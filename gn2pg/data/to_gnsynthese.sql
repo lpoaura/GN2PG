@@ -127,14 +127,14 @@ BEGIN
         , _id_af
         , _name
         ,
-    LEFT (_name
-        , 30)
-    , 'A compléter'
-    , TRUE
-    , TRUE
-    , now()
-RETURNING
-    id_dataset INTO the_dataset_id;
+        LEFT (_name
+            , 30)
+        , 'A compléter'
+        , TRUE
+        , TRUE
+        , now()
+    RETURNING
+        id_dataset INTO the_dataset_id;
 
     IF gn2pg_import.fct_c_check_has_additional_data_column ('gn_meta' ,
 	't_datasets' , 'additional_data') THEN
@@ -920,6 +920,8 @@ BEGIN
         CASE NEW.type
         WHEN 'synthese_with_metadata' THEN
             gn2pg_import.fct_get_af_id_from_uuid (cast(NEW.item #>> '{ca_uuid}' AS UUID))
+        WHEN 'synthese_with_metadata_separated' THEN
+            gn2pg_import.fct_get_af_id_from_uuid (cast(NEW.item #>> '{ca_uuid}' AS UUID))
         ELSE
 	    gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name
 		(cast(NEW.item #>> '{ca_uuid}' AS UUID) , NEW.item #>>
@@ -928,6 +930,8 @@ BEGIN
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_metadata' THEN
+            gn2pg_import.fct_get_dataset_id_from_uuid (cast(NEW.item #>> '{jdd_uuid}' AS UUID))
+        WHEN 'synthese_with_metadata_separated' THEN
             gn2pg_import.fct_get_dataset_id_from_uuid (cast(NEW.item #>> '{jdd_uuid}' AS UUID))
         ELSE
 	    gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name
@@ -1335,7 +1339,7 @@ DROP TRIGGER IF EXISTS tri_c_delete_data_from_geonature ON gn2pg_import.data_jso
 CREATE TRIGGER tri_c_delete_data_from_geonature
     AFTER DELETE ON gn2pg_import.data_json
     FOR EACH ROW
-    WHEN (old.type IN ('synthese_with_label' , 'synthese_with_cd_nomenclature' , 'synthese_with_metadata'))
+    WHEN (old.type IN ('synthese_with_label' , 'synthese_with_cd_nomenclature' , 'synthese_with_metadata' , 'synthese_with_metadata_separated'))
     EXECUTE PROCEDURE gn2pg_import.fct_tri_c_delete_data_from_geonature ();
 
 COMMIT;

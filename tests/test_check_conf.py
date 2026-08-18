@@ -107,3 +107,22 @@ class TestCheckConf:
 
         with pytest.raises(SchemaError, match="metadata_export_id is required"):
             check_conf.Gn2PgConf(file=config_file.name)
+
+    def test_metadata_only_does_not_require_data_export_id(self, tmp_path, monkeypatch, toml_conf):
+        config_file = tmp_path / "metadata_only.toml"
+        lines = [
+            line
+            for line in toml_conf.replace(
+                'data_type = "synthese_with_metadata"',
+                'data_type = "metadata_only"\n    metadata_export_id = 2',
+            ).splitlines()
+            if not line.strip().startswith("data_export_id =")
+        ]
+        config_file.write_text("\n".join(lines))
+        monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
+
+        source = next(iter(check_conf.Gn2PgConf(file=config_file.name).source_list.values()))
+
+        assert source.data_type == "metadata_only"
+        assert source.data_export_id is None
+        assert source.metadata_export_id == 2

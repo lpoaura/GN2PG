@@ -160,7 +160,7 @@ class BaseAPI:
         """Return the controler name."""
         return self._ctrl
 
-    def _url(self, kind: str = "data", params: Optional[dict] = None) -> str:
+    def _url(self, kind: str = "data", params: Optional[dict] = None) -> Optional[str]:
         """Generate export API URL with QueryStrings if params.
 
         Args:
@@ -170,9 +170,18 @@ class BaseAPI:
             str: export API URL.
         """
         if kind == "data":
+            if self._config.data_export_id is None:
+                return None
             url = (
                 f"{self._api_url}{self._export_api_path}/api/"
                 f"{str(self._config.data_export_id)}"
+            )
+        elif kind == "metadata":
+            if self._config.metadata_export_id is None:
+                return None
+            url = (
+                f"{self._api_url}{self._export_api_path}/api/"
+                f"{str(self._config.metadata_export_id)}"
             )
         elif kind == "log":
             url = f"{self._api_url}synthese/log"

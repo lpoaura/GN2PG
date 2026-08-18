@@ -7,6 +7,33 @@ to [Semantic Versioning](https://semver.org/).
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+# [next] 1.10.0 - 2026-09-xx
+
+### :rocket: Features
+
+- Allow separated export for metadata. 2 new import modes are now available, `synthese_with_separated_metadata` and `metadata_only`. Export sample queries ara available in [geonature_export_sinp_with_metadata.sql](./data/geonature_export_sinp_with_metadata_separated.sql).
+
+
+### :bug: Fixes
+
+- Fix and improve tests
+
+
+### :point_down: Release note
+
+1. Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+```
+
+2. For users who use `GN2PG_client` to populate a GeoNature database, update SQL triggers.
+
+```bash
+gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
+```
+
+
 ## 1.9.1 - 2025-06-10
 
 ### :bug: Fixes

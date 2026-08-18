@@ -1,4 +1,9 @@
-SET ROLE geonature;
+/*
+
+ Export basique mettant à dispo les données de synthèse avec le cd_nomenclature 
+ ET les métadonnées détaillées dans une vue séparée
+ */
+BEGIN;
 
 DROP VIEW IF EXISTS gn_exports.v_synthese_sinp_without_metadata_for_gn2pg CASCADE;
 
@@ -393,6 +398,11 @@ WITH af_actors AS (
 	    tds.id_nomenclature_resource_type = nrt.id_nomenclature
 	LEFT JOIN ref_nomenclatures.t_nomenclatures nss ON
 	    tds.id_nomenclature_source_status = nss.id_nomenclature
+        -- TODO : Custom filtering
+        -- WHERE tds.unique_dataset_id IN
+        -- (SELECT DISTINCT vs.jdd_uuid FROM
+        -- gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vs)
+        -- END TODO
     GROUP BY
         tds.id_dataset
         , tds.id_acquisition_framework
@@ -423,9 +433,11 @@ SELECT
 FROM
     af
     JOIN agg_ds ON agg_ds.id_acquisition_framework = af.id_acquisition_framework
-    -- For testing
-WHERE
-    af.uuid IN ( SELECT DISTINCT
-            vs.ca_uuid
-        FROM
-            gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vs);
+    -- TODO : Custom filtering
+    -- WHERE af.uuid IN
+    -- (SELECT DISTINCT vs.ca_uuid FROM
+    -- gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vs)
+    -- END TODO
+;
+
+COMMIT;
