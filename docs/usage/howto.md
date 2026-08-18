@@ -96,7 +96,7 @@ Provided `data_type` are :
 * `synthese_with_metadata_separated` for advanced and optimized exports where metadata are provided in a distinct export. It requires `metadata_export_id`; metadata are imported before observations.
 * `metadata_only` to import only the dedicated metadata export. It requires `metadata_export_id` and does not require `data_export_id`.
 
-The recommended method for data exchange is `synthese_with_metadata_separated`.
+**The recommended method for data exchange is** `synthese_with_metadata_separated`.
 
 :::
 
@@ -188,7 +188,7 @@ gn2pg_cli download --update <myconfigfile>
 
 To automate the launching of updates, you can write the cron task using the following command, for example every 30 minutes.
 
-```
+```crontab
 */30 * * * * /usr/bin/env bash -c "source <path to python environment>/bin/activate && gn2pg_cli download --update <myconfigfile>" > /dev/null 2>&1
 ```
 
