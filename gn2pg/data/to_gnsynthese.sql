@@ -13,8 +13,6 @@
  3. insert or update synthese data (from source/id_synthese, UUID may be NULL...)
  */
 /* Acquisition Frameworks */
-BEGIN;
-
 CREATE SCHEMA IF NOT EXISTS gn2pg_import;
 
 DROP FUNCTION IF EXISTS
@@ -39,7 +37,7 @@ BEGIN
                 AND table_name = _table_name
                 AND column_name = _column_name) INTO the_has_column;
     RETURN the_has_column;
-    END;
+END;
 $func$
 LANGUAGE plpgsql;
 
@@ -891,6 +889,7 @@ DECLARE
     the_additional_data JSONB;
     the_meta_validation_date TIMESTAMP;
 BEGIN
+    RAISE DEBUG '<gn2pg_import.fct_tri_c_upsert_data_to_geonature > NEW: %' , NEW;
     SELECT
         NEW.uuid INTO the_unique_id_sinp;
     SELECT
@@ -917,21 +916,18 @@ BEGIN
     SELECT
         NEW.item #>> '{id_synthese}' INTO the_entity_source_pk_value;
     SELECT
-        CASE NEW.type
-        WHEN 'synthese_with_metadata' THEN
-            gn2pg_import.fct_get_af_id_from_uuid (cast(NEW.item #>> '{ca_uuid}' AS UUID))
-        WHEN 'synthese_with_metadata_separated' THEN
-            gn2pg_import.fct_get_af_id_from_uuid (cast(NEW.item #>> '{ca_uuid}' AS UUID))
+	CASE WHEN NEW.type IN ('synthese_with_metadata' ,
+	    'synthese_with_metadata_separated') THEN
+            -- gn2pg_import.fct_get_af_id_from_uuid (cast(NEW.item #>> '{ca_uuid}' AS UUID))
+            NULL
         ELSE
 	    gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name
 		(cast(NEW.item #>> '{ca_uuid}' AS UUID) , NEW.item #>>
 		'{ca_nom}')
         END AS the_id_af INTO the_id_af;
     SELECT
-        CASE NEW.type
-        WHEN 'synthese_with_metadata' THEN
-            gn2pg_import.fct_get_dataset_id_from_uuid (cast(NEW.item #>> '{jdd_uuid}' AS UUID))
-        WHEN 'synthese_with_metadata_separated' THEN
+	CASE WHEN NEW.type IN ('synthese_with_metadata' ,
+	    'synthese_with_metadata_separated') THEN
             gn2pg_import.fct_get_dataset_id_from_uuid (cast(NEW.item #>> '{jdd_uuid}' AS UUID))
         ELSE
 	    gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name
@@ -1342,4 +1338,7 @@ CREATE TRIGGER tri_c_delete_data_from_geonature
     WHEN (old.type IN ('synthese_with_label' , 'synthese_with_cd_nomenclature' , 'synthese_with_metadata' , 'synthese_with_metadata_separated'))
     EXECUTE PROCEDURE gn2pg_import.fct_tri_c_delete_data_from_geonature ();
 
-COMMIT;
+CREATE TABLE gn2pg_import.test (
+    id SERIAL PRIMARY KEY
+    , label VARCHAR
+);
