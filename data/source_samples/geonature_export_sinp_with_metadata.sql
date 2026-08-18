@@ -1,3 +1,10 @@
+/*
+
+ Export basique mettant à dispo les données de synthèse avec le cd_nomenclature 
+ ET les métadonnées détaillées imbriquées dans chaque donnée
+ */
+BEGIN;
+
 DROP VIEW IF EXISTS gn_exports.v_synthese_sinp_with_metadata_for_gn2pg;
 
 CREATE VIEW gn_exports.v_synthese_sinp_with_metadata_for_gn2pg AS
@@ -392,3 +399,5 @@ FROM
 	    bib_areas_types.id_type) ON s.id_area_attachment = l_areas.id_area
 ORDER BY
     s.id_synthese ASC;
+
+COMMIT;
