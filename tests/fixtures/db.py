@@ -6,7 +6,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from gn2pg.store_postgresql import db_url
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def db(gn2pg_conf_one_source):
     engine = create_engine(URL.create(**db_url(gn2pg_conf_one_source)))
     if not database_exists(engine.url):

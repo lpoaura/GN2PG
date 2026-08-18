@@ -7,6 +7,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict
 from typing import Optional as TypeOptional
+from typing import TypeAlias
 
 from schema import Optional, Schema, SchemaError
 from toml import load
@@ -33,9 +34,9 @@ class IncorrectParameter(Gn2PgConfException):
     """Incorrect or missing parameter."""
 
 
-_ConfType = Dict[str, Any]
+_ConfType: TypeAlias = Dict[str, Any]
 
-_ConfSchema = Schema(
+_CONF_SCHEMA = Schema(
     {
         "db": {
             "db_host": str,
@@ -52,7 +53,8 @@ _ConfSchema = Schema(
                 "user_name": str,
                 "user_password": str,
                 "url": str,
-                "export_id": int,
+                Optional("data_export_id"): int,
+                Optional("metadata_export_id"): int,
                 Optional("id_application"): int,
                 Optional("enable"): bool,
                 Optional("data_type"): str,
@@ -94,8 +96,9 @@ class Source:
     user_name: str
     user_password: str
     url: str
-    export_id: int
+    data_export_id: TypeOptional[int]
     data_type: str
+    metadata_export_id: TypeOptional[int] = None
     id_application: int = 3
     enable: bool = True
     last_action_date: TypeOptional[str] = None
@@ -134,7 +137,8 @@ class Gn2PgSourceConf:
                     "synthese_with_cd_nomenclature",
                 ),
                 query_strings=coalesce_in_dict(config["source"][source], "query_strings", {}),
-                export_id=config["source"][source]["export_id"],
+                data_export_id=config["source"][source].get("data_export_id"),
+                metadata_export_id=config["source"][source].get("metadata_export_id"),
                 enable=(
                     True
                     if "enable" not in config["source"][source]
@@ -232,13 +236,18 @@ class Gn2PgSourceConf:
         return self._source.id_application
 
     @property
-    def export_id(self) -> int:
-        """Return export id, used to access to export
+    def data_export_id(self) -> TypeOptional[int]:
+        """Return the data export ID used to access the export.
 
         Returns:
-            int: GeoNature export_id
+            int: GeoNature data export ID
         """
-        return self._source.export_id
+        return self._source.data_export_id
+
+    @property
+    def metadata_export_id(self) -> TypeOptional[int]:
+        """Return the metadata export ID when the source uses a separate export."""
+        return self._source.metadata_export_id
 
     @property
     def data_type(self) -> str:
@@ -363,7 +372,45 @@ class Gn2PgConf:
         try:
             logger.info(_("Loading TOML configuration %s"), file)
             self._config = load(path)
-            _ConfSchema.validate(self._config)
+            for source in self._config.get("source", []):
+                if "export_id" in source:
+                    logger.warning(
+                        _(
+                            "The export_id configuration parameter is deprecated and "
+                            "will be removed in a future version; use data_export_id instead."
+                        )
+                    )
+                    if (
+                        "data_export_id" in source
+                        and source["export_id"] != source["data_export_id"]
+                    ):
+                        raise SchemaError(
+                            _("export_id and data_export_id must have the same value")
+                        )
+                    source["data_export_id"] = source.pop("export_id")
+                data_type = source.get("data_type", "synthese_with_cd_nomenclature")
+                normalized_data_type = (
+                    data_type.lower() if isinstance(data_type, str) else data_type
+                )
+                if (
+                    normalized_data_type
+                    in (
+                        "metadata_only",
+                        "synthese_with_metadata_separated",
+                    )
+                    and "metadata_export_id" not in source
+                ):
+                    raise SchemaError(
+                        _(
+                            "metadata_export_id is required when data_type is metadata_only "
+                            "or synthese_with_metadata_separated"
+                        )
+                    )
+                if normalized_data_type != "metadata_only" and "data_export_id" not in source:
+                    raise SchemaError(
+                        _("data_export_id is required unless data_type is metadata_only")
+                    )
+            _CONF_SCHEMA.validate(self._config)
         except SchemaError as error:
             logger.error(
                 _("Incorrect content in YAML configuration %s : %s"),

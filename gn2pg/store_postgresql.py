@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Methods to store data to Postgresql database."""
+
+import copy
 import importlib.resources
 import logging
 import sys
@@ -638,6 +640,60 @@ class StorePostgresql:
             self.count_data_errors,
             self.count_metadata_inserts,
             self.count_metadata_errors,
+        )
+
+    def store_metadata(self, items: list[dict]) -> Tuple[int, int, int]:
+        """Store acquisition frameworks and their datasets from a metadata export.
+
+        A metadata export item contains the acquisition framework in ``jsonb_insert``
+        and its datasets in the nested ``datasets`` array.
+        """
+        initial_upserts = self.count_metadata_inserts
+        initial_errors = self.count_metadata_errors
+
+        for exported_item in items:
+            metadata_item = exported_item.get("jsonb_insert")
+            if not isinstance(metadata_item, dict) or not metadata_item.get("uuid"):
+                logger.error(
+                    _("Invalid metadata export item from source %s: %s"),
+                    self._config.std_name,
+                    exported_item,
+                )
+                self.count_metadata_errors += 1
+                continue
+
+            acquisition_framework = copy.deepcopy(metadata_item)
+            datasets = acquisition_framework.pop("datasets", []) or []
+            acquisition_framework_uuid = acquisition_framework["uuid"]
+
+            # The acquisition framework must exist before dataset triggers run.
+            self.store_1_metadata(
+                controler="metadata",
+                level="acquisition framework",
+                elem=acquisition_framework,
+            )
+
+            for exported_dataset in datasets:
+                if not isinstance(exported_dataset, dict) or not exported_dataset.get("uuid"):
+                    logger.error(
+                        _("Invalid dataset in metadata export from source %s: %s"),
+                        self._config.std_name,
+                        exported_dataset,
+                    )
+                    self.count_metadata_errors += 1
+                    continue
+                dataset = copy.deepcopy(exported_dataset)
+                dataset["ca_uuid"] = acquisition_framework_uuid
+                self.store_1_metadata(
+                    controler="metadata",
+                    level="dataset",
+                    elem=dataset,
+                )
+
+        return (
+            len(items),
+            self.count_metadata_inserts - initial_upserts,
+            self.count_metadata_errors - initial_errors,
         )
 
     # ----------------

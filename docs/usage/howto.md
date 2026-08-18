@@ -58,8 +58,8 @@ user_name = "<monuser>"
 user_password = "<monPwd>"
 # GeoNature source URL
 url = "<http://geonature1/>"
-# GeoNature source Export id
-export_id = 1
+# GeoNature source data export ID (`export_id` is deprecated but still accepted)
+data_export_id = 1
 data_type = "synthese_with_metadata"
 # GeoNature ID application (default is 3)
 id_application = 1
@@ -73,7 +73,7 @@ name = "Source2"
 user_name = "<monuser>"
 user_password = "<monPwd>"
 url = "<http://geonature2/>"
-export_id = 1
+data_export_id = 1
 
 # Optional values
 [tuning]
@@ -86,8 +86,18 @@ You can add variable in source block `enable = false` to disable a source
 :::
 
 :::{tip}
+
 Default `data_type` (if not defined) is `synthese_with_cd_nomenclature`, this type is used to conditioning triggers to populate `gn_synthese.synthese`. This value can be customized for each source with key `data_type`.
-Provided `data_type` are `synthese_with_label` for standard GeoNature export, `synthese_with_cd_nomenclature` for a standard export using `cd_nomenclature`, `synthese_with_metadata` for and advanced export included metadata
+Provided `data_type` are :
+
+* `synthese_with_label` for standard GeoNature export 
+* `synthese_with_cd_nomenclature` for a standard export using `cd_nomenclature`
+* `synthese_with_metadata` for and advanced export included metadata
+* `synthese_with_metadata_separated` for advanced and optimized exports where metadata are provided in a distinct export. It requires `metadata_export_id`; metadata are imported before observations.
+* `metadata_only` to import only the dedicated metadata export. It requires `metadata_export_id` and does not require `data_export_id`.
+
+The recommended method for data exchange is `synthese_with_metadata_separated`.
+
 :::
 
 :::{tip}

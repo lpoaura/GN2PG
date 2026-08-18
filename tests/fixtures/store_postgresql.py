@@ -4,7 +4,7 @@ from gn2pg.store_postgresql import PostgresqlUtils, StorePostgresql
 
 
 @pytest.fixture(scope="session")
-def postgresql_utils(gn2pg_conf_one_source):
+def postgresql_utils(gn2pg_conf_one_source, db):
     utils = PostgresqlUtils(config=gn2pg_conf_one_source)
     utils.create_json_tables()
     return utils

@@ -9,7 +9,7 @@ To be able to launch tests, the following arguments must be provided:
 - db-user (admin user of the database)
 - db-password (password of the db-user)
 - db-port (port number of the database)
-- export-id (id of the export)
+- data-export-id (ID of the data export)
 - nb-threads (number of threads to use for parallelisation)
 
 ### Before launching tests...
@@ -32,4 +32,4 @@ Explanations:
 If the previous parameters of the postgreSQL container are used, the pytest
 command should be:
 
-`pytest --user=<my_user> --password=<my_password> --url=<my_url> --db-user=dbuser --db-password=dbpass --db-port=5434 --export-id=1 --nb-threads=1 tests`
+`pytest --user=<my_user> --password=<my_password> --url=<my_url> --db-user=dbuser --db-password=dbpass --db-port=5434 --data-export-id=1 --nb-threads=1 tests`

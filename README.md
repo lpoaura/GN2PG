@@ -49,6 +49,8 @@ Current provided trigger configs are:
 
 - `synthese_with_cd_nomenclature` which provide triggers to insert basically data on synthese and generate basic metadatas (acquisition framework and datasets). Source query sample is provided in file [geonature_export_sinp_with_cd_nomenclature.sql](https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_cd_nomenclature.sql)
 - `synthese_with_metadata` which provide triggers to insert data in synthese and populate most of the metadata data (acquisition frameworks, datasets, actors such as organisms and roles, territories, etc.). Source query sample is provided in file [geonature_export_sinp_with_metadata.sql](https://github.com/lpoaura/GN2PG/tree/main/data/source_samples/geonature_export_sinp_with_metadata.sql)
+- `synthese_with_metadata_separated` imports the export configured by `metadata_export_id` before importing observations from `data_export_id`.
+- `metadata_only` imports only `metadata_export_id`; `data_export_id` can be omitted in this mode.
 
 ```TOML
 # GN2PG configuration file
@@ -77,8 +79,8 @@ user_name = "<monuser>"
 user_password = "<monPwd>"
 # GeoNature source URL
 url = "<http://geonature1/>"
-# GeoNature source Export id
-export_id = 1
+# GeoNature source data export ID (`export_id` is deprecated but still accepted)
+data_export_id = 1
 # Data type is facultative. By default the value is 'synthese'. Therefore, triggers from to_gnsynthese.sql are not activated.
 # If you want to insert your data into a GeoNature database please choose either 'synthese_with_cd_nomenclature' or 'synthese_with_metadata'.
 # If not, delete the line.
@@ -91,7 +93,7 @@ name = "Source2"
 user_name = "<monuser>"
 user_password = "<monPwd>"
 url = "<http://geonature2/>"
-export_id = 1
+data_export_id = 1
 data_type = "synthese_with_cd_nomenclature"
 ```
 

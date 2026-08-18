@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgis/postgis:18-3.6-alpine
+    environment:
+      POSTGRES_USER: gn2pg
+      POSTGRES_PASSWORD: gn2pg
+      POSTGRES_DB: gn2pg
+    ports:
+      - "5432:5432"
+    volumes:
+      - PGDATA:/var/lib/postgresql
+      - /var/run/postgresql/:/var/run/postgresql/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  PGDATA:
