@@ -24,6 +24,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     create_engine,
+    event,
     exc,
     exists,
     func,
@@ -40,6 +41,34 @@ from gn2pg.utils import XferStatus
 
 # from gn2pg.logger import logger
 logger = logging.getLogger(__name__)
+
+
+class _PostgresqlNoticeLogger(list):
+    """Log PostgreSQL messages as soon as psycopg2 receives them."""
+
+    def append(self, notice: str) -> None:
+        message = notice.rstrip()
+        if message.startswith("DEBUG:"):
+            logger.debug("SQL: %s", message)
+        else:
+            logger.info("SQL: %s", message)
+        super().append(notice)
+        del self[:-50]
+
+
+def _create_postgresql_engine(url: URL) -> sqlalchemy.engine.base.Engine:
+    """Create an engine logging all PostgreSQL NOTICE and INFO messages."""
+    engine = create_engine(url, echo=False)
+
+    @event.listens_for(engine, "connect")
+    def configure_connection(dbapi_connection, _connection_record) -> None:
+        dbapi_connection.notices = _PostgresqlNoticeLogger()
+        client_min_messages = "DEBUG1" if logger.isEnabledFor(logging.DEBUG) else "NOTICE"
+        with dbapi_connection.cursor() as cursor:
+            cursor.execute(f"SET client_min_messages TO {client_min_messages}")
+        dbapi_connection.commit()
+
+    return engine
 
 
 def db_url(config):
@@ -124,7 +153,7 @@ class PostgresqlUtils:
         if self._config.database.querystring:
             self._db_url["query"] = self._config.database.querystring
 
-        self._db = create_engine(URL.create(**self._db_url), echo=False)
+        self._db = _create_postgresql_engine(URL.create(**self._db_url))
         self._db_schema = self._config.database.schema_import
         self._metadata = MetaData(schema=self._db_schema)
         try:
@@ -339,7 +368,6 @@ class PostgresqlUtils:
             script (str, optional): custom script path. Defaults to "to_gnsynthese".
         """
         logger.info(_("Start to execute %s script"), script)
-        conn = self._db.connect()
         if script == "to_gnsynthese":
             file = importlib.resources.files(  # pylint: disable=too-many-function-args
                 __package__ or "gn2pg"
@@ -362,9 +390,8 @@ class PostgresqlUtils:
             sql_script = sql_script.replace("gn2pg_import", self._db_schema)
         try:
             # logger.debug(sqlscript)
-            with self._db.connect() as conn:
+            with self._db.begin() as conn:
                 conn.execute(text(sql_script))
-                conn.close()
             logger.info(_("script %s successfully applied"), script)
         except exc.SQLAlchemyError as error:
             logger.critical(str(error))
@@ -379,9 +406,7 @@ class StorePostgresql:
         self._db_url = db_url(self._config)
         if self._config.database.querystring:
             self._db_url["query"] = self._config.database.querystring
-        self._db: sqlalchemy.engine.base.Engine = create_engine(
-            URL.create(**self._db_url), echo=False
-        )
+        self._db = _create_postgresql_engine(URL.create(**self._db_url))
         self._db_schema = self._config.database.schema_import
         self._metadata = MetaData(schema=self._db_schema)
         try:
