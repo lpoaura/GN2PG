@@ -12,31 +12,20 @@ from typing import Any, Optional, Tuple
 
 import psycopg2.errors
 import sqlalchemy.engine.base
-from sqlalchemy import (
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    MetaData,
-    PrimaryKeyConstraint,
-    String,
-    Table,
-    Text,
-    UniqueConstraint,
-    create_engine,
-    event,
-    exc,
-    exists,
-    func,
-    select,
-    text,
-)
-from sqlalchemy.dialects.postgresql import JSONB, UUID, insert
+from sqlalchemy import MetaData, Table, create_engine, event, exc, exists, select, text
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import IntegrityError, OperationalError, StatementError
 from sqlalchemy.sql import and_
 
 from gn2pg import _, __version__
+from gn2pg.database import build_metadata
+from gn2pg.database.migrations import (
+    DatabaseStatus,
+    database_status,
+    stamp_existing_database,
+    upgrade_database,
+)
 from gn2pg.utils import XferStatus
 
 # from gn2pg.logger import logger
@@ -155,186 +144,30 @@ class PostgresqlUtils:
 
         self._db = _create_postgresql_engine(URL.create(**self._db_url))
         self._db_schema = self._config.database.schema_import
-        self._metadata = MetaData(schema=self._db_schema)
-        try:
-            self._metadata.reflect(self._db)
-        except OperationalError as e:
-            logger.critical(_("An error occured while trying to connect to database : %s"), e)
-            sys.exit(0)
-
-    # ----------------
-    # Internal methods
-    # ----------------
-
-    def _create_table(self, name, *cols) -> None:
-        """Check if table exists, and create it if not
-
-        Parameters
-        ----------
-        name : str
-            Table name.
-        cols : list
-            Data returned from API call.
-
-        """
-        # Store to database, if enabled
-        if f"{self._config.database.schema_import}.{name}" not in self._metadata.tables:
-            logger.info("Table %s not found => Creating it", name)
-            table = Table(name, self._metadata, *cols)
-            table.create(self._db)
-        else:
-            logger.info("Table %s already exists => Keeping it", name)
-
-    def _create_import_log(self) -> None:
-        """Create import_log table if it does not exist."""
-        self._create_table(
-            "import_log",
-            Column("id", Integer, primary_key=True, autoincrement=True),
-            Column("source", String, nullable=False, index=True),
-            Column("controler", String, nullable=False),
-            Column("xfer_type", String, index=True, nullable=True),
-            Column("xfer_status", String, nullable=True),
-            Column(
-                "xfer_start_ts",
-                DateTime,
-                nullable=False,
-            ),
-            Column(
-                "xfer_end_ts",
-                DateTime,
-                nullable=True,
-            ),
-            Column("api_count_items", Integer, nullable=False, server_default="0"),
-            Column("api_count_errors", Integer, nullable=False, server_default="0"),
-            Column("data_count_upserts", Integer, nullable=False, server_default="0"),
-            Column("data_count_delete", Integer, nullable=False, server_default="0"),
-            Column("data_count_errors", Integer, nullable=False, server_default="0"),
-            Column("metadata_count_upserts", Integer, nullable=False, server_default="0"),
-            Column("metadata_count_errors", Integer, nullable=False, server_default="0"),
-            Column("xfer_filters", JSONB, server_default="{}"),
-            Column("comment", Text, nullable=True, default=None),
-        )
-
-    def _create_error_log(self) -> None:
-        """Create error_log table if table does not exist."""
-        self._create_table(
-            "error_log",
-            Column("source", String, nullable=False),
-            Column("uuid", UUID, nullable=False, index=True),
-            Column("controler", String, nullable=False),
-            Column("last_ts", DateTime, server_default=func.now(), nullable=False),
-            Column("item", JSONB),
-            Column("error", String),
-            Column(
-                "import_id",
-                Integer,
-                ForeignKey("import_log.id", ondelete="CASCADE", onupdate="CASCADE"),
-                index=True,
-            ),
-        )
-
-    def _create_data_json(self) -> None:
-        """Create observations_json table if it does not exist."""
-        self._create_table(
-            "data_json",
-            Column("source", String, nullable=False),
-            Column("controler", String, nullable=False),
-            Column("type", String, nullable=False),
-            Column("id_data", Integer, nullable=False, index=True),
-            Column("uuid", UUID, index=True),
-            Column("item", JSONB, nullable=False),
-            Column(
-                "update_ts",
-                DateTime,
-                server_default=func.now(),
-                nullable=False,
-            ),
-            Column(
-                "import_id",
-                Integer,
-                ForeignKey("import_log.id", onupdate="CASCADE"),
-            ),
-            PrimaryKeyConstraint("id_data", "source", "type", name="pk_source_data"),
-            UniqueConstraint("uuid", name="unique_uuid"),
-        )
-
-    def _create_metadata_json(self) -> None:
-        """Create observations_json table if it does not exist."""
-        self._create_table(
-            "metadata_json",
-            Column("source", String, nullable=False),
-            Column("controler", String, nullable=False),
-            Column("type", String, nullable=False),
-            Column("level", String, nullable=False),
-            Column("uuid", UUID, index=True),
-            Column("item", JSONB, nullable=False),
-            Column(
-                "update_ts",
-                DateTime,
-                server_default=func.now(),
-                nullable=False,
-            ),
-            Column(
-                "import_id",
-                Integer,
-                ForeignKey("import_log.id", onupdate="CASCADE"),
-            ),
-            PrimaryKeyConstraint("uuid", "source", name="pk_source_metadata"),
-            UniqueConstraint("uuid", name="metadata_unique_uuid"),
-        )
+        self._metadata = build_metadata(self._db_schema)
 
     def create_json_tables(self) -> None:
-        """Create all internal and jsonb tables."""
+        """Upgrade the internal and JSONB tables with Alembic."""
         logger.info(
             _("Connecting to %s database, to finalize creation"),
             self._config.database.name,
         )
         try:
-            with self._db.connect() as conn:
-                # Create extensions
-                try:
-                    ext_queries = (
-                        'CREATE EXTENSION IF NOT EXISTS "pgcrypto";',
-                        'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";',
-                    )
-                    for query in ext_queries:
-                        logger.debug(_("Execute: %s"), query)
-                        conn.execute(text(query))
-                    logger.info("PostgreSQL extensions successfully created")
-                except exc.SQLAlchemyError as error:
-                    logger.critical(str(error))
-                # Create import schema
-                try:
-                    query = f"""
-                    CREATE SCHEMA IF NOT EXISTS {self._config.database.schema_import}
-                    AUTHORIZATION {self._config.database.user};
-                    """  # noqa: E702
-                    logger.debug(_("Execute: %s"), query)
-                    conn.execute(text(query))
-                    logger.info(
-                        _("Schema %s owned by %s successfully created"),
-                        self._config.database.schema_import,
-                        self._config.database.user,
-                    )
-                except exc.SQLAlchemyError as error:
-                    logger.critical(
-                        _("Failed to create %s schema"),
-                        self._config.database.schema_import,
-                    )
-                    logger.critical(str(error))
-                # Set path to include VN import schema
-
-                # Check if tables exist or else create them
-                self._create_import_log()
-                self._create_error_log()
-                self._create_data_json()
-                self._create_metadata_json()
-
-                conn.close()
-
-                self._db.dispose()
+            upgrade_database(
+                URL.create(**self._db_url),
+                self._config.database.schema_import,
+            )
+            logger.info("Database successfully upgraded")
         except OperationalError as e:
             logger.critical(_("An error occured while trying to connect to database : %s"), e)
+
+    def migration_status(self) -> DatabaseStatus:
+        """Return the current Alembic status for the configured schema."""
+        return database_status(URL.create(**self._db_url), self._db_schema)
+
+    def stamp_existing(self) -> None:
+        """Validate and stamp an existing pre-Alembic database."""
+        stamp_existing_database(URL.create(**self._db_url), self._db_schema)
 
     def count_json_data(self):
         """Count observations stored in json table, by source and type.
@@ -356,7 +189,6 @@ class PostgresqlUtils:
                 """  # noqa: E702
 
             result = conn.execute(text(query)).fetchall()
-            conn.close()
 
         return result
 
@@ -408,12 +240,7 @@ class StorePostgresql:
             self._db_url["query"] = self._config.database.querystring
         self._db = _create_postgresql_engine(URL.create(**self._db_url))
         self._db_schema = self._config.database.schema_import
-        self._metadata = MetaData(schema=self._db_schema)
-        try:
-            self._metadata.reflect(self._db)
-        except OperationalError as e:
-            logger.critical(_("An error occured while trying to connect to database : %s"), e)
-            sys.exit(0)
+        self._metadata = build_metadata(self._db_schema)
 
         self.total_errors: int = 0
         self.count_data_upserts: int = 0
@@ -509,14 +336,12 @@ class StorePostgresql:
         metadata = self._table_defs["meta"]["metadata"]
         # logger.debug(elem[id_key_name])
         exists_stmt = select(
-            [
-                exists().where(
-                    metadata.c.source == self._config.std_name,
-                    metadata.c.controler == controler,
-                    metadata.c.uuid == elem[uuid_key_name],
-                    metadata.c.import_id == self.import_id,
-                )
-            ]
+            exists().where(
+                metadata.c.source == self._config.std_name,
+                metadata.c.controler == controler,
+                metadata.c.uuid == elem[uuid_key_name],
+                metadata.c.import_id == self.import_id,
+            )
         )
         if conn.execute(exists_stmt).scalar():
             return 0
@@ -826,7 +651,7 @@ class StorePostgresql:
         row = None
         metadata = self._metadata.tables[self._config.database.schema_import + "." + "import_log"]
         stmt = (
-            select([metadata.c.xfer_start_ts])
+            select(metadata.c.xfer_start_ts)
             .where(
                 and_(
                     metadata.c.source == self._config.std_name,
@@ -875,14 +700,12 @@ class StorePostgresql:
         """Store an error using the caller's transaction."""
         metadata = self._metadata.tables[self._config.database.schema_import + "." + "error_log"]
         exists_stmt = select(
-            [
-                exists().where(
-                    metadata.c.source == self._config.std_name,
-                    metadata.c.controler == controler,
-                    metadata.c.uuid == uuid,
-                    metadata.c.import_id == self.import_id,
-                )
-            ]
+            exists().where(
+                metadata.c.source == self._config.std_name,
+                metadata.c.controler == controler,
+                metadata.c.uuid == uuid,
+                metadata.c.import_id == self.import_id,
+            )
         )
         if not conn.execute(exists_stmt).scalar():
             insert_stmt = insert(metadata).values(

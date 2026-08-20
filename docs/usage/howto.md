@@ -113,7 +113,7 @@ You can specify globally page length to download and store data from API (defaul
 Commands are under `gn2pg_cli db` subcommands:
 
 ```text
-usage: gn2pg_cli db [-h] (--custom-script [CUSTOM_SCRIPT] | --json-tables-create) [file]
+usage: gn2pg_cli db [-h] (--custom-script [CUSTOM_SCRIPT] | --upgrade | --stamp-existing | --status) [file]
 
 positional arguments:
   file                  Configuration file name
@@ -123,13 +123,36 @@ options:
   --custom-script [CUSTOM_SCRIPT]
                         Exécute un script SQL personnalisé dans la base de données, la valeur par défaut est "to_gnsynthese". Vous pouvez également utiliser votre propre
                         script en utilisant le chemin de fichier absolu à la place de "to_gnsynthese"
-  --json-tables-create  Créer ou recréer des tables json
+  --upgrade, --json-tables-create
+                        Mettre à niveau le schéma avec Alembic
+  --stamp-existing      Valider et référencer une base GN2PG existante dans Alembic
+  --status              Afficher les révisions Alembic courante et cible
 ```
 
-To create json tables where datas will be downloaded, run :
+To create or upgrade the GN2PG schema, run:
 
 ```bash
-gn2pg_cli db --json-tables-create <myconfigfile>
+gn2pg_cli db --upgrade <myconfigfile>
+```
+
+For an existing GN2PG installation created before Alembic, first inspect and
+validate the database, stamp it at the historical baseline, then apply later
+migrations:
+
+```bash
+gn2pg_cli db --status <myconfigfile>
+gn2pg_cli db --stamp-existing <myconfigfile>
+gn2pg_cli db --upgrade <myconfigfile>
+```
+
+`--stamp-existing` does not alter business tables. It refuses partial or
+incompatible schemas and never stamps directly at the latest revision.
+
+For development, edit the shared definitions in `gn2pg/database/tables.py`,
+bring the development database to `head`, and generate a reviewed migration:
+
+```bash
+make db-revision CONFIG=<myconfigfile> MESSAGE="describe the schema change"
 ```
 
 ```{image} ../_static/gn2pg_import_models.png

@@ -13,6 +13,7 @@ from toml import TomlDecodeError
 
 from gn2pg import _, __project__, __version__, pkg_metadata
 from gn2pg.check_conf import Gn2PgConf
+from gn2pg.database.migrations import ExistingSchemaError
 from gn2pg.env import CONFDIR
 from gn2pg.helpers import full_download, init, manage_configs, update
 from gn2pg.logger import setup_logging
@@ -104,8 +105,20 @@ def arguments(args):
         ),
     )
     db_group.add_argument(
+        "--upgrade",
         "--json-tables-create",
-        help=_("Create or recreate json tables"),
+        dest="upgrade",
+        help=_("Upgrade the database schema to the latest Alembic revision"),
+        action="store_true",
+    )
+    db_group.add_argument(
+        "--stamp-existing",
+        help=_("Validate and stamp an existing pre-Alembic GN2PG schema"),
+        action="store_true",
+    )
+    db_group.add_argument(
+        "--status",
+        help=_("Show the current and target database migration revisions"),
         action="store_true",
     )
 
@@ -216,9 +229,22 @@ def handle_database_commands(args, cfg_ctrl) -> None:
 
     manage_pg = PostgresqlUtils(cfg)
 
-    if args.json_tables_create:
-        logger.info(_("Create, if not exists, json tables"))
+    if args.upgrade:
+        logger.info(_("Upgrade database schema"))
         manage_pg.create_json_tables()
+    if args.stamp_existing:
+        logger.info(_("Validate and stamp existing database schema"))
+        try:
+            manage_pg.stamp_existing()
+        except ExistingSchemaError as error:
+            logger.critical(str(error))
+            raise SystemExit(1) from error
+    if args.status:
+        status = manage_pg.migration_status()
+        print(_("Schema: %s") % cfg.database.schema_import)
+        print(_("Current revision: %s") % (status.current or "not versioned"))
+        print(_("Target revision: %s") % status.head)
+        print(_("Pending migrations: %s") % ("yes" if status.pending else "no"))
     if args.custom_script:
         logger.info(_("Execute custom script %s on db"), args.custom_script)
         manage_pg.custom_script(args.custom_script)

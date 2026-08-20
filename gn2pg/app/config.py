@@ -42,6 +42,7 @@ DATABASES = {
         "PASSWORD": gn2pg_config["db_password"],
         "HOST": gn2pg_config["db_host"],
         "PORT": gn2pg_config["db_port"],
+        "SCHEMA": gn2pg_config.get("db_schema_import", "gn2pg_import"),
     }
 }
 
@@ -77,4 +78,4 @@ class AppConfig:
         )
 
 
-FlaskConfig = AppConfig()
+FLASK_CONFIG = AppConfig()  # noqa  C0103
