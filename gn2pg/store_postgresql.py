@@ -32,6 +32,23 @@ from gn2pg.utils import XferStatus
 logger = logging.getLogger(__name__)
 
 
+def format_pg_error(error: StatementError) -> str:
+    """Limite SQL error output to main informations, without CONTEXT content"""
+    diag = getattr(error.orig, "diag", None)
+    if diag is None:
+        return str(error.orig)
+
+    return "\n".join(
+        filter(
+            None,
+            (
+                diag.message_primary,
+                f"DETAIL:  {diag.message_detail}" if diag.message_detail else None,
+            ),
+        )
+    )
+
+
 class _PostgresqlNoticeLogger(list):
     """Log PostgreSQL messages as soon as psycopg2 receives them."""
 
@@ -299,7 +316,7 @@ class StorePostgresql:
                     conn, controler, level, elem, uuid_key_name=uuid_key_name
                 )
             self.count_metadata_inserts += rowcount
-        except (IntegrityError, exc.StatementError) as error:
+        except (IntegrityError, StatementError) as error:
             self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
             if isinstance(error.orig, psycopg2.errors.UniqueViolation):
                 logger.warning(
@@ -307,7 +324,7 @@ class StorePostgresql:
                         "A metadata with UUID %(uuid)s from a different source already"
                         " exists in Database: %(error)s",
                     ),
-                    {"uuid": elem[uuid_key_name], "error": str(error)},
+                    {"uuid": elem[uuid_key_name], "error": format_pg_error(error)},
                 )
             else:
                 logger.critical(
@@ -319,7 +336,7 @@ class StorePostgresql:
                         "source": self._config.std_name,
                         "key": "uuid",
                         "uuid": elem[uuid_key_name],
-                        "error": str(error),
+                        "error": format_pg_error(error),
                     },
                 )
             self.count_metadata_errors += 1
@@ -417,7 +434,7 @@ class StorePostgresql:
                 data_upserts = conn.execute(do_update_stmt).rowcount
             self.count_metadata_inserts += metadata_inserts
             self.count_data_upserts += data_upserts
-        except (IntegrityError, exc.StatementError) as error:
+        except (IntegrityError, StatementError) as error:
             # The transaction has already been rolled back before logging the error.
             if isinstance(error.orig, psycopg2.errors.UniqueViolation):
                 self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
@@ -426,20 +443,20 @@ class StorePostgresql:
                         "A data with UUID %(uuid)s from a different source already"
                         " exists in Database: %(error)s",
                     ),
-                    {"uuid": elem[uuid_key_name], "error": str(error)},
+                    {"uuid": elem[uuid_key_name], "error": format_pg_error(error)},
                 )
             else:
                 self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
                 logger.critical(
                     _(
                         "One error occurred for data from source %(source)s "
-                        "with %(key)s = %(id)s. Error message is %(error)s"
+                        "with %(key)s = %(uuid)s. Error message is %(error)s"
                     ),
                     {
                         "source": self._config.std_name,
-                        "key": id_key_name,
-                        "id": elem[id_key_name],
-                        "error": str(error),
+                        "key": "uuid",
+                        "uuid": elem[uuid_key_name],
+                        "error": format_pg_error(error),
                     },
                 )
             self.count_data_errors += 1
