@@ -133,7 +133,7 @@ SELECT DISTINCT ON (data_json.item #>> '{ca_data,uuid}') CAST(data_json.item #>>
                                                        , 'metadata'                                        AS controller
                                                        , data_json.type
                                                        , 'acquisition framework'                           AS level
-                                                       , item -> 'ca_data'                                 AS ca_data
+                                                       , item -> 'ca_data'                                 AS item
                                                        , import_id
                                                        , update_ts
 FROM gn2pg_import.data_json
@@ -142,14 +142,15 @@ ON CONFLICT (uuid) DO NOTHING;
 
 
 INSERT INTO gn2pg_import.metadata_json(uuid, source, controler, type, level, item, import_id, update_ts)
-SELECT DISTINCT ON (data_json.item #>> '{jdd_data,uuid}') CAST(data_json.item #>> '{jdd_data,uuid}' AS uuid) AS uuid
-                                                        , source
-                                                        , 'metadata'                                         AS controller
-                                                        , data_json.type
-                                                        , 'dataset'                                          AS level
-                                                        , item -> 'jdd_data'                                 AS ca_data
-                                                        , import_id
-                                                        , update_ts
+SELECT DISTINCT ON
+    (data_json.item #>> '{jdd_data,uuid}') CAST(data_json.item #>> '{jdd_data,uuid}' AS uuid)                     AS uuid
+                                         , source
+                                         , 'metadata'                                                             AS controller
+                                         , data_json.type
+                                         , 'dataset'                                                              AS level
+                                         , JSONB_SET(item #> '{jdd_data}', '{ca_uuid}', item #> '{ca_data,uuid}') AS item
+                                         , import_id
+                                         , update_ts
 FROM gn2pg_import.data_json
 ORDER BY data_json.item #>> '{jdd_data,uuid}', update_ts ASC
 ON CONFLICT (uuid) DO NOTHING;
