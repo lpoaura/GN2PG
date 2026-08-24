@@ -37,7 +37,7 @@ class _PostgresqlNoticeLogger(list):
 
     def append(self, notice: str) -> None:
         message = notice.rstrip()
-        if message.startswith("DEBUG:"):
+        if message.startswith(("DEBUG:", "NOTICE:")):
             logger.debug("SQL: %s", message)
         else:
             logger.info("SQL: %s", message)
