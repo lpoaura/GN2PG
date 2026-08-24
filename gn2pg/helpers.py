@@ -65,7 +65,10 @@ def init(file: str) -> None:
         else:
             logger.warning(_("file %s will be overwritten"), toml_dst)
 
-    logger.info(_("Creating TOML configuration file %s, from %s"), toml_dst, toml_src)
+    logger.info(
+        _("Creating TOML configuration file %(destination)s, from %(source)s"),
+        {"destination": toml_dst, "source": toml_src},
+    )
     shutil.copyfile(toml_src, toml_dst)
     edit_config(toml_dst)
     sys.exit(0)
@@ -80,20 +83,19 @@ def full_download_1source(ctrl, cfg):
 
             downloader = ctrl(cfg, store_pg)
             logger.debug(
-                _("%s => Starting download using controler %s"),
-                cfg.source,
-                downloader.name,
+                _("%(source)s => Starting download using controler %(controler)s"),
+                {"source": cfg.source, "controler": downloader.name},
             )
             downloader.store()
             logger.info(
-                _("%s => Ending download using controler %s"),
-                cfg.source,
-                downloader.name,
+                _("%(source)s => Ending download using controler %(controler)s"),
+                {"source": cfg.source, "controler": downloader.name},
             )
             downloader.exit()
         except (AttributeError, InvalidSchema) as e:
             logger.critical(
-                _("An error occured when trying to download data from %s: %s"), cfg.name, e
+                _("An error occured when trying to download data from %(source)s: %(error)s"),
+                {"source": cfg.name, "error": e},
             )
             return
 
@@ -126,20 +128,19 @@ def update_1source(ctrl, cfg):
         try:
             downloader = ctrl(cfg, store_pg)
             logger.debug(
-                _("%s => Starting update (%s)"),
-                cfg.source,
-                downloader.name,
+                _("%(source)s => Starting update (%(controler)s)"),
+                {"source": cfg.source, "controler": downloader.name},
             )
             downloader.update()
             logger.info(
-                _("%s => Ending update (%s)"),
-                cfg.name,
-                downloader.name,
+                _("%(source)s => Ending update (%(controler)s)"),
+                {"source": cfg.name, "controler": downloader.name},
             )
             downloader.exit()
         except AttributeError as e:
             logger.critical(
-                _("An error occured when trying to download data from %s: %s"), cfg.name, e
+                _("An error occured when trying to download data from %(source)s: %(error)s"),
+                {"source": cfg.name, "error": e},
             )
             return
 

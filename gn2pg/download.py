@@ -135,14 +135,20 @@ class DownloadGn:
                     if response.get("total_len", 0) > 0:
                         msg = _("Stores") if store else _("Deletes")
                         logger.info(
-                            _("%s %d datas (%d/%d %.2f %%) from %s %s"),
-                            msg,
-                            response["len_items"],
-                            progress,
-                            response["total_len"],
-                            perc_progress,
-                            self._config.name,
-                            self._api_instance.controler,
+                            _(
+                                "%(action)s %(item_count)d datas "
+                                "(%(progress)d/%(total)d %(percentage).2f %%) from "
+                                "%(source)s %(controler)s"
+                            ),
+                            {
+                                "action": msg,
+                                "item_count": response["len_items"],
+                                "progress": progress,
+                                "total": response["total_len"],
+                                "percentage": perc_progress,
+                                "source": self._config.name,
+                                "controler": self._api_instance.controler,
+                            },
                         )
             except Exception as e:  # pylint: disable=W0718
                 errors.append(e)
@@ -214,9 +220,8 @@ class DownloadGn:
             queue.put(response)
         else:
             logger.info(
-                _("No new deleted data from %s %s"),
-                self._config.name,
-                self._api_instance.controler,
+                _("No new deleted data from %(source)s %(controler)s"),
+                {"source": self._config.name, "controler": self._api_instance.controler},
             )
 
     def process_progress(self, page: str) -> dict:
@@ -336,9 +341,11 @@ class DownloadGn:
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(error)
             logger.error(
-                _("A problem occured while downloading metadata from source %s: %s"),
-                self._config.name,
-                error,
+                _(
+                    "A problem occured while downloading metadata from source "
+                    "%(source)s: %(error)s"
+                ),
+                {"source": self._config.name, "error": error},
             )
             return False
         return True
@@ -389,9 +396,8 @@ class DownloadGn:
         logger.info(_("QueryStrings %s"), params)
 
         logger.info(
-            _("Getting new or update data from source %s since %s"),
-            self._config.name,
-            since,
+            _("Getting new or update data from source %(source)s since %(since)s"),
+            {"source": self._config.name, "since": since},
         )
 
         # Process UPDATE
@@ -426,14 +432,14 @@ class DownloadGn:
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
             logger.error(
-                _("A problem occured on UPDATE process for source %s : %s"), self._config.name, e
+                _("A problem occured on UPDATE process for source %(source)s: %(error)s"),
+                {"source": self._config.name, "error": e},
             )
             return
         # Process DELETE
         logger.info(
-            _("Getting deleted data from source %s since %s"),
-            self._config.name,
-            since,
+            _("Getting deleted data from source %(source)s since %(since)s"),
+            {"source": self._config.name, "since": since},
         )
         try:
             deleted_pages, _total_len, _xfer_http_status = self._api_instance.page_list(

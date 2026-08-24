@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-10 14:51+0200\n"
+"POT-Creation-Date: 2025-06-10 14:57+0200\n"
 "PO-Revision-Date: 2023-02-07 21:16+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -186,8 +186,7 @@ msgstr ""
 #: gn2pg/download.py:358
 #, fuzzy, python-format
 msgid "Getting deleted data from source %s since %s"
-msgstr ""
-"Obtention des données supprimées de la source %s depuis %s"
+msgstr "Obtention des données supprimées de la source %s depuis %s"
 
 #: gn2pg/helpers.py:50
 #, python-format
@@ -500,7 +499,7 @@ msgstr ""
 "Une erreur s'est produite pour les données de la source %(std_name)s avec "
 "%(id_key_name)s = %(id)s"
 
-#: gn2pg/store_postgresql.py:623
+#: gn2pg/store_postgresql.py:624
 #, fuzzy, python-format
 msgid ""
 "%(count_data_upserts)s data and %(count_metadata_inserts)s metadata have "
@@ -511,12 +510,12 @@ msgstr ""
 "été stockées dans la base de données à partir de la source %(std_name)s "
 "(%(count_data_errors)s erreurs se sont produite)"
 
-#: gn2pg/store_postgresql.py:664
+#: gn2pg/store_postgresql.py:666
 #, fuzzy, python-format
 msgid "Api returned %s row to delete from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"
 
-#: gn2pg/store_postgresql.py:683
+#: gn2pg/store_postgresql.py:685
 #, fuzzy, python-format
 msgid "%s rows have been deleted from source %s (controler %s)"
 msgstr "Récupération des éléments du contrôleur %s"

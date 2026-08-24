@@ -88,15 +88,21 @@ class BaseAPI:
                 )
         except HTTPError as error:
             logger.critical(
-                _("Login into GeoNature from source %s failed with status code %s, message: %s"),
-                self._config.name,
-                error.response.status_code,
-                error.response.json(),
+                _(
+                    "Login into GeoNature from source %(source)s failed with status code "
+                    "%(status_code)s, message: %(message)s"
+                ),
+                {
+                    "source": self._config.name,
+                    "status_code": error.response.status_code,
+                    "message": error.response.json(),
+                },
             )
             raise error
         except InvalidSchema as error:
             logger.critical(
-                _("There is probably an error on source URL for %s , %s"), self._config.name, error
+                _("There is probably an error on source URL for %(source)s, %(error)s"),
+                {"source": self._config.name, "error": error},
             )
             raise error
 
@@ -105,9 +111,8 @@ class BaseAPI:
         try:
             modules_list = self._session.get(self._api_url + "gn_commons/modules")
             logger.info(
-                _("Modules API status code is %s for url %s"),
-                modules_list.status_code,
-                modules_list.url,
+                _("Modules API status code is %(status_code)s for url %(url)s"),
+                {"status_code": modules_list.status_code, "url": modules_list.url},
             )
             modules_list.raise_for_status()
             if modules_list.status_code == 200 and "login?next=" not in modules_list.url:
@@ -120,23 +125,28 @@ class BaseAPI:
                 if self._export_api_path is None:
                     logger.critical(
                         _(
-                            "EXPORTS module not found in the modules list for export %s. "
-                            "User %s may not have required permissions on module."
+                            "EXPORTS module not found in the modules list for export %(export)s. "
+                            "User %(user)s may not have required permissions on module."
                         ),
-                        self._config.name,
-                        self._config.user_name,
+                        {"export": self._config.name, "user": self._config.user_name},
                     )
                     raise ExportModuleNotFoundError("Module not found")
             else:
                 logger.critical(
-                    _("Get GeoNature modules failed with status code %s, cause: %s"),
-                    modules_list.status_code,
-                    json.loads(modules_list.content)["msg"],
+                    _(
+                        "Get GeoNature modules failed with status code %(status_code)s, "
+                        "cause: %(cause)s"
+                    ),
+                    {
+                        "status_code": modules_list.status_code,
+                        "cause": json.loads(modules_list.content)["msg"],
+                    },
                 )
 
         except HTTPError as error:
             logger.critical(
-                _("Looking for export module failed for source %s , %s"), self._config.name, error
+                _("Looking for export module failed for source %(source)s, %(error)s"),
+                {"source": self._config.name, "error": error},
             )
             raise error
 
@@ -228,10 +238,8 @@ class BaseAPI:
                 limit = resp["limit"]
                 total_pages = math.ceil(total_filtered / limit)
                 logger.debug(
-                    _("API %s contains %s data in %s page(s)"),
-                    api_url,
-                    total_filtered,
-                    total_pages,
+                    _("API %(url)s contains %(count)s data in %(pages)s page(s)"),
+                    {"url": api_url, "count": total_filtered, "pages": total_pages},
                 )
                 if total_filtered > 0:
                     page_list = list(

@@ -304,22 +304,23 @@ class StorePostgresql:
             if isinstance(error.orig, psycopg2.errors.UniqueViolation):
                 logger.warning(
                     _(
-                        "A metadata with UUID %s from a different source already"
-                        " exists in Database: %s",
+                        "A metadata with UUID %(uuid)s from a different source already"
+                        " exists in Database: %(error)s",
                     ),
-                    elem[uuid_key_name],
-                    str(error),
+                    {"uuid": elem[uuid_key_name], "error": str(error)},
                 )
             else:
                 logger.critical(
                     _(
-                        "One error occurred for data from source %s "
-                        "with %s = %s. Error message is %s"
+                        "One error occurred for data from source %(source)s "
+                        "with  %(key)s = %(uuid)s. Error message is %(error)s"
                     ),
-                    self._config.std_name,
-                    "uuid",
-                    elem[uuid_key_name],
-                    str(error),
+                    {
+                        "source": self._config.std_name,
+                        "key": "uuid",
+                        "uuid": elem[uuid_key_name],
+                        "error": str(error),
+                    },
                 )
             self.count_metadata_errors += 1
 
@@ -378,7 +379,10 @@ class StorePostgresql:
             uuid_key_name (str, optional): data UUID. Defaults to "id_perm_sinp".
         """
         metadata = self._table_defs[controler]["metadata"]
-        logger.debug("elem[id_key_name] is %s, id_key_name is %s", elem[id_key_name], id_key_name)
+        logger.debug(
+            "elem[id_key_name] is %(item)s, id_key_name is %(key)s",
+            {"item": elem[id_key_name], "key": id_key_name},
+        )
         try:
             metadata_inserts = 0
             with self._db.begin() as conn:
@@ -419,23 +423,24 @@ class StorePostgresql:
                 self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
                 logger.warning(
                     _(
-                        "A data with UUID %s from a different source already"
-                        " exists in Database: %s",
+                        "A data with UUID %(uuid)s from a different source already"
+                        " exists in Database: %(error)s",
                     ),
-                    elem[uuid_key_name],
-                    str(error),
+                    {"uuid": elem[uuid_key_name], "error": str(error)},
                 )
             else:
                 self.error_log(controler, elem, str(error), uuid=elem.get(uuid_key_name, None))
                 logger.critical(
                     _(
-                        "One error occurred for data from source %s "
-                        "with %s = %s. Error message is %s"
+                        "One error occurred for data from source %(source)s "
+                        "with %(key)s = %(id)s. Error message is %(error)s"
                     ),
-                    self._config.std_name,
-                    id_key_name,
-                    elem[id_key_name],
-                    str(error),
+                    {
+                        "source": self._config.std_name,
+                        "key": id_key_name,
+                        "id": elem[id_key_name],
+                        "error": str(error),
+                    },
                 )
             self.count_data_errors += 1
 
@@ -516,9 +521,8 @@ class StorePostgresql:
             metadata_item = exported_item.get("jsonb_insert")
             if not isinstance(metadata_item, dict) or not metadata_item.get("uuid"):
                 logger.error(
-                    _("Invalid metadata export item from source %s: %s"),
-                    self._config.std_name,
-                    exported_item,
+                    _("Invalid metadata export item from source %(source)s: %(item)s"),
+                    {"source": self._config.std_name, "item": exported_item},
                 )
                 self.count_metadata_errors += 1
                 continue
@@ -537,9 +541,8 @@ class StorePostgresql:
             for exported_dataset in datasets:
                 if not isinstance(exported_dataset, dict) or not exported_dataset.get("uuid"):
                     logger.error(
-                        _("Invalid dataset in metadata export from source %s: %s"),
-                        self._config.std_name,
-                        exported_dataset,
+                        _("Invalid dataset in metadata export from source %(source)s: %(item)s"),
+                        {"source": self._config.std_name, "item": exported_dataset},
                     )
                     self.count_metadata_errors += 1
                     continue
@@ -580,10 +583,11 @@ class StorePostgresql:
         del_count = 0
         # Store to database, if enabled
         logger.debug(
-            _("Api returned %s row to delete from source %s (controler %s)"),
-            str(len(items)),
-            self._config.name,
-            controler,
+            _(
+                "Api returned %(length)s row to delete from source %(source)s "
+                "(controler %(controler)s)"
+            ),
+            {"length": str(len(items)), "source": self._config.name, "controler": controler},
         )
         keys = [item[id_key_name] for item in items]
         with self._db.begin() as conn:
@@ -600,10 +604,11 @@ class StorePostgresql:
             )
             del_count += deleted_data.rowcount
         logger.debug(
-            _("%s rows have been deleted from source %s (controler %s)"),
-            str(del_count),
-            self._config.name,
-            controler,
+            _(
+                "%(count)s rows have been deleted from source %(source)s "
+                "(controler %(controler)s)"
+            ),
+            {"count": str(del_count), "source": self._config.name, "controler": controler},
         )
 
         return del_count

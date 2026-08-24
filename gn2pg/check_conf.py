@@ -413,9 +413,8 @@ class Gn2PgConf:
             _CONF_SCHEMA.validate(self._config)
         except SchemaError as error:
             logger.error(
-                _("Incorrect content in YAML configuration %s : %s"),
-                file,
-                error,
+                _("Incorrect content in YAML configuration %(file)s: %(error)s"),
+                {"file": file, "error": error},
             )
             raise
 
@@ -424,25 +423,22 @@ class Gn2PgConf:
         for source in self._config["source"]:
             source_name = simplify(source["name"])
             logger.info(
-                _('Source "%s" identifier will be "%s"'),
-                source["name"],
-                source_name,
+                _('Source "%(source)s" identifier will be "%(identifier)s"'),
+                {"source": source["name"], "identifier": source_name},
             )
 
             if source_name in self._source_list:
                 logger.critical(
-                    (
-                        _('Source #%s named "%s" (->%s) already used by another source'),
-                        i + 1,
-                        source["name"],
-                        source_name,
-                    )
+                    _(
+                        'Source #%(index)s named "%(source)s" (->%(identifier)s) '
+                        "already used by another source"
+                    ),
+                    {"index": i + 1, "source": source["name"], "identifier": source_name},
                 )
             self._source_list[source_name] = Gn2PgSourceConf(i, self._config)
             logger.debug(
-                _("Settings for %s are : %s"),
-                source_name,
-                self.secure_dict(source_name),
+                _("Settings for %(source)s are: %(settings)s"),
+                {"source": source_name, "settings": self.secure_dict(source_name)},
             )
             i += 1
 
