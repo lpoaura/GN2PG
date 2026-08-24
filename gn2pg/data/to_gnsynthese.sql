@@ -1169,9 +1169,9 @@ BEGIN
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
-            gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYPE' , NEW.item #>> '{label}')
+            gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYPE' , NEW.item #>> '{methode_determination}')
         ELSE
-            gn2pg_import.fct_c_get_id_nomenclature ('TYPE' , NEW.item #>> '{label}')
+            gn2pg_import.fct_c_get_id_nomenclature ('TYPE' , NEW.item #>> '{methode_determination}')
 	END AS id_nomenclature_determination_method INTO
 	    the_id_nomenclature_determination_method;
     SELECT
