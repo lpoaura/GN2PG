@@ -125,9 +125,14 @@ class DownloadGn:
                     response = queue.get()
                     if response in ("DONE", "EXIT"):
                         break
+
+                    # Get total data to import from the first batch
+                    if progress == 0:
+                        total_len = response["total_len"]
+
                     progress += response["len_items"]
                     # self.api_count_items = response["total_len"]
-                    perc_progress = round(progress / response["total_len"] * 100, 2)
+                    perc_progress = round(progress / total_len * 100, 2)
 
                     # if store:
                     #     self.data_count_upserts = progress
@@ -139,7 +144,7 @@ class DownloadGn:
                             msg,
                             response["len_items"],
                             progress,
-                            response["total_len"],
+                            total_len,
                             perc_progress,
                             self._config.name,
                             self._api_instance.controler,
