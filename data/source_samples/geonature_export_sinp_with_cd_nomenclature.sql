@@ -1,3 +1,10 @@
+/*
+
+ Export basique mettant à dispo les données de synthèse avec le cd_nomenclature
+ /!\ Les métadonnées ne sont pas détaillées
+ */
+BEGIN;
+
 DROP VIEW IF EXISTS gn_exports.v_synthese_sinp_with_cd_nomenclature_for_gn2pg;
 
 CREATE VIEW gn_exports.v_synthese_sinp_with_cd_nomenclature_for_gn2pg AS
@@ -133,3 +140,5 @@ FROM
 	s.id_nomenclature_valid_status = n20.id_nomenclature
 ORDER BY
     id_synthese;
+
+COMMIT;

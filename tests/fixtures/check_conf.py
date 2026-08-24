@@ -3,7 +3,6 @@ import tempfile
 import pytest
 
 from gn2pg.check_conf import Gn2PgConf
-from gn2pg.env import CONFDIR
 
 
 @pytest.fixture(scope="session")
@@ -15,7 +14,7 @@ def toml_conf(pytestconfig):
     db_password = pytestconfig.getoption("db_password")
     db_port = int(pytestconfig.getoption("db_port"))
     db_name = pytestconfig.getoption("db_name")
-    export_id = pytestconfig.getoption("export_id")
+    data_export_id = pytestconfig.getoption("data_export_id")
     nb_threads = pytestconfig.getoption("nb_threads")
     toml_str = f"""
     [db]
@@ -43,8 +42,8 @@ def toml_conf(pytestconfig):
     user_password = "{password}"
     # GeoNature source URL
     url = "{url}"
-    # GeoNature source Export id
-    export_id = {export_id}
+    # GeoNature source data export ID
+    data_export_id = {data_export_id}
     # Data type (used to distinct datas and to conditionning triggers)
     data_type = "synthese_with_metadata"
 
@@ -64,7 +63,7 @@ def toml_conf(pytestconfig):
 
 @pytest.fixture(scope="session")
 def gn2pg_conf_file(toml_conf):
-    with tempfile.NamedTemporaryFile(dir=CONFDIR, suffix=".toml", delete=True, mode="w") as f:
+    with tempfile.NamedTemporaryFile(suffix=".toml", delete=True, mode="w") as f:
         name = f.name
         f.write(toml_conf)
         f.seek(0)

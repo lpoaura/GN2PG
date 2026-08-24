@@ -7,7 +7,7 @@
 **Last documentation update:** {{ date_update }}
 
 
-```{image} ./_static/src_gn2pg.png
+```{image} _static/src_gn2pg.png
 :align: center
 :width: 300px
 :alt: Logo project

@@ -135,14 +135,20 @@ class DownloadGn:
                     if response.get("total_len", 0) > 0:
                         msg = _("Stores") if store else _("Deletes")
                         logger.info(
-                            _("%s %d datas (%d/%d %.2f %%) from %s %s"),
-                            msg,
-                            response["len_items"],
-                            progress,
-                            response["total_len"],
-                            perc_progress,
-                            self._config.name,
-                            self._api_instance.controler,
+                            _(
+                                "%(action)s %(item_count)d datas "
+                                "(%(progress)d/%(total)d %(percentage).2f %%) from "
+                                "%(source)s %(controler)s"
+                            ),
+                            {
+                                "action": msg,
+                                "item_count": response["len_items"],
+                                "progress": progress,
+                                "total": response["total_len"],
+                                "percentage": perc_progress,
+                                "source": self._config.name,
+                                "controler": self._api_instance.controler,
+                            },
                         )
             except Exception as e:  # pylint: disable=W0718
                 errors.append(e)
@@ -153,14 +159,16 @@ class DownloadGn:
         errors: List[Exception] = []
 
         # Initialize and start the report thread
-        thread = Thread(target=report, args=[self.queue])
-        thread.start()
+        report_thread = Thread(target=report, args=[self.queue])
+        report_thread.start()
 
         # Start the worker threads
-        with ThreadPool(nb_threads) as thread:
-            thread.map(partial(func, queue=self.queue), pages)
-
-        self.queue.put(("DONE"))
+        try:
+            with ThreadPool(nb_threads) as worker_pool:
+                worker_pool.map(partial(func, queue=self.queue), pages)
+        finally:
+            self.queue.put("DONE")
+            report_thread.join()
         return errors
 
     def download(self, page: str, queue: Queue) -> None:
@@ -182,6 +190,18 @@ class DownloadGn:
         ) = self._backend.store_data(self._api_instance.controler, response["items"])
         queue.put(response)
 
+    def download_metadata(self, page: str, queue: Queue) -> None:
+        """Download and store one page returned by the metadata export."""
+        response = self.process_progress(page=page)
+        (
+            _threaded_items,
+            metadata_upserts,
+            metadata_errors,
+        ) = self._backend.store_metadata(response["items"])
+        self.metadata_count_upserts += metadata_upserts
+        self.metadata_count_errors += metadata_errors
+        queue.put(response)
+
     def delete(self, page: str, queue: Queue) -> None:
         """
         Delete (or not) data in DB from a page download
@@ -200,9 +220,8 @@ class DownloadGn:
             queue.put(response)
         else:
             logger.info(
-                _("No new deleted data from %s %s"),
-                self._config.name,
-                self._api_instance.controler,
+                _("No new deleted data from %(source)s %(controler)s"),
+                {"source": self._config.name, "controler": self._api_instance.controler},
             )
 
     def process_progress(self, page: str) -> dict:
@@ -226,6 +245,16 @@ class DownloadGn:
 
     def store(self) -> None:
         """Store data into Database"""
+        if self._config.data_type in (
+            "metadata_only",
+            "synthese_with_metadata_separated",
+        ):
+            if not self.store_metadata(xfer_type="full"):
+                return
+            if self._config.data_type == "metadata_only":
+                self.xfer_status = XferStatus.success
+                return
+
         # Store start download TimeStamp to populate increment log  after download end.
 
         params = {"limit": self._config.max_page_length}
@@ -235,9 +264,10 @@ class DownloadGn:
         logger.info(_("QueryStrings %s"), params)
         pages = None
         try:
-            pages, self.api_count_items, _xfer_http_status = self._api_instance.page_list(
+            pages, data_count_items, _xfer_http_status = self._api_instance.page_list(
                 kind="data", params=params
             )
+            self.api_count_items += data_count_items
         except (RetryError, ResponseError) as e:
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
@@ -279,6 +309,47 @@ class DownloadGn:
 
         self.xfer_status = XferStatus.success
 
+    def store_metadata(self, xfer_type: str) -> bool:
+        """Fully refresh metadata from its dedicated export."""
+        params = {"limit": self._config.max_page_length}
+        logger.info(_("Getting metadata from source %s"), self._config.name)
+        try:
+            pages, metadata_count_items, _xfer_http_status = self._api_instance.page_list(
+                kind="metadata", params=params
+            )
+            self.api_count_items += metadata_count_items
+            self.xfer_type = xfer_type
+            self.xfer_status = XferStatus.import_data
+            self._backend.import_log(
+                controler=self._api_instance.controler,
+                values={
+                    "xfer_type": xfer_type,
+                    "xfer_status": self.xfer_status,
+                    "xfer_filters": (json.dumps(params, default=str),),
+                },
+            )
+            if pages:
+                errors = self.launch_threads(
+                    nb_threads=self._config.nb_threads,
+                    func=self.download_metadata,
+                    pages=pages,
+                )
+                if errors:
+                    raise errors[0]
+        except (RetryError, ResponseError) as error:
+            self.queue.put(("EXIT"))
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(error)
+            logger.error(
+                _(
+                    "A problem occured while downloading metadata from source "
+                    "%(source)s: %(error)s"
+                ),
+                {"source": self._config.name, "error": error},
+            )
+            return False
+        return True
+
     def update(self, since: Optional[str] = None, actions: Optional[list] = None) -> None:
         """[summary]
 
@@ -286,6 +357,12 @@ class DownloadGn:
             since (str): DateTime limit to update.
             actions (list): Actions list (Insert > I, Update > U, Delete > D)
         """
+
+        if self._config.data_type == "metadata_only":
+            if not self.store_metadata(xfer_type="update"):
+                return
+            self.xfer_status = XferStatus.success
+            return
 
         # Update new or modified data from API
         logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
@@ -308,22 +385,27 @@ class DownloadGn:
                 self.store()
                 return
 
+        # A separated metadata refresh must finish before observation upserts.
+        if self._config.data_type == "synthese_with_metadata_separated":
+            if not self.store_metadata(xfer_type="update"):
+                return
+
         params["limit"] = self._config.max_page_length
         params["filter_d_up_derniere_action"] = since
         params.update(self._config.query_strings)
         logger.info(_("QueryStrings %s"), params)
 
         logger.info(
-            _("Getting new or update data from source %s since %s"),
-            self._config.name,
-            since,
+            _("Getting new or update data from source %(source)s since %(since)s"),
+            {"source": self._config.name, "since": since},
         )
 
         # Process UPDATE
         try:
-            upsert_pages, self.api_count_items, _xfer_http_status = self._api_instance.page_list(
+            upsert_pages, data_count_items, _xfer_http_status = self._api_instance.page_list(
                 kind="data", params=params
             )
+            self.api_count_items += data_count_items
             self.xfer_type = "update"
             self.xfer_status = XferStatus.import_data
             self.xfer_filters = (json.dumps(params, default=str),)
@@ -350,14 +432,14 @@ class DownloadGn:
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
             logger.error(
-                _("A problem occured on UPDATE process for source %s : %s"), self._config.name, e
+                _("A problem occured on UPDATE process for source %(source)s: %(error)s"),
+                {"source": self._config.name, "error": e},
             )
             return
         # Process DELETE
         logger.info(
-            _("Getting deleted data from source %s since %s"),
-            self._config.name,
-            since,
+            _("Getting deleted data from source %(source)s since %(since)s"),
+            {"source": self._config.name, "since": since},
         )
         try:
             deleted_pages, _total_len, _xfer_http_status = self._api_instance.page_list(
