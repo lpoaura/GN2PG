@@ -115,7 +115,7 @@ def full_download(cfg_ctrl):
             logger.info(_("Source %s is disabled"), source)
 
 
-def update_1source(ctrl, cfg):
+def update_1source(ctrl, cfg, since: Optional[str] = None):
     """[summary]
 
     Args:
@@ -131,7 +131,7 @@ def update_1source(ctrl, cfg):
                 _("%(source)s => Starting update (%(controler)s)"),
                 {"source": cfg.source, "controler": downloader.name},
             )
-            downloader.update()
+            downloader.update(since=since)
             logger.info(
                 _("%(source)s => Ending update (%(controler)s)"),
                 {"source": cfg.name, "controler": downloader.name},
@@ -145,7 +145,7 @@ def update_1source(ctrl, cfg):
             return
 
 
-def update(cfg_ctrl):
+def update(cfg_ctrl, since: Optional[str] = None):
     """[summary]
 
     Args:
@@ -157,7 +157,7 @@ def update(cfg_ctrl):
     for source, cfg in cfg_source_list.items():
         if cfg.enable:
             logger.info(_("Starting update for source %s"), source)
-            update_1source(Data, cfg)
+            update_1source(Data, cfg, since=since)
             logger.info(_("Ending update for source %s"), source)
 
         else:

@@ -38,6 +38,24 @@ def test_database_migration_options_keep_flag_based_interface():
         arguments(["db", "--upgrade", "--status", "config.toml"])
 
 
+def test_incremental_download_accepts_since_override():
+    args = arguments(["download", "--update", "--since=2022-06-05", "config.toml"])
+
+    assert args.update
+    assert args.since == "2022-06-05"
+
+
+def test_incremental_download_rejects_invalid_since(capsys):
+    with raises(SystemExit) as exc_info:
+        arguments(["download", "--update", "--since=2022-13-40", "config.toml"])
+
+    assert exc_info.value.code == 2
+    assert (
+        "error: argument --since: incorrect date format, expected YYYY-MM-DD or YY:MM:DD hh:mm"
+        in (capsys.readouterr().err)
+    )
+
+
 @parametrize("versionarg", ["-V", "--version"])
 def test_version(versionarg, capsys):
     """The global version flags print project identification."""

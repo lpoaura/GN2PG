@@ -182,7 +182,7 @@ When data from GN2PG is inserted into the `geonature.synthese` table using the s
 Data download can be executed using `gn2pg_cli download` commands.
 
 ```text
-usage: gn2pg_cli download [-h] (--full | --update) [file]
+usage: gn2pg_cli download [-h] (--full | --update) [--since SINCE] [file]
 
 positional arguments:
   file        Configuration file name
@@ -191,6 +191,7 @@ options:
   -h, --help  show this help message and exit
   --full      Effectuer un téléchargement complet
   --update    Effectuer un téléchargement incrémentiel
+  --since     Remplacer la date de début du téléchargement incrémentiel
 ```
 
 ### Full download
@@ -207,6 +208,13 @@ To update datas into `data_json` table, run :
 
 ```bash
 gn2pg_cli download --update <myconfigfile>
+```
+
+The date stored in the database can be overridden for a specific update with
+`--since`:
+
+```bash
+gn2pg_cli download --update --since='2022-06-05' <myconfigfile>
 ```
 
 To automate the launching of updates, you can write the cron task using the following command, for example every 30 minutes.

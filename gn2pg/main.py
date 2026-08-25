@@ -18,11 +18,19 @@ from gn2pg.env import CONFDIR
 from gn2pg.helpers import full_download, init, manage_configs, update
 from gn2pg.logger import setup_logging
 from gn2pg.store_postgresql import PostgresqlUtils
-from gn2pg.utils import BColors
+from gn2pg.utils import BColors, validate_datetime
 
 logger = logging.getLogger(__name__)
 
 sh_col = BColors()
+
+
+def since_datetime(value: str) -> str:
+    """Validate a CLI value used as an incremental download start date."""
+    try:
+        return validate_datetime(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
 
 
 def arguments(args):
@@ -35,7 +43,7 @@ def arguments(args):
         :obj:`argparse.Namespace`: command line parameters namespace
     """
     # Get options
-    parser = argparse.ArgumentParser(description="Gn2Pg Client app")
+    parser = argparse.ArgumentParser(description=__project__)
 
     subparser = parser.add_subparsers(help=_("Config management commands"), required=True)
 
@@ -49,7 +57,7 @@ def arguments(args):
         "--version",
         help=_("Print version number"),
         action="version",
-        version=f"%(prog)s v{__version__}",
+        version=f"{__project__} v{__version__}",
     )
     output_group = parser.add_mutually_exclusive_group()
     output_group.add_argument(
@@ -131,6 +139,12 @@ def arguments(args):
         help=_("Perform an incremental download"),
         action="store_true",
     )
+    download_parser.add_argument(
+        "--since",
+        type=since_datetime,
+        default=None,
+        help=_("Override the incremental download start date"),
+    )
 
     for p in (db_parser, download_parser):
         p.add_argument("file", nargs="?", help="Configuration file name")
@@ -155,9 +169,8 @@ def main(args) -> None:
 
 {newline_char.join(pkg_metadata.get_all('Project-URL'))}
 """
-    print(epilog)
-
     args = arguments(args)
+    print(epilog)
 
     # Setup logging
     loglevel = logging.INFO
@@ -216,7 +229,7 @@ def handle_download_commands(args, cfg_ctrl) -> bool:
 
     if args.update:
         logger.info(_("Perform update action"))
-        update(cfg_ctrl)
+        update(cfg_ctrl, since=args.since)
 
     return True
 

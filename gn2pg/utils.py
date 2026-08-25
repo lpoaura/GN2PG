@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Some utils"""
 
+import datetime
 from typing import Any
 
 
@@ -72,3 +73,12 @@ def coalesce_in_dict(source: dict, key: str, default: Any) -> Any:
     if key in source:
         return source[key]
     return default
+
+
+def validate_datetime(date_text: str) -> str:
+    """Return an ISO date after validation."""
+    try:
+        datetime.date.fromisoformat(date_text)
+    except ValueError as error:
+        raise ValueError("incorrect date format, expected YYYY-MM-DD or YY:MM:DD hh:mm") from error
+    return date_text
