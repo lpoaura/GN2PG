@@ -1169,7 +1169,8 @@ BEGIN
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
-            gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYPE' , NEW.item #>> '{methode_determination}')
+	    gn2pg_import.fct_c_get_id_nomenclature_from_label ('TYPE' ,
+		NEW.item #>> '{methode_determination}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('TYPE' , NEW.item #>> '{methode_determination}')
 	END AS id_nomenclature_determination_method INTO
@@ -1179,7 +1180,12 @@ BEGIN
     SELECT
         NEW.item #>> '{comment_occurrence}' INTO the_comment_description;
     SELECT
-        NEW.item #> '{donnees_additionnelles}' INTO the_additional_data;
+        CASE WHEN (NEW.item -> 'donnees_additionnelles') IS NULL
+            OR (NEW.item -> 'donnees_additionnelles') = 'null'::JSONB THEN
+            '{}'::JSONB
+        ELSE
+            NEW.item -> 'donnees_additionnelles'
+        END INTO the_additional_data;
     SELECT
         NULL INTO the_meta_validation_date;
 
@@ -1337,8 +1343,3 @@ CREATE TRIGGER tri_c_delete_data_from_geonature
     FOR EACH ROW
     WHEN (old.type IN ('synthese_with_label' , 'synthese_with_cd_nomenclature' , 'synthese_with_metadata' , 'synthese_with_metadata_separated'))
     EXECUTE PROCEDURE gn2pg_import.fct_tri_c_delete_data_from_geonature ();
-
-CREATE TABLE gn2pg_import.test (
-    id SERIAL PRIMARY KEY
-    , label VARCHAR
-);
