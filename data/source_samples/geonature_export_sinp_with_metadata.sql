@@ -341,6 +341,7 @@ SELECT
     , n13.cd_nomenclature AS type_denombrement
     , n14.cd_nomenclature AS niveau_sensibilite
     , n15.cd_nomenclature AS statut_observation
+    , s.meta_validation_date AS validation_date
     , n16.cd_nomenclature AS floutage_dee
     , n17.cd_nomenclature AS statut_source
     , n18.cd_nomenclature AS type_info_geo

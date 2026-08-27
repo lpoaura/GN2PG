@@ -66,6 +66,7 @@ SELECT
     END area_attachment
     , n_determ_method.cd_nomenclature AS methode_determination
     , n_valid_status.cd_nomenclature AS statut_validation
+    , s.meta_validation_date AS validation_date
     , coalesce(s.meta_update_date , s.meta_create_date) AS derniere_action
 FROM
     gn_synthese.synthese s

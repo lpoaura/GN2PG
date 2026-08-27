@@ -35,7 +35,9 @@ BEGIN
             WHERE
                 table_schema = _schema_name
                 AND table_name = _table_name
-                AND column_name = _column_name) INTO the_has_column;
+                AND column_name = _column_name)
+    INTO
+        the_has_column;
     RETURN the_has_column;
 END;
 $func$
@@ -67,7 +69,9 @@ BEGIN
         , now()
         , now()
     RETURNING
-        id_acquisition_framework INTO the_af_id;
+        id_acquisition_framework
+    INTO
+        the_af_id;
 
     IF gn2pg_import.fct_c_check_has_additional_data_column ('gn_meta' ,
 	't_acquisition_frameworks' , 'additional_data') THEN
@@ -82,7 +86,9 @@ BEGIN
     END IF;
 ELSE
     SELECT
-        id_acquisition_framework INTO the_af_id
+        id_acquisition_framework
+    INTO
+        the_af_id
     FROM
         gn_meta.t_acquisition_frameworks
     WHERE
@@ -132,7 +138,9 @@ BEGIN
         , TRUE
         , now()
     RETURNING
-        id_dataset INTO the_dataset_id;
+        id_dataset
+    INTO
+        the_dataset_id;
 
     IF gn2pg_import.fct_c_check_has_additional_data_column ('gn_meta' ,
 	't_datasets' , 'additional_data') THEN
@@ -147,7 +155,9 @@ BEGIN
     END IF;
 ELSE
     SELECT
-        id_dataset INTO the_dataset_id
+        id_dataset
+    INTO
+        the_dataset_id
     FROM
         gn_meta.t_datasets
     WHERE
@@ -183,7 +193,9 @@ BEGIN
     SELECT
         _source
     RETURNING
-        id_source INTO the_source_id;
+        id_source
+    INTO
+        the_source_id;
 
     IF gn2pg_import.fct_c_check_has_additional_data_column ('gn_synthese' ,
 	't_sources' , 'additional_data') THEN
@@ -198,7 +210,9 @@ BEGIN
     END IF;
 ELSE
     SELECT
-        id_source INTO the_source_id
+        id_source
+    INTO
+        the_source_id
     FROM
         gn_synthese.t_sources
     WHERE
@@ -227,7 +241,9 @@ DECLARE
     the_id_area INTEGER;
 BEGIN
     SELECT
-        id_area INTO the_id_area
+        id_area
+    INTO
+        the_id_area
     FROM
         ref_geo.l_areas la
     WHERE
@@ -255,7 +271,9 @@ DECLARE
     the_id_nomenclature INTEGER;
 BEGIN
     SELECT
-        id_nomenclature INTO the_id_nomenclature
+        id_nomenclature
+    INTO
+        the_id_nomenclature
     FROM
         ref_nomenclatures.t_nomenclatures n
     WHERE
@@ -280,7 +298,9 @@ DECLARE
     the_id_nomenclature INT;
 BEGIN
     SELECT
-        id_nomenclature INTO the_id_nomenclature
+        id_nomenclature
+    INTO
+        the_id_nomenclature
     FROM
         ref_nomenclatures.t_nomenclatures n
         JOIN ref_nomenclatures.bib_nomenclatures_types t ON n.id_type = t.id_type
@@ -463,7 +483,9 @@ BEGIN
         ON CONFLICT (uuid_organisme)
             DO NOTHING;
         SELECT
-            id_organisme INTO the_id_actor
+            id_organisme
+        INTO
+            the_id_actor
         FROM
             utilisateurs.bib_organismes
         WHERE
@@ -479,7 +501,9 @@ BEGIN
         ON CONFLICT (uuid_role)
             DO NOTHING;
         SELECT
-            id_role INTO the_id_actor
+            id_role
+        INTO
+            the_id_actor
         FROM
             utilisateurs.t_roles
         WHERE
@@ -608,7 +632,9 @@ BEGIN
         , now()
         , now()
     RETURNING
-        id_acquisition_framework INTO the_af_id;
+        id_acquisition_framework
+    INTO
+        the_af_id;
 
     PERFORM
         gn2pg_import.fct_c_insert_af_actors (the_af_id , _af_data -> 'actors' , _source);
@@ -617,10 +643,14 @@ BEGIN
     /* Manage AF territories */
     IF _af_data ->> 'territories' IS NULL THEN
         SELECT
-            array_to_json(ARRAY['METROP'])::JSONB INTO the_territories;
+            array_to_json(ARRAY['METROP'])::JSONB
+        INTO
+            the_territories;
     ELSE
         SELECT
-            _af_data -> 'territories' INTO the_territories;
+            _af_data -> 'territories'
+        INTO
+            the_territories;
     END IF;
     PERFORM
         gn2pg_import.fct_c_insert_af_territories (the_af_id , the_territories);
@@ -629,10 +659,14 @@ BEGIN
     /* Manage AF objectives */
     IF _af_data ->> 'objectives' IS NULL THEN
         SELECT
-            array_to_json(ARRAY['11'])::JSONB INTO the_objectives;
+            array_to_json(ARRAY['11'])::JSONB
+        INTO
+            the_objectives;
     ELSE
         SELECT
-            _af_data -> 'objectives' INTO the_objectives;
+            _af_data -> 'objectives'
+        INTO
+            the_objectives;
     END IF;
     PERFORM
         gn2pg_import.fct_c_insert_af_objectives (the_af_id , the_objectives);
@@ -641,10 +675,14 @@ BEGIN
     /* Manage AF volet_sinp */
     IF _af_data ->> 'voletsinp' IS NULL THEN
         SELECT
-            array_to_json(ARRAY['1'])::JSONB INTO the_voletsinp;
+            array_to_json(ARRAY['1'])::JSONB
+        INTO
+            the_voletsinp;
     ELSE
         SELECT
-            _af_data -> 'voletsinp' INTO the_voletsinp;
+            _af_data -> 'voletsinp'
+        INTO
+            the_voletsinp;
     END IF;
     PERFORM
         gn2pg_import.fct_c_insert_af_sinp_theme (the_af_id , the_voletsinp);
@@ -664,7 +702,9 @@ BEGIN
     END IF;
 ELSE
     SELECT
-        id_acquisition_framework INTO the_af_id
+        id_acquisition_framework
+    INTO
+        the_af_id
     FROM
         gn_meta.t_acquisition_frameworks
     WHERE
@@ -725,7 +765,9 @@ BEGIN
         , now()
         , now()
     RETURNING
-        id_dataset INTO the_dataset_id;
+        id_dataset
+    INTO
+        the_dataset_id;
 
     PERFORM
 	gn2pg_import.fct_c_insert_dataset_actor (the_dataset_id , _ds_data ->
@@ -747,7 +789,9 @@ BEGIN
     END IF;
 ELSE
     SELECT
-        id_dataset INTO the_dataset_id
+        id_dataset
+    INTO
+        the_dataset_id
     FROM
         gn_meta.t_datasets
     WHERE
@@ -768,7 +812,9 @@ DECLARE
     the_id INT;
 BEGIN
     SELECT
-        id_acquisition_framework INTO the_id
+        id_acquisition_framework
+    INTO
+        the_id
     FROM
         gn_meta.t_acquisition_frameworks
     WHERE
@@ -785,7 +831,9 @@ DECLARE
     the_id INT;
 BEGIN
     SELECT
-        id_dataset INTO the_id
+        id_dataset
+    INTO
+        the_id
     FROM
         gn_meta.t_datasets
     WHERE
@@ -891,9 +939,13 @@ DECLARE
 BEGIN
     RAISE DEBUG '<gn2pg_import.fct_tri_c_upsert_data_to_geonature > NEW: %' , NEW;
     SELECT
-        NEW.uuid INTO the_unique_id_sinp;
+        NEW.uuid
+    INTO
+        the_unique_id_sinp;
     SELECT
-        gn2pg_import.fct_c_get_or_insert_source (NEW.source) INTO the_id_source;
+        gn2pg_import.fct_c_get_or_insert_source (NEW.source)
+    INTO
+        the_id_source;
     -- Condition to upsert: Data do not exists or data exists from this source only
     IF NOT EXISTS (
         SELECT
@@ -910,11 +962,17 @@ BEGIN
                 AND id_source = the_id_source) THEN
         -- Proceed upsert
         SELECT
-            find_srid ('gn_synthese' , 'synthese' , 'the_geom_local') INTO _local_srid;
+            find_srid ('gn_synthese' , 'synthese' , 'the_geom_local')
+        INTO
+            _local_srid;
     SELECT
-        cast(NEW.item #>> '{id_perm_grp_sinp}' AS UUID) INTO the_unique_id_sinp_grp;
+        cast(NEW.item #>> '{id_perm_grp_sinp}' AS UUID)
+    INTO
+        the_unique_id_sinp_grp;
     SELECT
-        NEW.item #>> '{id_synthese}' INTO the_entity_source_pk_value;
+        NEW.item #>> '{id_synthese}'
+    INTO
+        the_entity_source_pk_value;
     SELECT
 	CASE WHEN NEW.type IN ('synthese_with_metadata' ,
 	    'synthese_with_metadata_separated') THEN
@@ -924,7 +982,9 @@ BEGIN
 	    gn2pg_import.fct_c_get_or_insert_basic_af_from_uuid_name
 		(cast(NEW.item #>> '{ca_uuid}' AS UUID) , NEW.item #>>
 		'{ca_nom}')
-        END AS the_id_af INTO the_id_af;
+        END AS the_id_af
+    INTO
+        the_id_af;
     SELECT
 	CASE WHEN NEW.type IN ('synthese_with_metadata' ,
 	    'synthese_with_metadata_separated') THEN
@@ -933,7 +993,9 @@ BEGIN
 	    gn2pg_import.fct_c_get_or_insert_basic_dataset_from_uuid_name
 		(cast(NEW.item #>> '{jdd_uuid}' AS UUID) , NEW.item #>>
 		'{jdd_nom}' , the_id_af)
-        END AS id_dataset INTO the_id_dataset;
+        END AS id_dataset
+    INTO
+        the_id_dataset;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -942,7 +1004,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('NAT_OBJ_GEO' , NEW.item
 		#>> '{nature_objet_geo}')
-        END AS id_nomenclature_geo_object_nature INTO the_id_nomenclature_geo_object_nature;
+        END AS id_nomenclature_geo_object_nature
+    INTO
+        the_id_nomenclature_geo_object_nature;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -950,9 +1014,13 @@ BEGIN
 		NEW.item #>> '{type_regroupement}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('TYP_GRP' , NEW.item #>> '{type_regroupement}')
-        END AS id_nomenclature_grp_typ INTO the_id_nomenclature_grp_typ;
+        END AS id_nomenclature_grp_typ
+    INTO
+        the_id_nomenclature_grp_typ;
     SELECT
-        NEW.item #>> '{methode_regroupement}' INTO the_grp_method;
+        NEW.item #>> '{methode_regroupement}'
+    INTO
+        the_grp_method;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -960,7 +1028,9 @@ BEGIN
 		NEW.item #>> '{technique_obs}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('METH_OBS' , NEW.item #>> '{technique_obs}')
-        END AS id_nomenclature_obs_technique INTO the_id_nomenclature_obs_technique;
+        END AS id_nomenclature_obs_technique
+    INTO
+        the_id_nomenclature_obs_technique;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -969,7 +1039,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_BIO' , NEW.item #>>
 		'{statut_biologique}')
-        END AS id_nomenclature_bio_status INTO the_id_nomenclature_bio_status;
+        END AS id_nomenclature_bio_status
+    INTO
+        the_id_nomenclature_bio_status;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -977,7 +1049,9 @@ BEGIN
 		NEW.item #>> '{etat_biologique}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('ETA_BIO' , NEW.item #>> '{etat_biologique}')
-        END AS id_nomenclature_bio_condition INTO the_id_nomenclature_bio_condition;
+        END AS id_nomenclature_bio_condition
+    INTO
+        the_id_nomenclature_bio_condition;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -985,7 +1059,9 @@ BEGIN
 		NEW.item #>> '{naturalite}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('NATURALITE' , NEW.item #>> '{naturalite}')
-        END AS id_nomenclature_naturalness INTO the_id_nomenclature_naturalness;
+        END AS id_nomenclature_naturalness
+    INTO
+        the_id_nomenclature_naturalness;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -994,7 +1070,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('PREUVE_EXIST' , NEW.item
 		#>> '{preuve_existante}')
-        END AS id_nomenclature_exist_proof INTO the_id_nomenclature_exist_proof;
+        END AS id_nomenclature_exist_proof
+    INTO
+        the_id_nomenclature_exist_proof;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1003,7 +1081,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_VALID' , NEW.item
 		#>> '{statut_validation}')
-        END AS id_nomenclature_valid_status INTO the_id_nomenclature_valid_status;
+        END AS id_nomenclature_valid_status
+    INTO
+        the_id_nomenclature_valid_status;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1012,7 +1092,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('NIV_PRECIS' , NEW.item #>>
 		'{precision_diffusion}')
-        END AS id_nomenclature_diffusion_level INTO the_id_nomenclature_diffusion_level;
+        END AS id_nomenclature_diffusion_level
+    INTO
+        the_id_nomenclature_diffusion_level;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1020,14 +1102,18 @@ BEGIN
 		NEW.item #>> '{stade_vie}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('STADE_VIE' , NEW.item #>> '{stade_vie}')
-        END AS id_nomenclature_life_stage INTO the_id_nomenclature_life_stage;
+        END AS id_nomenclature_life_stage
+    INTO
+        the_id_nomenclature_life_stage;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
             gn2pg_import.fct_c_get_id_nomenclature_from_label ('SEXE' , NEW.item #>> '{sexe}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('SEXE' , NEW.item #>> '{sexe}')
-        END AS id_nomenclature_sex INTO the_id_nomenclature_sex;
+        END AS id_nomenclature_sex
+    INTO
+        the_id_nomenclature_sex;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1036,7 +1122,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('OBJ_DENBR' , NEW.item #>>
 		'{objet_denombrement}')
-        END AS id_nomenclature_obj_count INTO the_id_nomenclature_obj_count;
+        END AS id_nomenclature_obj_count
+    INTO
+        the_id_nomenclature_obj_count;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1045,7 +1133,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('TYP_DENBR' , NEW.item #>>
 		'{type_denombrement}')
-        END AS id_nomenclature_type_count INTO the_id_nomenclature_type_count;
+        END AS id_nomenclature_type_count
+    INTO
+        the_id_nomenclature_type_count;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1054,7 +1144,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('SENSIBILITE' , NEW.item
 		#>> '{niveau_sensibilite}')
-        END AS id_nomenclature_sensitivity INTO the_id_nomenclature_sensitivity;
+        END AS id_nomenclature_sensitivity
+    INTO
+        the_id_nomenclature_sensitivity;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1063,7 +1155,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_OBS' , NEW.item #>>
 		'{statut_observation}')
-        END AS id_nomenclature_observation_status INTO the_id_nomenclature_observation_status;
+        END AS id_nomenclature_observation_status
+    INTO
+        the_id_nomenclature_observation_status;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1071,7 +1165,9 @@ BEGIN
 		NEW.item #>> '{floutage_dee}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('DEE_FLOU' , NEW.item #>> '{floutage_dee}')
-        END AS id_nomenclature_blurring INTO the_id_nomenclature_blurring;
+        END AS id_nomenclature_blurring
+    INTO
+        the_id_nomenclature_blurring;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1080,7 +1176,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('STATUT_SOURCE' , NEW.item
 		#>> '{statut_source}')
-        END AS id_nomenclature_source_status INTO the_id_nomenclature_source_status;
+        END AS id_nomenclature_source_status
+    INTO
+        the_id_nomenclature_source_status;
     -- Try to define the id_area_attachment if available
     SELECT
         CASE WHEN NEW.item ? 'area_attachment'
@@ -1088,7 +1186,9 @@ BEGIN
 	    gn2pg_import.fct_c_get_id_area (NEW.item #>>
 		'{area_attachment,type_code}' , NEW.item #>>
 		'{area_attachment,area_code}')
-        END INTO the_id_area_attachment;
+        END
+    INTO
+        the_id_area_attachment;
     -- If no area_attachment found in present db, type_info_geo is referencing, else
     -- attachment
     SELECT
@@ -1096,7 +1196,9 @@ BEGIN
             gn2pg_import.fct_c_get_id_nomenclature ('TYP_INF_GEO' , '2')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('TYP_INF_GEO' , '1')
-        END INTO the_id_nomenclature_info_geo_type;
+        END
+    INTO
+        the_id_nomenclature_info_geo_type;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1105,7 +1207,9 @@ BEGIN
         ELSE
 	    gn2pg_import.fct_c_get_id_nomenclature ('OCC_COMPORTEMENT' ,
 		NEW.item #>> '{comportement}')
-        END AS id_nomenclature_behaviour INTO the_id_nomenclature_behaviour;
+        END AS id_nomenclature_behaviour
+    INTO
+        the_id_nomenclature_behaviour;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1113,59 +1217,113 @@ BEGIN
 		NEW.item #>> '{statut_biogeo}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('STAT_BIOGEO' , NEW.item #>> '{statut_biogeo}')
-        END AS id_nomenclature_biogeo_status INTO the_id_nomenclature_biogeo_status;
+        END AS id_nomenclature_biogeo_status
+    INTO
+        the_id_nomenclature_biogeo_status;
     SELECT
-        NEW.item #>> '{reference_biblio}' INTO the_reference_biblio;
+        NEW.item #>> '{reference_biblio}'
+    INTO
+        the_reference_biblio;
     SELECT
-        NEW.item #>> '{nombre_min}' INTO the_count_min;
+        NEW.item #>> '{nombre_min}'
+    INTO
+        the_count_min;
     SELECT
-        NEW.item #>> '{nombre_max}' INTO the_count_max;
+        NEW.item #>> '{nombre_max}'
+    INTO
+        the_count_max;
     SELECT
-        NEW.item #>> '{cd_nom}' INTO the_cd_nom;
+        NEW.item #>> '{cd_nom}'
+    INTO
+        the_cd_nom;
     SELECT
-        NEW.item #>> '{cd_hab}' INTO the_cd_hab;
+        NEW.item #>> '{cd_hab}'
+    INTO
+        the_cd_hab;
     SELECT
-        NEW.item #>> '{nom_cite}' INTO the_nom_cite;
+        NEW.item #>> '{nom_cite}'
+    INTO
+        the_nom_cite;
     SELECT
-        NEW.item #>> '{version_taxref}' INTO the_meta_v_taxref;
+        NEW.item #>> '{version_taxref}'
+    INTO
+        the_meta_v_taxref;
     SELECT
-        NEW.item #>> '{numero_preuve}' INTO the_sample_number_proof;
+        NEW.item #>> '{numero_preuve}'
+    INTO
+        the_sample_number_proof;
     SELECT
-        NEW.item #>> '{preuve_numerique}' INTO the_digital_proof;
+        NEW.item #>> '{preuve_numerique}'
+    INTO
+        the_digital_proof;
     SELECT
-        NEW.item #>> '{preuve_non_numerique}' INTO the_non_digital_proof;
+        NEW.item #>> '{preuve_non_numerique}'
+    INTO
+        the_non_digital_proof;
     SELECT
-        NEW.item #>> '{altitude_min}' INTO the_altitude_min;
+        NEW.item #>> '{altitude_min}'
+    INTO
+        the_altitude_min;
     SELECT
-        NEW.item #>> '{altitude_max}' INTO the_altitude_max;
+        NEW.item #>> '{altitude_max}'
+    INTO
+        the_altitude_max;
     SELECT
-        NEW.item #>> '{profondeur_min}' INTO the_depth_min;
+        NEW.item #>> '{profondeur_min}'
+    INTO
+        the_depth_min;
     SELECT
-        NEW.item #>> '{profondeur_max}' INTO the_depth_max;
+        NEW.item #>> '{profondeur_max}'
+    INTO
+        the_depth_max;
     SELECT
-        NEW.item #>> '{nom_lieu}' INTO the_place_name;
+        NEW.item #>> '{nom_lieu}'
+    INTO
+        the_place_name;
     SELECT
-        st_setsrid (st_geomfromtext (NEW.item #>> '{wkt_4326}') , 4326) INTO _the_geom_4326;
+        st_setsrid (st_geomfromtext (NEW.item #>> '{wkt_4326}') , 4326)
+    INTO
+        _the_geom_4326;
     SELECT
-        st_centroid (_the_geom_4326) INTO _the_geom_point;
+        st_centroid (_the_geom_4326)
+    INTO
+        _the_geom_point;
     SELECT
-        st_transform (_the_geom_4326 , _local_srid) INTO _the_geom_local;
+        st_transform (_the_geom_4326 , _local_srid)
+    INTO
+        _the_geom_local;
     SELECT
-        cast(NEW.item #>> '{precision}' AS INT) INTO the_precision;
+        cast(NEW.item #>> '{precision}' AS INT)
+    INTO
+        the_precision;
     SELECT
-        cast(NEW.item #>> '{date_debut}' AS DATE) INTO the_date_min;
+        cast(NEW.item #>> '{date_debut}' AS DATE)
+    INTO
+        the_date_min;
     SELECT
-        cast(NEW.item #>> '{date_fin}' AS DATE) INTO the_date_max;
+        cast(NEW.item #>> '{date_fin}' AS DATE)
+    INTO
+        the_date_max;
     SELECT
-        NEW.item #>> '{validateur}' INTO the_validator;
+        NEW.item #>> '{validateur}'
+    INTO
+        the_validator;
     SELECT
-        NEW.item #>> '{comment_validation}' INTO the_validation_comment;
+        NEW.item #>> '{comment_validation}'
+    INTO
+        the_validation_comment;
     SELECT
-        NEW.item #>> '{observateurs}' INTO the_observers;
+        NEW.item #>> '{observateurs}'
+    INTO
+        the_observers;
     SELECT
-        NEW.item #>> '{determinateur}' INTO the_determiner;
+        NEW.item #>> '{determinateur}'
+    INTO
+        the_determiner;
     SELECT
-        NULL INTO the_id_digitiser;
+        NULL
+    INTO
+        the_id_digitiser;
     SELECT
         CASE NEW.type
         WHEN 'synthese_with_label' THEN
@@ -1173,21 +1331,30 @@ BEGIN
 		NEW.item #>> '{methode_determination}')
         ELSE
             gn2pg_import.fct_c_get_id_nomenclature ('TYPE' , NEW.item #>> '{methode_determination}')
-	END AS id_nomenclature_determination_method INTO
-	    the_id_nomenclature_determination_method;
+        END AS id_nomenclature_determination_method
+    INTO
+        the_id_nomenclature_determination_method;
     SELECT
-        NEW.item #>> '{comment_releve}' INTO the_comment_context;
+        NEW.item #>> '{comment_releve}'
+    INTO
+        the_comment_context;
     SELECT
-        NEW.item #>> '{comment_occurrence}' INTO the_comment_description;
+        NEW.item #>> '{comment_occurrence}'
+    INTO
+        the_comment_description;
     SELECT
         CASE WHEN (NEW.item -> 'donnees_additionnelles') IS NULL
             OR (NEW.item -> 'donnees_additionnelles') = 'null'::JSONB THEN
             '{}'::JSONB
         ELSE
             NEW.item -> 'donnees_additionnelles'
-        END INTO the_additional_data;
+        END
+    INTO
+        the_additional_data;
     SELECT
-        NULL INTO the_meta_validation_date;
+        cast(NEW.item ->> 'validation_date' AS DATE)
+    INTO
+        the_meta_validation_date;
 
 
     /* Proceed to upsert */
@@ -1334,7 +1501,8 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature () IS 'Trigger function to delete datas';
+COMMENT ON FUNCTION gn2pg_import.fct_tri_c_delete_data_from_geonature () IS
+    'Trigger function to delete datas';
 
 DROP TRIGGER IF EXISTS tri_c_delete_data_from_geonature ON gn2pg_import.data_json;
 
