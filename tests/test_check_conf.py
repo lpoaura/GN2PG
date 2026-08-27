@@ -53,6 +53,10 @@ class TestCheckConf:
             assert source.max_retry == expected_tuning.get("max_retry", 5)
             assert source.max_requests == expected_tuning.get("max_requests", 0)
             assert source.retry_delay == expected_tuning.get("retry_delay", 5)
+            assert source.http_timeout == (
+                expected_tuning.get("http_connect_timeout", 10),
+                expected_tuning.get("http_read_timeout", 120),
+            )
             assert source.unavailable_delay == expected_tuning.get("unavailable_delay", 600)
             assert source.lru_maxsize == expected_tuning.get("lru_maxsize", 32)
             assert source.nb_threads == expected_tuning.get("nb_threads", 1)

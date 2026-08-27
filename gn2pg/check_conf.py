@@ -67,6 +67,8 @@ _CONF_SCHEMA = Schema(
             Optional("max_retry"): int,
             Optional("max_requests"): int,
             Optional("retry_delay"): int,
+            Optional("http_connect_timeout"): int,
+            Optional("http_read_timeout"): int,
             Optional("unavailable_delay"): int,
             Optional("lru_maxsize"): int,
             Optional("nb_threads"): int,
@@ -113,6 +115,8 @@ class Tuning:
     max_retry: int = 5
     max_requests: int = 0
     retry_delay: int = 5
+    http_connect_timeout: int = 10
+    http_read_timeout: int = 120
     unavailable_delay: int = 600
     lru_maxsize: int = 32
     nb_threads: int = 1
@@ -156,6 +160,7 @@ class Gn2PgSourceConf:
                 schema_import=config["db"]["db_schema_import"],
                 querystring=coalesce_in_dict(config["db"], "db_querystring", {}),
             )  # type: Db
+            self._tuning = Tuning()
             if "tuning" in config:
                 tuning = config["tuning"]
                 self._tuning = Tuning(
@@ -163,10 +168,16 @@ class Gn2PgSourceConf:
                     max_retry=coalesce_in_dict(tuning, "max_retry", 5),
                     max_requests=coalesce_in_dict(tuning, "max_requests", 0),
                     retry_delay=coalesce_in_dict(tuning, "retry_delay", 5),
+                    http_connect_timeout=coalesce_in_dict(tuning, "http_connect_timeout", 10),
+                    http_read_timeout=coalesce_in_dict(tuning, "http_read_timeout", 120),
                     unavailable_delay=coalesce_in_dict(tuning, "unavailable_delay", 600),
                     lru_maxsize=coalesce_in_dict(tuning, "lru_maxsize", 32),
                     nb_threads=coalesce_in_dict(tuning, "nb_threads", 1),
                 )
+            self.http_timeout = (
+                self._tuning.http_connect_timeout,
+                self._tuning.http_read_timeout,
+            )
 
         except Exception:  # pragma: no cover
             logger.exception(_("Error creating %s configuration"), source)

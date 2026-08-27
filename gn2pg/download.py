@@ -20,11 +20,11 @@ from multiprocessing.pool import ThreadPool
 from threading import Thread
 from typing import Callable, List, Optional
 
-from requests.exceptions import HTTPError, InvalidSchema, RetryError
+from requests.exceptions import HTTPError, InvalidSchema, RequestException
 from urllib3.exceptions import ResponseError
 
 from gn2pg import _, __version__
-from gn2pg.api import DataAPI, ExportModuleNotFoundError
+from gn2pg.api import APIException, DataAPI, ExportModuleNotFoundError
 from gn2pg.check_conf import Gn2PgSourceConf
 from gn2pg.store_postgresql import StorePostgresql
 from gn2pg.utils import XferStatus
@@ -245,6 +245,10 @@ class DownloadGn:
 
     def store(self) -> None:
         """Store data into Database"""
+        # Bound the full export before making any request so that new data
+        # arriving during offset pagination cannot extend the result set.
+        until = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         if self._config.data_type in (
             "metadata_only",
             "synthese_with_metadata_separated",
@@ -257,10 +261,10 @@ class DownloadGn:
 
         # Store start download TimeStamp to populate increment log  after download end.
 
-        params = {"limit": self._config.max_page_length}
+        params = dict(self._config.query_strings)
+        params["limit"] = self._config.max_page_length
+        params["filter_d_lo_derniere_action"] = until
         logger.debug(_("Getting items from controler %s"), self._api_instance.controler)
-        # logger.info(self._config._query_strings)
-        params.update(self._config.query_strings)
         logger.info(_("QueryStrings %s"), params)
         pages = None
         try:
@@ -268,10 +272,10 @@ class DownloadGn:
                 kind="data", params=params
             )
             self.api_count_items += data_count_items
-        except (RetryError, ResponseError) as e:
+        except (RequestException, ResponseError, APIException) as e:
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
-            logger.critical("%s %s %s", e, e.response, dir(e))
+            logger.critical("%s", e)
             logger.error(_("Could not retrieve API data from source %s"), self._config.name)
             return
 
@@ -296,7 +300,7 @@ class DownloadGn:
                 self.xfer_status = XferStatus.success
                 # Log download timestamp to download.
 
-        except (RetryError, ResponseError) as e:
+        except (RequestException, ResponseError, APIException) as e:
             self.queue.put(("EXIT"))
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
@@ -336,7 +340,7 @@ class DownloadGn:
                 )
                 if errors:
                     raise errors[0]
-        except (RetryError, ResponseError) as error:
+        except (RequestException, ResponseError, APIException) as error:
             self.queue.put(("EXIT"))
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(error)
@@ -364,6 +368,11 @@ class DownloadGn:
             self.xfer_status = XferStatus.success
             return
 
+        # Freeze the upper end of the incremental window before making any
+        # export request. All offset pages therefore address the same bounded
+        # period, even when the source keeps receiving new observations.
+        until = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         # Update new or modified data from API
         logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
         # Get last update from increment log.
@@ -390,9 +399,10 @@ class DownloadGn:
             if not self.store_metadata(xfer_type="update"):
                 return
 
+        params.update(self._config.query_strings)
         params["limit"] = self._config.max_page_length
         params["filter_d_up_derniere_action"] = since
-        params.update(self._config.query_strings)
+        params["filter_d_lo_derniere_action"] = until
         logger.info(_("QueryStrings %s"), params)
 
         logger.info(
@@ -426,7 +436,7 @@ class DownloadGn:
                     pages=upsert_pages,
                 )
 
-        except (RetryError, ResponseError) as e:
+        except (RequestException, ResponseError, APIException) as e:
             self.queue.put(("EXIT"))
             logger.critical("%s %s %s %s", dir(e), type(e), e.args, str(e))
             self.xfer_status = XferStatus.failed
@@ -467,7 +477,7 @@ class DownloadGn:
                     store=False,
                 )
 
-        except (RetryError, ResponseError) as e:
+        except (RequestException, ResponseError, APIException) as e:
             self.queue.put(("EXIT"))
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
