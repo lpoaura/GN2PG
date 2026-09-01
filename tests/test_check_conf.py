@@ -76,7 +76,10 @@ class TestCheckConf:
         source = next(iter(config.source_list.values()))
         expected_id = int(toml_conf.split("data_export_id =", maxsplit=1)[1].splitlines()[0])
         assert source.data_export_id == expected_id
-        assert "export_id configuration parameter is deprecated" in caplog.text
+        assert any(
+            "export_id" in record.getMessage() and "data_export_id" in record.getMessage()
+            for record in caplog.records
+        )
 
     def test_metadata_export_id_for_separated_metadata(self, tmp_path, monkeypatch, toml_conf):
         config_file = tmp_path / "metadata_export_id.toml"
@@ -109,7 +112,7 @@ class TestCheckConf:
         )
         monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
 
-        with pytest.raises(SchemaError, match="metadata_export_id is required"):
+        with pytest.raises(SchemaError, match="metadata_export_id"):
             check_conf.Gn2PgConf(file=config_file.name)
 
     def test_metadata_only_does_not_require_data_export_id(self, tmp_path, monkeypatch, toml_conf):

@@ -42,7 +42,6 @@ def build_metadata(schema: str = "gn2pg_import") -> MetaData:
         Column("metadata_count_errors", Integer, nullable=False, server_default=text("0")),
         Column("xfer_filters", JSONB, server_default=text("'{}'::jsonb")),
         Column("comment", Text),
-        Column("test", Text),
     )
 
     Table(
