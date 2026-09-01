@@ -36,6 +36,27 @@ class IncorrectParameter(Gn2PgConfException):
 
 _ConfType: TypeAlias = Dict[str, Any]
 
+_SENSITIVE_SOURCE_FIELDS = ("user_name", "user_password", "url")
+
+
+def _obfuscate_sensitive_source_values(error: SchemaError, config: _ConfType) -> str:
+    """Return a schema error message without source connection values."""
+    message = str(error)
+    sources = config.get("source", [])
+    if not isinstance(sources, list):
+        return message
+    sensitive_values = {
+        repr(source[field])
+        for source in sources
+        if isinstance(source, dict)
+        for field in _SENSITIVE_SOURCE_FIELDS
+        if field in source
+    }
+    for value in sorted(sensitive_values, key=len, reverse=True):
+        message = message.replace(value, repr("***"))
+    return message
+
+
 _CONF_SCHEMA = Schema(
     {
         "db": {
@@ -423,11 +444,12 @@ class Gn2PgConf:
                     )
             _CONF_SCHEMA.validate(self._config)
         except SchemaError as error:
+            secure_error = _obfuscate_sensitive_source_values(error, self._config)
             logger.error(
                 _("Incorrect content in YAML configuration %(file)s: %(error)s"),
-                {"file": file, "error": error},
+                {"file": file, "error": secure_error},
             )
-            raise
+            raise SchemaError(secure_error) from None
 
         self._source_list = {}  # type: _ConfType
         i = 0

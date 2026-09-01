@@ -115,6 +115,32 @@ class TestCheckConf:
         with pytest.raises(SchemaError, match="metadata_export_id"):
             check_conf.Gn2PgConf(file=config_file.name)
 
+    def test_schema_error_obfuscates_source_connection_values(
+        self, tmp_path, monkeypatch, toml_conf, caplog
+    ):
+        sensitive_values = {
+            "user_name": 918273,
+            "user_password": 827364,
+            "url": 736455,
+        }
+        lines = []
+        for line in toml_conf.splitlines():
+            field = next(
+                (field for field in sensitive_values if line.strip().startswith(f"{field} =")),
+                None,
+            )
+            lines.append(f"    {field} = {sensitive_values[field]}" if field is not None else line)
+        config_file = tmp_path / "invalid_sensitive_values.toml"
+        config_file.write_text("\n".join(lines))
+        monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
+
+        with caplog.at_level(logging.ERROR), pytest.raises(SchemaError) as exc_info:
+            check_conf.Gn2PgConf(file=config_file.name)
+
+        displayed_error = f"{caplog.text}\n{exc_info.value}"
+        assert "***" in displayed_error
+        assert all(str(value) not in displayed_error for value in sensitive_values.values())
+
     def test_metadata_only_does_not_require_data_export_id(self, tmp_path, monkeypatch, toml_conf):
         config_file = tmp_path / "metadata_only.toml"
         lines = [
