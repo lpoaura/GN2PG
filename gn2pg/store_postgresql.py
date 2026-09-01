@@ -689,6 +689,197 @@ class StorePostgresql:
 
         return row[0] if row is not None else None
 
+    def resumable_cursor(self, controler: str, xfer_type: Optional[str] = None) -> Optional[dict]:
+        """Return the latest interrupted data cursor, optionally by transfer type."""
+        imports = self._metadata.tables[self._config.database.schema_import + ".import_log"]
+        conditions = [
+            imports.c.source == self._config.std_name,
+            imports.c.controler == controler,
+            imports.c.cursor_phase == "data",
+            imports.c.xfer_status != XferStatus.success,
+        ]
+        if xfer_type is not None:
+            conditions.append(imports.c.xfer_type == xfer_type)
+        stmt = (
+            select(
+                imports.c.id,
+                imports.c.xfer_start_ts,
+                imports.c.xfer_type,
+                imports.c.xfer_filters,
+                imports.c.cursor_column,
+                imports.c.cursor_value,
+            )
+            .where(and_(*conditions))
+            .order_by(imports.c.xfer_start_ts.desc())
+            .limit(1)
+        )
+        with self._db.connect() as conn:
+            run = conn.execute(stmt).mappings().first()
+        return dict(run) if run is not None else None
+
+    def supersede_cursor(self, import_id: int) -> None:
+        """Retire an old cursor after its checkpoint was copied to a new run."""
+        imports = self._metadata.tables[self._config.database.schema_import + ".import_log"]
+        stmt = imports.update().where(imports.c.id == import_id).values(cursor_phase="superseded")
+        with self._db.begin() as conn:
+            conn.execute(stmt)
+
+    def save_cursor(self, column: str, value: int) -> None:
+        """Persist the last data identifier committed by the current run."""
+        self.import_log(
+            controler="data",
+            values={
+                "cursor_phase": "data",
+                "cursor_column": column,
+                "cursor_value": value,
+            },
+        )
+
+    def complete_cursor(self) -> None:
+        """Mark the data cursor phase as complete for the current run."""
+        self.import_log(
+            controler="data",
+            values={"cursor_phase": "complete"},
+        )
+
+    def create_download_pages(self, phase: str, urls: list[str]) -> list[dict]:
+        """Persist the pages of one transfer phase before processing them."""
+        pages = self._metadata.tables[self._config.database.schema_import + ".download_page"]
+        values = [
+            {
+                "import_id": self.import_id,
+                "phase": phase,
+                "page_number": page_number,
+                "url": url,
+            }
+            for page_number, url in enumerate(urls, start=1)
+        ]
+        if not values:
+            return []
+        stmt = insert(pages).returning(pages.c.id, pages.c.page_number, pages.c.url)
+        with self._db.begin() as conn:
+            rows = conn.execute(stmt, values).mappings().all()
+        return [dict(row) for row in rows]
+
+    def resumable_delete_pages(self, controler: str) -> Optional[dict]:
+        """Return the latest incomplete delete phase and its unfinished pages."""
+        schema = self._config.database.schema_import
+        pages = self._metadata.tables[schema + ".download_page"]
+        imports = self._metadata.tables[schema + ".import_log"]
+        run_stmt = (
+            select(imports.c.id, imports.c.xfer_start_ts, imports.c.xfer_filters)
+            .join(pages, pages.c.import_id == imports.c.id)
+            .where(
+                and_(
+                    imports.c.source == self._config.std_name,
+                    imports.c.controler == controler,
+                    imports.c.xfer_type == "update",
+                    imports.c.xfer_status != XferStatus.success,
+                    pages.c.phase == "delete",
+                )
+            )
+            .order_by(imports.c.xfer_start_ts.desc())
+            .limit(1)
+        )
+        with self._db.connect() as conn:
+            run = conn.execute(run_stmt).mappings().first()
+            if run is not None:
+                page_stmt = (
+                    select(pages.c.id, pages.c.page_number, pages.c.url)
+                    .where(
+                        and_(
+                            pages.c.import_id == run["id"],
+                            pages.c.phase == "delete",
+                            pages.c.status != "success",
+                        )
+                    )
+                    .order_by(pages.c.page_number)
+                )
+                pending = [dict(row) for row in conn.execute(page_stmt).mappings()]
+                return {
+                    "import_id": run["id"],
+                    "xfer_start_ts": run["xfer_start_ts"],
+                    "xfer_filters": run["xfer_filters"],
+                    "pages": pending,
+                    "rebuild": False,
+                }
+
+            # The delete page-list request itself may have failed before any
+            # page checkpoint could be created. The completed data cursor and
+            # its bounded filters still let the client rebuild only deletes.
+            run_stmt = (
+                select(
+                    imports.c.id,
+                    imports.c.xfer_start_ts,
+                    imports.c.xfer_filters,
+                )
+                .where(
+                    and_(
+                        imports.c.source == self._config.std_name,
+                        imports.c.controler == controler,
+                        imports.c.xfer_type == "update",
+                        imports.c.xfer_status != XferStatus.success,
+                        imports.c.cursor_phase == "complete",
+                    )
+                )
+                .order_by(imports.c.xfer_start_ts.desc())
+                .limit(1)
+            )
+            run = conn.execute(run_stmt).mappings().first()
+            if run is None:
+                return None
+            return {
+                "import_id": run["id"],
+                "xfer_start_ts": run["xfer_start_ts"],
+                "xfer_filters": run["xfer_filters"],
+                "pages": [],
+                "rebuild": True,
+            }
+
+    def complete_resumed_delete(self, import_id: int) -> None:
+        """Close the original import log once all its delete pages succeeded."""
+        imports = self._metadata.tables[self._config.database.schema_import + ".import_log"]
+        stmt = (
+            imports.update()
+            .where(imports.c.id == import_id)
+            .values(xfer_status=XferStatus.success, xfer_end_ts=datetime.now())
+        )
+        with self._db.begin() as conn:
+            conn.execute(stmt)
+
+    def start_download_page(self, page_id: int) -> None:
+        """Mark one page as running and increment its attempt counter."""
+        pages = self._metadata.tables[self._config.database.schema_import + ".download_page"]
+        stmt = (
+            pages.update()
+            .where(pages.c.id == page_id)
+            .values(
+                status="running",
+                attempts=pages.c.attempts + 1,
+                started_at=datetime.now(),
+                completed_at=None,
+                last_error=None,
+            )
+        )
+        with self._db.begin() as conn:
+            conn.execute(stmt)
+
+    def finish_download_page(
+        self, page_id: int, *, item_count: int = 0, error: Optional[str] = None
+    ) -> None:
+        """Persist the final outcome of one page attempt."""
+        pages = self._metadata.tables[self._config.database.schema_import + ".download_page"]
+        values = {
+            "status": "failed" if error else "success",
+            "last_error": error,
+            "completed_at": datetime.now(),
+        }
+        if not error:
+            values["item_count"] = item_count
+        stmt = pages.update().where(pages.c.id == page_id).values(**values)
+        with self._db.begin() as conn:
+            conn.execute(stmt)
+
     def error_log(  # pylint: disable=R0917
         self,
         controler: str,

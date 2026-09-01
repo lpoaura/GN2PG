@@ -32,6 +32,11 @@ data_export_id = 1
 #metadata_export_id = 2
 # Data type (used to distinct datas and to conditionning triggers)
 data_type = "synthese_with_metadata"
+# Unique source fields used for storage and optional cursor pagination.
+id_key_name = "id_synthese"
+uuid_key_name = "id_perm_sinp"
+pagination_strategy = "cursor"
+cursor_start = 0
 # GeoNature ID application (default is 3)
 #id_application = 1
 # Additional export API QueryStrings to filter or order data, you can add multiple "orderby" columns by separating column names with ":"

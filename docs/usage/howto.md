@@ -182,7 +182,7 @@ When data from GN2PG is inserted into the `geonature.synthese` table using the s
 Data download can be executed using `gn2pg_cli download` commands.
 
 ```text
-usage: gn2pg_cli download [-h] (--full | --update) [--since SINCE] [file]
+usage: gn2pg_cli download [-h] (--full | --update | --retry-failed) [--since SINCE] [file]
 
 positional arguments:
   file        Configuration file name
@@ -191,6 +191,8 @@ options:
   -h, --help  show this help message and exit
   --full      Effectuer un téléchargement complet
   --update    Effectuer un téléchargement incrémentiel
+  --retry-failed
+              Reprendre les téléchargements API échoués sans démarrer un nouveau transfert
   --since     Remplacer la date de début du téléchargement incrémentiel
 ```
 
@@ -216,6 +218,18 @@ The date stored in the database can be overridden for a specific update with
 ```bash
 gn2pg_cli download --update --since='2022-06-05' <myconfigfile>
 ```
+
+### Retry failed downloads
+
+To resume checkpointed API downloads without opening a new time window, run:
+
+```bash
+gn2pg_cli download --retry-failed <myconfigfile>
+```
+
+This resumes cursor downloads and incomplete deletion pages for enabled sources.
+It never retries records stored in `error_log`. Data downloads using offset
+pagination cannot be resumed safely and are left untouched.
 
 To automate the launching of updates, you can write the cron task using the following command, for example every 30 minutes.
 

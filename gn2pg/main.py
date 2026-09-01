@@ -15,7 +15,7 @@ from gn2pg import _, __project__, __version__, pkg_metadata
 from gn2pg.check_conf import Gn2PgConf
 from gn2pg.database.migrations import ExistingSchemaError
 from gn2pg.env import CONFDIR
-from gn2pg.helpers import full_download, init, manage_configs, update
+from gn2pg.helpers import full_download, init, manage_configs, retry_failed, update
 from gn2pg.logger import setup_logging
 from gn2pg.store_postgresql import PostgresqlUtils
 from gn2pg.utils import BColors, validate_datetime
@@ -139,6 +139,11 @@ def arguments(args):
         help=_("Perform an incremental download"),
         action="store_true",
     )
+    download_group.add_argument(
+        "--retry-failed",
+        help=_("Resume failed API downloads without starting a new transfer"),
+        action="store_true",
+    )
     download_parser.add_argument(
         "--since",
         type=since_datetime,
@@ -230,6 +235,10 @@ def handle_download_commands(args, cfg_ctrl) -> bool:
     if args.update:
         logger.info(_("Perform update action"))
         update(cfg_ctrl, since=args.since)
+
+    if args.retry_failed:
+        logger.info(_("Retry failed downloads"))
+        retry_failed(cfg_ctrl)
 
     return True
 

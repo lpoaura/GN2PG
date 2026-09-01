@@ -1477,10 +1477,20 @@ COMMENT ON FUNCTION gn2pg_import.fct_tri_c_upsert_data_to_geonature () IS 'Trigg
 
 DROP TRIGGER IF EXISTS tri_c_upsert_data_to_geonature ON gn2pg_import.data_json;
 
-CREATE TRIGGER tri_c_upsert_data_to_geonature
-    AFTER INSERT OR UPDATE ON gn2pg_import.data_json
+DROP TRIGGER IF EXISTS tri_c_insert_data_to_geonature ON gn2pg_import.data_json;
+
+DROP TRIGGER IF EXISTS tri_c_update_data_to_geonature ON gn2pg_import.data_json;
+
+CREATE TRIGGER tri_c_insert_data_to_geonature
+    AFTER INSERT ON gn2pg_import.data_json
     FOR EACH ROW
     WHEN (new.uuid IS NOT NULL)
+    EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature ();
+
+CREATE TRIGGER tri_c_update_data_to_geonature
+    AFTER UPDATE ON gn2pg_import.data_json
+    FOR EACH ROW
+    WHEN (new.uuid IS NOT NULL AND old.payload_hash IS DISTINCT FROM new.payload_hash)
     EXECUTE PROCEDURE gn2pg_import.fct_tri_c_upsert_data_to_geonature ();
 
 -- DELETE

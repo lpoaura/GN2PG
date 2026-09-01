@@ -3,10 +3,13 @@
 from functools import lru_cache
 
 from sqlalchemy import (
+    BigInteger,
     Column,
+    Computed,
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
     MetaData,
     PrimaryKeyConstraint,
     String,
@@ -42,7 +45,9 @@ def build_metadata(schema: str = "gn2pg_import") -> MetaData:
         Column("metadata_count_errors", Integer, nullable=False, server_default=text("0")),
         Column("xfer_filters", JSONB, server_default=text("'{}'::jsonb")),
         Column("comment", Text),
-        Column("test", Text),
+        Column("cursor_phase", String),
+        Column("cursor_column", String),
+        Column("cursor_value", BigInteger),
     )
 
     Table(
@@ -63,6 +68,29 @@ def build_metadata(schema: str = "gn2pg_import") -> MetaData:
     )
 
     Table(
+        "download_page",
+        metadata,
+        Column("id", Integer, primary_key=True, autoincrement=True),
+        Column(
+            "import_id",
+            Integer,
+            ForeignKey(f"{schema}.import_log.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
+        Column("phase", String, nullable=False),
+        Column("page_number", Integer, nullable=False),
+        Column("url", Text, nullable=False),
+        Column("status", String, nullable=False, server_default=text("'pending'")),
+        Column("attempts", Integer, nullable=False, server_default=text("0")),
+        Column("item_count", Integer, nullable=False, server_default=text("0")),
+        Column("last_error", Text),
+        Column("started_at", DateTime),
+        Column("completed_at", DateTime),
+        UniqueConstraint("import_id", "phase", "page_number", name="uq_download_page"),
+    )
+
+    Table(
         "data_json",
         metadata,
         Column("source", String, nullable=False),
@@ -71,6 +99,12 @@ def build_metadata(schema: str = "gn2pg_import") -> MetaData:
         Column("id_data", Integer, nullable=False, index=True),
         Column("uuid", UUID, index=True),
         Column("item", JSONB, nullable=False),
+        Column(
+            "payload_hash",
+            LargeBinary,
+            Computed("digest(item::text, 'sha256')", persisted=True),
+            nullable=False,
+        ),
         Column("update_ts", DateTime, server_default=text("now()"), nullable=False),
         Column(
             "import_id",

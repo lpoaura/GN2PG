@@ -222,7 +222,9 @@ class BaseAPI:
             return None
         if params is not None:
             logger.debug("params %s", params)
-            url = url + "?" + urlencode(params)
+            # The synthese log endpoint accepts repeated parameters (notably
+            # the lower and upper bounds of meta_last_action_date).
+            url = url + "?" + urlencode(params, doseq=kind == "log")
         return url
 
     def page_list(
@@ -321,6 +323,13 @@ class BaseAPI:
             logger.critical(_("Download data from %s failed"), page_url)
             logger.critical(str(error))
             raise
+
+    def get_cursor_page(self, params: dict) -> dict:
+        """Get one data page using caller-provided keyset pagination filters."""
+        page_url = self._url("data", params)
+        if page_url is None:
+            raise APIException("The data export URL is not configured")
+        return self.get_page(page_url)
 
 
 class DataAPI(BaseAPI):

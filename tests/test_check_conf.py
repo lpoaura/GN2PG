@@ -40,6 +40,12 @@ class TestCheckConf:
             assert source.id_application == expected_source.get("id_application", 3)
             assert source.enable == expected_source.get("enable", True)
             assert source.query_strings == expected_source.get("query_strings", {})
+            assert source.id_key_name == expected_source.get("id_key_name", "id_synthese")
+            assert source.uuid_key_name == expected_source.get("uuid_key_name", "id_perm_sinp")
+            assert source.pagination_strategy == expected_source.get(
+                "pagination_strategy", "offset"
+            )
+            assert source.cursor_start == expected_source.get("cursor_start", 0)
 
             assert source.database.host == expected_db["db_host"]
             assert source.database.port == expected_db["db_port"]

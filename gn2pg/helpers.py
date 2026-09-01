@@ -164,6 +164,26 @@ def update(cfg_ctrl, since: Optional[str] = None):
             logger.info(_("Source %s is disabled"), source)
 
 
+def retry_failed_1source(ctrl, cfg):
+    """Resume one source without creating a new download window."""
+    with StorePostgresql(cfg) as store_pg:
+        downloader = ctrl(cfg, store_pg)
+        try:
+            downloader.retry_failed()
+        finally:
+            downloader.exit()
+
+
+def retry_failed(cfg_ctrl):
+    """Resume failed API downloads for every enabled source."""
+    for source, cfg in cfg_ctrl.source_list.items():
+        if cfg.enable:
+            logger.info(_("Looking for a failed download for source %s"), source)
+            retry_failed_1source(Data, cfg)
+        else:
+            logger.info(_("Source %s is disabled"), source)
+
+
 def edit_config(file_path: str) -> None:
     "Open config file in a text editor"
     editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "nano"

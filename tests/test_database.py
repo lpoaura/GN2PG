@@ -18,19 +18,21 @@ def test_shared_metadata_contains_all_tables_for_configured_schema():
     assert set(metadata.tables) == {
         "custom_import.import_log",
         "custom_import.error_log",
+        "custom_import.download_page",
         "custom_import.data_json",
         "custom_import.metadata_json",
     }
     assert "test" not in metadata.tables["custom_import.import_log"].c
+    assert "payload_hash" in metadata.tables["custom_import.data_json"].c
     assert build_metadata("custom_import") is metadata
 
 
-def test_alembic_has_a_single_initial_head():
+def test_alembic_has_a_single_head():
     """The migration history exposes one current head."""
     config = Config()
     config.set_main_option("script_location", "gn2pg/alembic")
 
-    assert ScriptDirectory.from_config(config).get_heads() == ["20260818_01"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["20260827_02"]
 
 
 def test_alembic_version_table_uses_project_schema():

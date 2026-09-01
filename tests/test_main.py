@@ -45,6 +45,14 @@ def test_incremental_download_accepts_since_override():
     assert args.since == "2022-06-05"
 
 
+def test_retry_failed_is_a_download_action():
+    args = arguments(["download", "--retry-failed", "config.toml"])
+
+    assert args.retry_failed
+    with raises(SystemExit):
+        arguments(["download", "--retry-failed", "--full", "config.toml"])
+
+
 def test_incremental_download_rejects_invalid_since(capsys):
     with raises(SystemExit) as exc_info:
         arguments(["download", "--update", "--since=2022-13-40", "config.toml"])

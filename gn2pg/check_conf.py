@@ -60,6 +60,10 @@ _CONF_SCHEMA = Schema(
                 Optional("data_type"): str,
                 Optional("last_action_date"): str,
                 Optional("query_strings"): dict,
+                Optional("id_key_name"): str,
+                Optional("uuid_key_name"): str,
+                Optional("pagination_strategy"): str,
+                Optional("cursor_start"): int,
             }
         ],
         Optional("tuning"): {
@@ -105,6 +109,10 @@ class Source:
     enable: bool = True
     last_action_date: TypeOptional[str] = None
     query_strings: dict = field(default_factory=dict)
+    id_key_name: str = "id_synthese"
+    uuid_key_name: str = "id_perm_sinp"
+    pagination_strategy: str = "offset"
+    cursor_start: int = 0
 
 
 @dataclass
@@ -143,6 +151,16 @@ class Gn2PgSourceConf:
                 query_strings=coalesce_in_dict(config["source"][source], "query_strings", {}),
                 data_export_id=config["source"][source].get("data_export_id"),
                 metadata_export_id=config["source"][source].get("metadata_export_id"),
+                id_key_name=coalesce_in_dict(
+                    config["source"][source], "id_key_name", "id_synthese"
+                ),
+                uuid_key_name=coalesce_in_dict(
+                    config["source"][source], "uuid_key_name", "id_perm_sinp"
+                ),
+                pagination_strategy=coalesce_in_dict(
+                    config["source"][source], "pagination_strategy", "offset"
+                ),
+                cursor_start=coalesce_in_dict(config["source"][source], "cursor_start", 0),
                 enable=(
                     True
                     if "enable" not in config["source"][source]
@@ -178,6 +196,14 @@ class Gn2PgSourceConf:
                 self._tuning.http_connect_timeout,
                 self._tuning.http_read_timeout,
             )
+            self.pagination_strategy = self._source.pagination_strategy.lower()
+            if self.pagination_strategy not in ("cursor", "offset"):
+                raise IncorrectParameter(
+                    _("pagination_strategy must be either 'cursor' or 'offset'")
+                )
+            self.id_key_name = self._source.id_key_name
+            self.uuid_key_name = self._source.uuid_key_name
+            self.cursor_start = self._source.cursor_start
 
         except Exception:  # pragma: no cover
             logger.exception(_("Error creating %s configuration"), source)

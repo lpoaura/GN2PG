@@ -14,6 +14,10 @@ from sqlalchemy.schema import PrimaryKeyConstraint, UniqueConstraint
 from gn2pg.database.tables import build_metadata
 
 BASELINE_REVISION = "20260818_01"
+BASELINE_TABLES = {"import_log", "error_log", "data_json", "metadata_json"}
+POST_BASELINE_COLUMNS = {
+    "import_log": {"cursor_phase", "cursor_column", "cursor_value"},
+}
 VERSION_TABLE = "alembic_version"
 
 
@@ -102,7 +106,11 @@ def stamp_existing_database(url: URL, schema: str) -> None:
 def validate_existing_schema(url: URL, schema: str) -> list[str]:
     """Return structural differences that make a baseline stamp unsafe."""
     expected_metadata = build_metadata(schema)
-    expected_tables = {table.name: table for table in expected_metadata.sorted_tables}
+    expected_tables = {
+        table.name: table
+        for table in expected_metadata.sorted_tables
+        if table.name in BASELINE_TABLES
+    }
     errors: list[str] = []
     engine = create_engine(url)
     try:
@@ -114,26 +122,38 @@ def validate_existing_schema(url: URL, schema: str) -> list[str]:
                 errors.append(f"missing tables: {', '.join(sorted(missing_tables))}")
 
             for name in sorted(set(expected_tables) & actual_tables):
-                _validate_table(inspector, schema, expected_tables[name], errors)
+                _validate_table(
+                    inspector,
+                    schema,
+                    expected_tables[name],
+                    errors,
+                    ignored_columns=POST_BASELINE_COLUMNS.get(name, set()),
+                )
     finally:
         engine.dispose()
     return errors
 
 
-def _validate_table(inspector, schema: str, expected, errors: list[str]) -> None:
+def _validate_table(
+    inspector, schema: str, expected, errors: list[str], ignored_columns=frozenset()
+) -> None:
     """Compare columns and key constraints for one reflected table."""
-    _validate_columns(inspector, schema, expected, errors)
+    _validate_columns(inspector, schema, expected, errors, ignored_columns)
     _validate_primary_and_unique_keys(inspector, schema, expected, errors)
     _validate_indexes(inspector, schema, expected, errors)
     _validate_foreign_keys(inspector, schema, expected, errors)
 
 
-def _validate_columns(inspector, schema: str, expected, errors: list[str]) -> None:
+def _validate_columns(
+    inspector, schema: str, expected, errors: list[str], ignored_columns=frozenset()
+) -> None:
     """Compare required column types and nullability."""
     actual_columns = {
         column["name"]: column for column in inspector.get_columns(expected.name, schema)
     }
     for column in expected.columns:
+        if column.name in ignored_columns:
+            continue
         actual = actual_columns.get(column.name)
         label = f"{expected.name}.{column.name}"
         if actual is None:

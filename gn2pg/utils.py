@@ -14,6 +14,7 @@ class XferStatus:
     delete = "delete"
     success = "success"
     failed = "failed"
+    skipped = "skipped"
 
 
 class BColors:

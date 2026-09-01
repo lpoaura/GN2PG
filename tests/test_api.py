@@ -34,6 +34,21 @@ class TestApi:
 
         assert base_api._url(kind="metadata") == "https://geonature.example/api/exports/api/23"
 
+    def test_log_url_encodes_repeated_date_bounds(self):
+        base_api = object.__new__(BaseAPI)
+        base_api._api_url = "https://geonature.example/api/"
+
+        url = base_api._url(
+            kind="log",
+            params={
+                "meta_last_action_date": ["gte:2026-08-01", "lte:2026-08-27"],
+                "sort": "meta_last_action_date:asc",
+            },
+        )
+
+        assert url.count("meta_last_action_date=") == 2
+        assert "sort=meta_last_action_date%3Aasc" in url
+
     def test_page_list(self, base_api):
         params = {"limit": 10}
         api_url = base_api._url(params=params)

@@ -31,3 +31,15 @@ def test_update_source_passes_since_override_to_downloader(monkeypatch):
     helpers.update_1source(controller, source, since="2022-06-05")
 
     downloader.update.assert_called_once_with(since="2022-06-05")
+
+
+def test_retry_failed_only_processes_enabled_sources(monkeypatch):
+    enabled_source = SimpleNamespace(enable=True)
+    disabled_source = SimpleNamespace(enable=False)
+    config = SimpleNamespace(source_list={"enabled": enabled_source, "disabled": disabled_source})
+    retry_source = Mock()
+    monkeypatch.setattr(helpers, "retry_failed_1source", retry_source)
+
+    helpers.retry_failed(config)
+
+    retry_source.assert_called_once_with(helpers.Data, enabled_source)
