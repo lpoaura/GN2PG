@@ -60,8 +60,8 @@ SELECT
     , n_source_status.cd_nomenclature AS statut_source
     , n_info_geo_type.cd_nomenclature AS type_info_geo
     , CASE WHEN l_areas.area_code IS NOT NULL THEN
-	jsonb_build_object('area_code' , l_areas.area_code , 'type_code'
-	    , bib_areas_types.type_code)
+	jsonb_build_object('area_code' , l_areas.area_code , 'type_code' ,
+	    bib_areas_types.type_code)
     END area_attachment
     , n_determ_method.cd_nomenclature AS methode_determination
     , n_valid_status.cd_nomenclature AS statut_validation
@@ -129,9 +129,27 @@ ORDER BY
 DROP VIEW IF EXISTS gn_exports.v_metadata_for_gn2pg;
 
 CREATE VIEW gn_exports.v_metadata_for_gn2pg AS
-WITH af_actors AS (
+WITH af_ids AS MATERIALIZED (
+    SELECT DISTINCT
+        taf.id_acquisition_framework
+    FROM
+        gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vsy
+        JOIN gn_meta.t_datasets tds ON tds.unique_dataset_id = vsy.jdd_uuid
+	JOIN gn_meta.t_acquisition_frameworks taf ON
+	    tds.id_acquisition_framework = taf.id_acquisition_framework
+)
+, ds_ids AS MATERIALIZED (
+    SELECT DISTINCT
+        tds.id_dataset
+        , tds.unique_dataset_id AS jdd_uuid
+    FROM
+        gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vsy
+        JOIN gn_meta.t_datasets tds ON tds.unique_dataset_id = vsy.jdd_uuid
+)
+, af_actors AS (
     SELECT
         cafa.id_acquisition_framework
+        /* */
         , json_build_object('type_role'
             , CASE WHEN cafa.id_organism IS NOT NULL THEN
                 'organism'::TEXT
@@ -154,12 +172,15 @@ WITH af_actors AS (
                     , tro.nom_role
                     , 'last_name'
                     , tro.prenom_role)
+            ELSE
+                NULL::JSON
             END
             , 'email'
             , coalesce(borg.email_organisme
                 , tro.email)) AS json_data
     FROM
         gn_meta.cor_acquisition_framework_actor cafa
+        JOIN af_ids ON cafa.id_acquisition_framework = af_ids.id_acquisition_framework
         LEFT JOIN utilisateurs.bib_organismes borg ON cafa.id_organism = borg.id_organisme
         LEFT JOIN utilisateurs.t_roles tro ON cafa.id_role = tro.id_role
 	JOIN ref_nomenclatures.t_nomenclatures tn ON
@@ -171,6 +192,7 @@ WITH af_actors AS (
         , array_agg(DISTINCT t_nomenclatures.cd_nomenclature) AS territories
     FROM
         gn_meta.cor_acquisition_framework_territory caft
+        JOIN af_ids ON caft.id_acquisition_framework = af_ids.id_acquisition_framework
 	LEFT JOIN ref_nomenclatures.t_nomenclatures ON
 	    caft.id_nomenclature_territory = t_nomenclatures.id_nomenclature
     GROUP BY
@@ -182,6 +204,7 @@ WITH af_actors AS (
         , array_agg(DISTINCT t_nomenclatures.cd_nomenclature) AS objectives
     FROM
         gn_meta.cor_acquisition_framework_objectif cafo
+        JOIN af_ids ON cafo.id_acquisition_framework = af_ids.id_acquisition_framework
 	LEFT JOIN ref_nomenclatures.t_nomenclatures ON
 	    cafo.id_nomenclature_objectif = t_nomenclatures.id_nomenclature
     GROUP BY
@@ -193,6 +216,7 @@ WITH af_actors AS (
         , array_agg(DISTINCT t_nomenclatures.cd_nomenclature) AS voletsinp
     FROM
         gn_meta.cor_acquisition_framework_voletsinp cafv
+        JOIN af_ids ON cafv.id_acquisition_framework = af_ids.id_acquisition_framework
 	LEFT JOIN ref_nomenclatures.t_nomenclatures ON
 	    cafv.id_nomenclature_voletsinp = t_nomenclatures.id_nomenclature
     GROUP BY
@@ -209,6 +233,7 @@ WITH af_actors AS (
                 , sinp_datatype_publications.publication_url)) AS publications
     FROM
         gn_meta.cor_acquisition_framework_publication cafp
+        JOIN af_ids ON cafp.id_acquisition_framework = af_ids.id_acquisition_framework
 	LEFT JOIN gn_meta.sinp_datatype_publications ON cafp.id_publication =
 	    sinp_datatype_publications.id_publication
     GROUP BY
@@ -218,44 +243,27 @@ WITH af_actors AS (
     SELECT
         taf.id_acquisition_framework
         , taf.unique_acquisition_framework_id AS uuid
-        , jsonb_build_object('uuid'
-            , taf.unique_acquisition_framework_id
-            , 'name'
-            , taf.acquisition_framework_name
-            , 'desc'
-            , taf.acquisition_framework_desc
-            , 'start_date'
-            , taf.acquisition_framework_start_date
-            , 'end_date'
-            , taf.acquisition_framework_end_date
-            , 'initial_closing_date'
-            , taf.initial_closing_date
-            , 'territories'
-            , af_territories.territories
-            , 'territorial_level'
-            , ntl.cd_nomenclature
-            , 'territory_desc'
-            , taf.territory_desc
-            , 'objectives'
-            , af_objectives.objectives
-            , 'publications'
-            , af_publication.publications
-            , 'financing_type'
-            , nft.cd_nomenclature
-            , 'target_description'
-            , taf.target_description
-            , 'ecologic_or_geologic_target'
-            , taf.ecologic_or_geologic_target
-            , 'sinp_theme'
-            , af_voletsinp.voletsinp
-            , 'actors'
-            , json_agg(af_actors.json_data)
-            , 'is_parent'
-            , taf.is_parent
-            , 'parent_uuid'
-            , tafp.unique_acquisition_framework_id) AS af_data
+        , taf.acquisition_framework_name AS name
+        , taf.acquisition_framework_desc AS desc
+        , taf.acquisition_framework_start_date AS start_date
+        , taf.acquisition_framework_end_date AS end_date
+        , taf.initial_closing_date AS initial_closing_date
+        , af_territories.territories AS territories
+        , ntl.cd_nomenclature AS territorial_level
+        , taf.territory_desc AS territory_desc
+        , af_objectives.objectives AS objectives
+        , af_publication.publications AS publications
+        , nft.cd_nomenclature AS financing_type
+        , taf.target_description AS target_description
+        , taf.ecologic_or_geologic_target AS ecologic_or_geologic_target
+        , af_voletsinp.voletsinp AS sinp_theme
+        , json_agg(af_actors.json_data) AS actors
+        , taf.is_parent AS is_parent
+        , tafp.unique_acquisition_framework_id AS parent_uuid
+        , taf.meta_update_date AS meta_update_date
     FROM
         gn_meta.t_acquisition_frameworks taf
+        JOIN af_ids ON taf.id_acquisition_framework = af_ids.id_acquisition_framework
 	LEFT JOIN gn_meta.t_acquisition_frameworks tafp ON
 	    tafp.id_acquisition_framework = taf.acquisition_framework_parent_id
         JOIN af_actors ON af_actors.id_acquisition_framework = taf.id_acquisition_framework
@@ -312,12 +320,15 @@ WITH af_actors AS (
                     , tro.nom_role
                     , 'last_name'
                     , tro.prenom_role)
+            ELSE
+                NULL::JSON
             END
             , 'email'
             , coalesce(borg.email_organisme
                 , tro.email)) AS json_data
     FROM
         gn_meta.cor_dataset_actor cda
+        JOIN ds_ids ON ds_ids.id_dataset = cda.id_dataset
         LEFT JOIN utilisateurs.bib_organismes borg ON cda.id_organism = borg.id_organisme
         LEFT JOIN utilisateurs.t_roles tro ON cda.id_role = tro.id_role
 	JOIN ref_nomenclatures.t_nomenclatures tn ON
@@ -326,23 +337,22 @@ WITH af_actors AS (
 , ds_protocols AS (
     SELECT
         cdp.id_dataset
-        , jsonb_agg(jsonb_build_object('uuid'
-                , sdp.unique_protocol_id
-                , 'name'
-                , sdp.protocol_name
-                , 'desc'
-                , sdp.protocol_desc
-                , 'url'
-                , sdp.protocol_url
-                , 'type'
-                , t_nomenclatures.cd_nomenclature)) AS protocols
+        , jsonb_build_object('uuid'
+            , sdp.unique_protocol_id
+            , 'name'
+            , sdp.protocol_name
+            , 'desc'
+            , sdp.protocol_desc
+            , 'url'
+            , sdp.protocol_url
+            , 'type'
+            , t_nomenclatures.cd_nomenclature) AS protocols
     FROM
         gn_meta.cor_dataset_protocol cdp
+        JOIN ds_ids ON ds_ids.id_dataset = cdp.id_dataset
         JOIN gn_meta.sinp_datatype_protocols sdp ON cdp.id_protocol = sdp.id_protocol
 	LEFT JOIN ref_nomenclatures.t_nomenclatures ON
 	    sdp.id_nomenclature_protocol_type = t_nomenclatures.id_nomenclature
-    GROUP BY
-        1
 )
 , ds AS (
     SELECT
@@ -381,6 +391,7 @@ WITH af_actors AS (
 		(cdt.id_nomenclature_territory))
             , 'actors'
             , json_agg(ds_actors.json_data)) AS dataset_data
+        , tds.meta_update_date
     FROM
         gn_meta.t_datasets tds
         JOIN ds_actors ON ds_actors.id_dataset = tds.id_dataset
@@ -398,11 +409,10 @@ WITH af_actors AS (
 	    tds.id_nomenclature_resource_type = nrt.id_nomenclature
 	LEFT JOIN ref_nomenclatures.t_nomenclatures nss ON
 	    tds.id_nomenclature_source_status = nss.id_nomenclature
-        -- TODO : Custom filtering
-        -- WHERE tds.unique_dataset_id IN
-        -- (SELECT DISTINCT vs.jdd_uuid FROM
-        -- gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vs)
-        -- END TODO
+    WHERE (tds.unique_dataset_id IN ( SELECT DISTINCT
+                vs.jdd_uuid
+            FROM
+                gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vs))
     GROUP BY
         tds.id_dataset
         , tds.id_acquisition_framework
@@ -420,24 +430,43 @@ WITH af_actors AS (
 )
 , agg_ds AS (
     SELECT
-        id_acquisition_framework
-        , jsonb_agg(dataset_data) AS datasets
+        ds.id_acquisition_framework
+        , jsonb_agg(ds.dataset_data) AS datasets
+        , max(ds.meta_update_date) AS meta_update_date
     FROM
         ds
     GROUP BY
-        id_acquisition_framework
+        ds.id_acquisition_framework
 )
 SELECT
     af.id_acquisition_framework
-    , jsonb_insert(af.af_data , '{datasets}' , agg_ds.datasets)
+    , af.uuid
+    , af.name
+    , af.desc
+    , af.start_date
+    , af.end_date
+    , af.initial_closing_date
+    , af.territories
+    , af.territorial_level
+    , af.territory_desc
+    , af.objectives
+    , af.publications
+    , af.financing_type
+    , af.target_description
+    , af.ecologic_or_geologic_target
+    , af.sinp_theme
+    , af.actors
+    , af.is_parent
+    , af.parent_uuid
+    , agg_ds.datasets AS datasets
+    , (
+        SELECT
+            max(meta_update_date)
+        FROM
+	    unnest(ARRAY[af.meta_update_date , agg_ds.meta_update_date]) AS
+		meta_update_date) AS meta_update_date
 FROM
     af
-    JOIN agg_ds ON agg_ds.id_acquisition_framework = af.id_acquisition_framework
-    -- TODO : Custom filtering
-    -- WHERE af.uuid IN
-    -- (SELECT DISTINCT vs.ca_uuid FROM
-    -- gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vs)
-    -- END TODO
-;
+    JOIN agg_ds ON agg_ds.id_acquisition_framework = af.id_acquisition_framework;
 
 COMMIT;
