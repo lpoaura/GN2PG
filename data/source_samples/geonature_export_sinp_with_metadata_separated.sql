@@ -33,7 +33,6 @@ SELECT
     , s.comment_context AS comment_releve
     , s.comment_description AS comment_occurrence
     , ds.unique_dataset_id AS jdd_uuid
-    , af.unique_acquisition_framework_id AS ca_uuid
     , s.reference_biblio AS reference_biblio
     , s.cd_hab AS code_habitat
     , h.lb_hab_fr AS habitat
@@ -73,8 +72,6 @@ FROM
     -- For testing
     JOIN taxonomie.taxref ON s.cd_nom = taxref.cd_nom
     JOIN gn_meta.t_datasets ds ON s.id_dataset = ds.id_dataset
-    JOIN gn_meta.t_acquisition_frameworks af ON ds.id_acquisition_framework =
-	af.id_acquisition_framework
     LEFT JOIN ref_habitats.habref h ON h.cd_hab = s.cd_hab
     LEFT JOIN ref_nomenclatures.t_nomenclatures n_geo_object_nature ON
 	s.id_nomenclature_geo_object_nature =
