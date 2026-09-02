@@ -47,7 +47,14 @@ pip install --upgrade gn2pg-client
 > gn2pg_cli db --stamp-existing myconfig.toml
 > ```
 
-2. Install or update db tables
+2. Update your config
+
+```bash
+gn2pg_cli config --edit myconfig.toml
+```
+Change variable `export_id` to `data_export_id`
+
+3. Install or update db tables 
 
 ```bash
 gn2pg_cli db --upgrade myconfig.toml
