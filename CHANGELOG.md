@@ -7,19 +7,32 @@ to [Semantic Versioning](https://semver.org/).
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
-# [next] 1.10.0 - 2026-09-xx
+# 1.10.0 - 2026-09-02
 
 ### :rocket: Features
 
-- Allow separated export for metadata. 2 new import modes are now available, `synthese_with_separated_metadata` and `metadata_only`. Export sample queries ara available in [geonature_export_sinp_with_metadata.sql](./data/geonature_export_sinp_with_metadata_separated.sql).
+- Allow separated export for metadata. 2 new import modes are now available, `synthese_with_separated_metadata` and `metadata_only` .
+Export sample queries ara available in [geonature_export_sinp_with_metadata.sql](./data/source_samples/geonature_export_sinp_with_metadata_separated.sql) and [geonature_export_metadata_only.sql](./data/source_samples/geonature_export_metadata_only.sql) (fix #127)
+- Database migrations are now managed through alembic using command `gn2pg_cli db --upgrade <config file>`.
+- New option to force update since a specific date (fix #133).
+- Command `gn2pg_cli db --json-tables-create myconfig.toml` is now deprecated, replaced by `gn2pg_cli db --upgrade myconfig.toml`.
 
 
 ### :bug: Fixes
 
 - Fix and improve tests
-
+- SQLAlchemy have been update to v2
+- Improve logging messages
+- Improve errors management
+- Fix workflow, deletes are executed before updates (fix #123)
+- Avoid duplicates when metadata have multiple protocols (fix #135)
+- Fix management of additional_data field in synthese export if value `null` (fix #128).
+- Fix missing meta_validate_date usage (fix #131)
+- Update documentation (fix #138)
 
 ### :point_down: Release note
+
+#### Client side
 
 1. Update the app
 
@@ -27,12 +40,23 @@ to [Semantic Versioning](https://semver.org/).
 pip install --upgrade gn2pg-client
 ```
 
-2. For users who use `GN2PG_client` to populate a GeoNature database, update SQL triggers.
+> [!WARNING]
+> For users who have already installed `GN2PG_client` version 1.9.1 and below,
+> you have to stamp database to initial version using command:
+> ```
+> gn2pg_cli db --stamp-existing myconfig.toml
+> ```
+
+2. Install or update db tables
 
 ```bash
-gn2pg_cli db --custom-script=to_gnsynthese myconfig.toml
+gn2pg_cli db --upgrade myconfig.toml
+gn2pg_cli db --custom-script to_gnsynthese myconfig.toml
 ```
 
+#### Provider side
+
+You should update your current export views based on samples provided in [data/source_samples](./data/source_samples/).
 
 ## 1.9.1 - 2025-06-10
 

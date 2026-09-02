@@ -9,10 +9,15 @@ from typing import Any
 class XferStatus:
     """List of transfer status"""
 
+    # The transfer has been created but processing has not started yet.
     init = "init"
+    # Data or metadata is currently being downloaded and stored.
     import_data = "importing data"
+    # Records deleted from the source are currently being removed locally.
     delete = "delete"
+    # All requested transfer steps completed successfully.
     success = "success"
+    # The transfer stopped because an API or processing error occurred.
     failed = "failed"
     skipped = "skipped"
 

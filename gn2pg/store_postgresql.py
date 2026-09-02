@@ -535,7 +535,7 @@ class StorePostgresql:
         initial_errors = self.count_metadata_errors
 
         for exported_item in items:
-            metadata_item = exported_item.get("jsonb_insert")
+            metadata_item = exported_item
             if not isinstance(metadata_item, dict) or not metadata_item.get("uuid"):
                 logger.error(
                     _("Invalid metadata export item from source %(source)s: %(item)s"),

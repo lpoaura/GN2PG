@@ -70,6 +70,8 @@ class DownloadGn:
         self.xfer_filters = {}
         self.xfer_status = XferStatus.init
         self.xfer_comment = None
+        self._resumed_delete_filters: dict = {}
+        self._resumed_delete_import_id: Optional[int] = None
 
         self._limits = {
             "max_retry": max_retry,
@@ -243,7 +245,13 @@ class DownloadGn:
         if resume is None:
             return False
 
+        # A completed delete phase followed by a failed cursor phase is resumed
+        # by ``resume_update`` below, not by replaying already completed pages.
+        if not resume.get("rebuild") and not resume["pages"]:
+            return False
+
         logger.info(_("Resuming an incomplete delete phase for source %s"), self._config.name)
+        self._resumed_delete_filters = resume.get("xfer_filters") or {}
         self.xfer_type = "update"
         self.xfer_status = XferStatus.delete
         self.xfer_filters = {"resume": "delete"}
@@ -259,9 +267,11 @@ class DownloadGn:
         try:
             if resume.get("rebuild"):
                 filters = resume["xfer_filters"]
-                if not self._process_deletes(
+                if not self.process_delete(
                     filters["filter_d_up_derniere_action"],
                     filters["filter_d_lo_derniere_action"],
+                    update_params=filters,
+                    delete_before_update=filters.get("delete_before_update", False),
                 ):
                     raise DownloadGnException("Could not rebuild the bounded delete phase")
             elif resume["pages"]:
@@ -279,27 +289,55 @@ class DownloadGn:
                 {"source": self._config.name, "error": error},
             )
         else:
-            self._backend.complete_resumed_delete(resume["import_id"])
+            if self._resumed_delete_filters.get("delete_before_update"):
+                self._resumed_delete_import_id = resume["import_id"]
+            else:
+                self._backend.complete_resumed_delete(resume["import_id"])
             self.xfer_status = XferStatus.success
         return True
 
     def resume_update(self) -> bool:
         """Resume an interrupted update phase before starting a new window."""
         if self.resume_delete():
+            if self.xfer_status != XferStatus.success:
+                return True
+            resume_params = getattr(self, "_resumed_delete_filters", {})
+            if not resume_params.get("delete_before_update"):
+                return True
+            resume_params = dict(resume_params)
+            resume_params.pop("delete_before_update")
+            if not self._refresh_update_metadata():
+                return True
+            if self.uses_cursor:
+                succeeded = self._execute_cursor_transfer(
+                    resume_params,
+                    "update",
+                    delete_before_update=True,
+                )
+            else:
+                succeeded = self.process_update(resume_params)
+            if succeeded:
+                self._backend.complete_resumed_delete(self._resumed_delete_import_id)
+                self.xfer_status = XferStatus.success
             return True
         resume = self._resumable_cursor("update")
         if resume is None:
             return False
-        resume_params = resume["xfer_filters"]
+        resume_params = dict(resume["xfer_filters"])
+        delete_before_update = resume_params.pop("delete_before_update", False)
         if self._execute_cursor_transfer(
             resume_params,
             "update",
             last_cursor=resume["cursor_value"],
             start_ts=resume["xfer_start_ts"],
             resumed_import_id=resume["id"],
-        ) and self._process_deletes(
-            resume_params["filter_d_up_derniere_action"],
-            resume_params["filter_d_lo_derniere_action"],
+            delete_before_update=delete_before_update,
+        ) and (
+            delete_before_update
+            or self.process_delete(
+                resume_params["filter_d_up_derniere_action"],
+                resume_params["filter_d_lo_derniere_action"],
+            )
         ):
             self.xfer_status = XferStatus.success
         return True
@@ -434,11 +472,14 @@ class DownloadGn:
         last_cursor: Optional[int] = None,
         start_ts: Optional[datetime] = None,
         resumed_import_id: Optional[int] = None,
+        delete_before_update: bool = False,
     ) -> bool:
         """Run or resume a cursor transfer and persist its lifecycle."""
         self.xfer_type = xfer_type
         self.xfer_status = XferStatus.import_data
         self.xfer_filters = dict(params)
+        if delete_before_update:
+            self.xfer_filters["delete_before_update"] = True
         values = {
             "xfer_type": xfer_type,
             "xfer_status": self.xfer_status,
@@ -491,16 +532,18 @@ class DownloadGn:
             return False
 
         xfer_type = resume["xfer_type"]
-        params = resume["xfer_filters"]
+        params = dict(resume["xfer_filters"])
+        delete_before_update = params.pop("delete_before_update", False)
         succeeded = self._execute_cursor_transfer(
             params,
             xfer_type,
             last_cursor=resume["cursor_value"],
             start_ts=resume["xfer_start_ts"],
             resumed_import_id=resume["id"],
+            delete_before_update=delete_before_update,
         )
-        if succeeded and xfer_type == "update":
-            succeeded = self._process_deletes(
+        if succeeded and xfer_type == "update" and not delete_before_update:
+            succeeded = self.process_delete(
                 params["filter_d_up_derniere_action"],
                 params["filter_d_lo_derniere_action"],
             )
@@ -636,6 +679,118 @@ class DownloadGn:
             return False
         return True
 
+    def process_update(self, params: dict) -> bool:
+        """Download and store records inserted or updated by the source."""
+        logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
+        logger.info(_("QueryStrings %s"), params)
+        logger.info(
+            _("Getting new or update data from source %(source)s since %(since)s"),
+            {
+                "source": self._config.name,
+                "since": params["filter_d_up_derniere_action"],
+            },
+        )
+        try:
+            upsert_pages, data_count_items, _xfer_http_status = self._api_instance.page_list(
+                kind="data", params=params
+            )
+            self.api_count_items += data_count_items
+            self.xfer_type = "update"
+            self.xfer_status = XferStatus.import_data
+            self.xfer_filters = (json.dumps(params, default=str),)
+
+            self._backend.import_log(
+                controler=self._api_instance.controler,
+                values={
+                    "xfer_type": "update",
+                    "xfer_status": self.xfer_status,
+                    "xfer_filters": self.xfer_filters,
+                },
+            )
+            if upsert_pages:
+                self.launch_threads(
+                    nb_threads=self._config.nb_threads,
+                    func=self.download,
+                    pages=upsert_pages,
+                )
+        except (RequestException, ResponseError, APIException) as error:
+            self.queue.put("EXIT")
+            logger.critical("%s %s %s %s", dir(error), type(error), error.args, str(error))
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(error)
+            logger.error(
+                _("A problem occured on UPDATE process for source %(source)s: %(error)s"),
+                {"source": self._config.name, "error": error},
+            )
+            return False
+        return True
+
+    def process_delete(
+        self,
+        since: str,
+        until: Optional[str] = None,
+        update_params: Optional[dict] = None,
+        delete_before_update: bool = False,
+    ) -> bool:
+        """Download and apply the bounded deletion phase of an update."""
+        logger.info(
+            _("Getting deleted data from source %(source)s since %(since)s"),
+            {"source": self._config.name, "since": since},
+        )
+        try:
+            action_dates = [f"gte:{since}"]
+            if until is not None:
+                action_dates.append(f"lte:{until}")
+            delete_params = {
+                "meta_last_action_date": action_dates,
+                "limit": self._config.max_page_length,
+                "last_action": "D",
+                "sort": "meta_last_action_date:asc",
+            }
+            self.xfer_type = "update"
+            self.xfer_status = XferStatus.delete
+            self.xfer_filters = dict(
+                update_params
+                or {
+                    "filter_d_up_derniere_action": since,
+                    "filter_d_lo_derniere_action": until,
+                }
+            )
+            if delete_before_update:
+                self.xfer_filters["delete_before_update"] = True
+            self._backend.import_log(
+                controler=self._api_instance.controler,
+                values={
+                    "xfer_type": self.xfer_type,
+                    "xfer_status": self.xfer_status,
+                    "xfer_filters": self.xfer_filters,
+                },
+            )
+            deleted_pages, _total_len, _xfer_http_status = self._api_instance.page_list(
+                kind="log",
+                params=delete_params,
+                pagination_param="page",
+            )
+            if deleted_pages:
+                durable_pages = self._backend.create_download_pages("delete", deleted_pages)
+                self.launch_threads(
+                    nb_threads=self._config.nb_threads,
+                    func=self.delete,
+                    pages=durable_pages,
+                    store=False,
+                )
+        except (RequestException, ResponseError, APIException, DownloadGnException) as error:
+            self.queue.put("EXIT")
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(error)
+            logger.error(
+                "A problem occured on DELETE process for source %s : %s",
+                self._config.name,
+                error,
+            )
+            return False
+        return True
+
     def update(self, since: Optional[str] = None, actions: Optional[list] = None) -> None:
         """[summary]
 
@@ -657,10 +812,6 @@ class DownloadGn:
         if since is None and self.resume_update():
             return
 
-        # Update new or modified data from API
-        logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
-        # Get last update from increment log.
-
         if actions is None:
             actions = ["I", "U"]
         params = {"action": actions}
@@ -678,111 +829,36 @@ class DownloadGn:
                 self.store()
                 return
 
-        # A separated metadata refresh must finish before observation upserts.
-        if not self._refresh_update_metadata():
-            return
-
         params.update(self._config.query_strings)
         params["limit"] = self._config.max_page_length
         params["filter_d_up_derniere_action"] = since
         params["filter_d_lo_derniere_action"] = until
-        logger.info(_("QueryStrings %s"), params)
 
-        logger.info(
-            _("Getting new or update data from source %(source)s since %(since)s"),
-            {"source": self._config.name, "since": since},
-        )
+        # Apply deletes first: subsequent upserts restore records that were deleted
+        # and then recreated within the same incremental window.
+        if not self.process_delete(
+            since,
+            until,
+            update_params=params,
+            delete_before_update=True,
+        ):
+            return
+
+        # A separated metadata refresh must finish before observation upserts.
+        if not self._refresh_update_metadata():
+            return
 
         if self.uses_cursor:
-            if self._execute_cursor_transfer(params, "update") and self._process_deletes(
-                since, until
-            ):
-                self.xfer_status = XferStatus.success
-            return
-
-        # Process UPDATE
-        try:
-            upsert_pages, data_count_items, _xfer_http_status = self._api_instance.page_list(
-                kind="data", params=params
+            update_succeeded = self._execute_cursor_transfer(
+                params,
+                "update",
+                delete_before_update=True,
             )
-            self.api_count_items += data_count_items
-            self.xfer_type = "update"
-            self.xfer_status = XferStatus.import_data
-            self.xfer_filters = (json.dumps(params, default=str),)
+        else:
+            update_succeeded = self.process_update(params)
 
-            self._backend.import_log(
-                controler=self._api_instance.controler,
-                values={
-                    "xfer_type": "update",
-                    "xfer_status": self.xfer_status,
-                    "xfer_filters": self.xfer_filters,
-                },
-            )
-            # input(f"UPDATE INPUT {self._config.name}")
-            if upsert_pages:
-                self.launch_threads(
-                    nb_threads=self._config.nb_threads,
-                    func=self.download,
-                    pages=upsert_pages,
-                )
-
-        except (RequestException, ResponseError, APIException) as e:
-            self.queue.put(("EXIT"))
-            logger.critical("%s %s %s %s", dir(e), type(e), e.args, str(e))
-            self.xfer_status = XferStatus.failed
-            self.xfer_comment = str(e)
-            logger.error(
-                _("A problem occured on UPDATE process for source %(source)s: %(error)s"),
-                {"source": self._config.name, "error": e},
-            )
-            return
-        if self._process_deletes(since, until):
+        if update_succeeded:
             self.xfer_status = XferStatus.success
-
-    def _process_deletes(self, since: str, until: str) -> bool:
-        """Download and apply the bounded deletion phase of an update."""
-        logger.info(
-            _("Getting deleted data from source %(source)s since %(since)s"),
-            {"source": self._config.name, "since": since},
-        )
-        try:
-            delete_params = {
-                "meta_last_action_date": [f"gte:{since}", f"lte:{until}"],
-                "limit": self._config.max_page_length,
-                "last_action": "D",
-                "sort": "meta_last_action_date:asc",
-            }
-            deleted_pages, _total_len, _xfer_http_status = self._api_instance.page_list(
-                kind="log",
-                params=delete_params,
-                pagination_param="page",
-            )
-            # input(f"DELETE INPUT {self._config.name}")
-            self.xfer_status = XferStatus.delete
-            self._backend.import_log(
-                controler=self._api_instance.controler,
-                values={
-                    "xfer_status": self.xfer_status,
-                },
-            )
-            if deleted_pages:
-                durable_pages = self._backend.create_download_pages("delete", deleted_pages)
-                self.launch_threads(
-                    nb_threads=self._config.nb_threads,
-                    func=self.delete,
-                    pages=durable_pages,
-                    store=False,
-                )
-
-        except (RequestException, ResponseError, APIException, DownloadGnException) as e:
-            self.queue.put(("EXIT"))
-            self.xfer_status = XferStatus.failed
-            self.xfer_comment = str(e)
-            logger.error(
-                "A problem occured on DELETE process for source %s : %s", self._config.name, e
-            )
-            return False
-        return True
 
     def exit(self):
         """Final log on exit"""
