@@ -20,11 +20,11 @@ from multiprocessing.pool import ThreadPool
 from threading import Thread
 from typing import Callable, List, Optional
 
-from requests.exceptions import HTTPError, InvalidSchema, RetryError
+from requests.exceptions import HTTPError, InvalidSchema, RequestException
 from urllib3.exceptions import ResponseError
 
 from gn2pg import _, __version__
-from gn2pg.api import DataAPI, ExportModuleNotFoundError
+from gn2pg.api import APIException, DataAPI, ExportModuleNotFoundError
 from gn2pg.check_conf import Gn2PgSourceConf
 from gn2pg.store_postgresql import StorePostgresql
 from gn2pg.utils import XferStatus
@@ -135,14 +135,20 @@ class DownloadGn:
                     if response.get("total_len", 0) > 0:
                         msg = _("Stores") if store else _("Deletes")
                         logger.info(
-                            _("%s %d datas (%d/%d %.2f %%) from %s %s"),
-                            msg,
-                            response["len_items"],
-                            progress,
-                            response["total_len"],
-                            perc_progress,
-                            self._config.name,
-                            self._api_instance.controler,
+                            _(
+                                "%(action)s %(item_count)d datas "
+                                "(%(progress)d/%(total)d %(percentage).2f %%) from "
+                                "%(source)s %(controler)s"
+                            ),
+                            {
+                                "action": msg,
+                                "item_count": response["len_items"],
+                                "progress": progress,
+                                "total": response["total_len"],
+                                "percentage": perc_progress,
+                                "source": self._config.name,
+                                "controler": self._api_instance.controler,
+                            },
                         )
             except Exception as e:  # pylint: disable=W0718
                 errors.append(e)
@@ -214,9 +220,8 @@ class DownloadGn:
             queue.put(response)
         else:
             logger.info(
-                _("No new deleted data from %s %s"),
-                self._config.name,
-                self._api_instance.controler,
+                _("No new deleted data from %(source)s %(controler)s"),
+                {"source": self._config.name, "controler": self._api_instance.controler},
             )
 
     def process_progress(self, page: str) -> dict:
@@ -240,6 +245,10 @@ class DownloadGn:
 
     def store(self) -> None:
         """Store data into Database"""
+        # Bound the full export before making any request so that new data
+        # arriving during offset pagination cannot extend the result set.
+        until = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         if self._config.data_type in (
             "metadata_only",
             "synthese_with_metadata_separated",
@@ -252,10 +261,10 @@ class DownloadGn:
 
         # Store start download TimeStamp to populate increment log  after download end.
 
-        params = {"limit": self._config.max_page_length}
+        params = dict(self._config.query_strings)
+        params["limit"] = self._config.max_page_length
+        params["filter_d_lo_derniere_action"] = until
         logger.debug(_("Getting items from controler %s"), self._api_instance.controler)
-        # logger.info(self._config._query_strings)
-        params.update(self._config.query_strings)
         logger.info(_("QueryStrings %s"), params)
         pages = None
         try:
@@ -263,10 +272,10 @@ class DownloadGn:
                 kind="data", params=params
             )
             self.api_count_items += data_count_items
-        except (RetryError, ResponseError) as e:
+        except (RequestException, ResponseError, APIException) as e:
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
-            logger.critical("%s %s %s", e, e.response, dir(e))
+            logger.critical("%s", e)
             logger.error(_("Could not retrieve API data from source %s"), self._config.name)
             return
 
@@ -291,7 +300,7 @@ class DownloadGn:
                 self.xfer_status = XferStatus.success
                 # Log download timestamp to download.
 
-        except (RetryError, ResponseError) as e:
+        except (RequestException, ResponseError, APIException) as e:
             self.queue.put(("EXIT"))
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(e)
@@ -331,12 +340,100 @@ class DownloadGn:
                 )
                 if errors:
                     raise errors[0]
-        except (RetryError, ResponseError) as error:
+        except (RequestException, ResponseError, APIException) as error:
             self.queue.put(("EXIT"))
             self.xfer_status = XferStatus.failed
             self.xfer_comment = str(error)
             logger.error(
-                _("A problem occured while downloading metadata from source %s: %s"),
+                _(
+                    "A problem occured while downloading metadata from source "
+                    "%(source)s: %(error)s"
+                ),
+                {"source": self._config.name, "error": error},
+            )
+            return False
+        return True
+
+    def process_update(self, params: dict) -> bool:
+        """Download and store records inserted or updated by the source."""
+        logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
+        logger.info(_("QueryStrings %s"), params)
+        logger.info(
+            _("Getting new or update data from source %(source)s since %(since)s"),
+            {
+                "source": self._config.name,
+                "since": params["filter_d_up_derniere_action"],
+            },
+        )
+        try:
+            upsert_pages, data_count_items, _xfer_http_status = self._api_instance.page_list(
+                kind="data", params=params
+            )
+            self.api_count_items += data_count_items
+            self.xfer_type = "update"
+            self.xfer_status = XferStatus.import_data
+            self.xfer_filters = (json.dumps(params, default=str),)
+
+            self._backend.import_log(
+                controler=self._api_instance.controler,
+                values={
+                    "xfer_type": "update",
+                    "xfer_status": self.xfer_status,
+                    "xfer_filters": self.xfer_filters,
+                },
+            )
+            if upsert_pages:
+                self.launch_threads(
+                    nb_threads=self._config.nb_threads,
+                    func=self.download,
+                    pages=upsert_pages,
+                )
+        except (RequestException, ResponseError, APIException) as error:
+            self.queue.put("EXIT")
+            logger.critical("%s %s %s %s", dir(error), type(error), error.args, str(error))
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(error)
+            logger.error(
+                _("A problem occured on UPDATE process for source %(source)s: %(error)s"),
+                {"source": self._config.name, "error": error},
+            )
+            return False
+        return True
+
+    def process_delete(self, since: str) -> bool:
+        """Download deletion events and remove the corresponding local records."""
+        logger.info(
+            _("Getting deleted data from source %(source)s since %(since)s"),
+            {"source": self._config.name, "since": since},
+        )
+        try:
+            deleted_pages, _total_len, _xfer_http_status = self._api_instance.page_list(
+                kind="log",
+                params={
+                    "meta_last_action_date": f"gte:{since}",
+                    "limit": self._config.max_page_length,
+                    "last_action": "D",
+                },
+                pagination_param="page",
+            )
+            self.xfer_status = XferStatus.delete
+            self._backend.import_log(
+                controler=self._api_instance.controler,
+                values={"xfer_status": self.xfer_status},
+            )
+            if deleted_pages:
+                self.launch_threads(
+                    nb_threads=self._config.nb_threads,
+                    func=self.delete,
+                    pages=deleted_pages,
+                    store=False,
+                )
+        except (RequestException, ResponseError, APIException) as error:
+            self.queue.put("EXIT")
+            self.xfer_status = XferStatus.failed
+            self.xfer_comment = str(error)
+            logger.error(
+                "A problem occured on DELETE process for source %s : %s",
                 self._config.name,
                 error,
             )
@@ -357,9 +454,10 @@ class DownloadGn:
             self.xfer_status = XferStatus.success
             return
 
-        # Update new or modified data from API
-        logger.debug(_("Updating items from controler %s"), self._api_instance.controler)
-        # Get last update from increment log.
+        # Freeze the upper end of the incremental window before making any
+        # export request. All offset pages therefore address the same bounded
+        # period, even when the source keeps receiving new observations.
+        until = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if actions is None:
             actions = ["I", "U"]
@@ -379,95 +477,17 @@ class DownloadGn:
                 return
 
         # A separated metadata refresh must finish before observation upserts.
+
+        params.update(self._config.query_strings)
+        params["limit"] = self._config.max_page_length
+        params["filter_d_up_derniere_action"] = since
+        params["filter_d_lo_derniere_action"] = until
+        if not self.process_delete(since):
+            return
         if self._config.data_type == "synthese_with_metadata_separated":
             if not self.store_metadata(xfer_type="update"):
                 return
-
-        params["limit"] = self._config.max_page_length
-        params["filter_d_up_derniere_action"] = since
-        params.update(self._config.query_strings)
-        logger.info(_("QueryStrings %s"), params)
-
-        logger.info(
-            _("Getting new or update data from source %s since %s"),
-            self._config.name,
-            since,
-        )
-
-        # Process UPDATE
-        try:
-            upsert_pages, data_count_items, _xfer_http_status = self._api_instance.page_list(
-                kind="data", params=params
-            )
-            self.api_count_items += data_count_items
-            self.xfer_type = "update"
-            self.xfer_status = XferStatus.import_data
-            self.xfer_filters = (json.dumps(params, default=str),)
-
-            self._backend.import_log(
-                controler=self._api_instance.controler,
-                values={
-                    "xfer_type": "update",
-                    "xfer_status": self.xfer_status,
-                    "xfer_filters": self.xfer_filters,
-                },
-            )
-            # input(f"UPDATE INPUT {self._config.name}")
-            if upsert_pages:
-                self.launch_threads(
-                    nb_threads=self._config.nb_threads,
-                    func=self.download,
-                    pages=upsert_pages,
-                )
-
-        except (RetryError, ResponseError) as e:
-            self.queue.put(("EXIT"))
-            logger.critical("%s %s %s %s", dir(e), type(e), e.args, str(e))
-            self.xfer_status = XferStatus.failed
-            self.xfer_comment = str(e)
-            logger.error(
-                _("A problem occured on UPDATE process for source %s : %s"), self._config.name, e
-            )
-            return
-        # Process DELETE
-        logger.info(
-            _("Getting deleted data from source %s since %s"),
-            self._config.name,
-            since,
-        )
-        try:
-            deleted_pages, _total_len, _xfer_http_status = self._api_instance.page_list(
-                kind="log",
-                params={
-                    "meta_last_action_date": f"gte:{since}",
-                    "limit": self._config.max_page_length,
-                    "last_action": "D",
-                },
-                pagination_param="page",
-            )
-            # input(f"DELETE INPUT {self._config.name}")
-            self.xfer_status = XferStatus.delete
-            self._backend.import_log(
-                controler=self._api_instance.controler,
-                values={
-                    "xfer_status": self.xfer_status,
-                },
-            )
-            if deleted_pages:
-                self.launch_threads(
-                    nb_threads=self._config.nb_threads,
-                    func=self.delete,
-                    pages=deleted_pages,
-                    store=False,
-                )
-
-        except (RetryError, ResponseError) as e:
-            self.queue.put(("EXIT"))
-            self.xfer_status = XferStatus.failed
-            self.xfer_comment = str(e)
-            logger.error(
-                "A problem occured on DELETE process for source %s : %s", self._config.name, e
-            )
+        if not self.process_update(params):
             return
 
         self.xfer_status = XferStatus.success

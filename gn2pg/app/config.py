@@ -27,7 +27,8 @@ if Path(TOML_DST).is_file():
     CONFDIR.mkdir(exist_ok=True)
 else:
     logger.warning(
-        _("%s file doesn't exist. Check the filename at the path %s"), TOML_DST, CONFDIR
+        _("%(file)s file doesn't exist. Check the filename at the path %(path)s"),
+        {"file": TOML_DST, "path": CONFDIR},
     )
     sys.exit(0)
 gn2pg_config = toml.load(TOML_DST, _dict=dict)["db"]
@@ -42,6 +43,7 @@ DATABASES = {
         "PASSWORD": gn2pg_config["db_password"],
         "HOST": gn2pg_config["db_host"],
         "PORT": gn2pg_config["db_port"],
+        "SCHEMA": gn2pg_config.get("db_schema_import", "gn2pg_import"),
     }
 }
 
@@ -77,4 +79,4 @@ class AppConfig:
         )
 
 
-FlaskConfig = AppConfig()
+FLASK_CONFIG = AppConfig()  # noqa  C0103

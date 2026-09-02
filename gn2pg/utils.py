@@ -2,16 +2,22 @@
 # -*- coding: utf-8 -*-
 """Some utils"""
 
+import datetime
 from typing import Any
 
 
 class XferStatus:
     """List of transfer status"""
 
+    # The transfer has been created but processing has not started yet.
     init = "init"
+    # Data or metadata is currently being downloaded and stored.
     import_data = "importing data"
+    # Records deleted from the source are currently being removed locally.
     delete = "delete"
+    # All requested transfer steps completed successfully.
     success = "success"
+    # The transfer stopped because an API or processing error occurred.
     failed = "failed"
 
 
@@ -72,3 +78,12 @@ def coalesce_in_dict(source: dict, key: str, default: Any) -> Any:
     if key in source:
         return source[key]
     return default
+
+
+def validate_datetime(date_text: str) -> str:
+    """Return an ISO date after validation."""
+    try:
+        datetime.date.fromisoformat(date_text)
+    except ValueError as error:
+        raise ValueError("incorrect date format, expected YYYY-MM-DD or YY:MM:DD hh:mm") from error
+    return date_text

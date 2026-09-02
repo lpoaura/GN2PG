@@ -21,6 +21,11 @@ isort:
 pylint:
 	poetry run pylint gn2pg
 
+db-revision:
+	@test -n "$(CONFIG)" || (echo "CONFIG is required" && exit 1)
+	@test -n "$(MESSAGE)" || (echo "MESSAGE is required" && exit 1)
+	poetry run python generate_revision.py --config "$(CONFIG)" --message "$(MESSAGE)"
+
 trans-update-po:
 	xgettext -d base -o gn2pg/locale/gn2pg.pot --from-code=UTF-8 --language=Python gn2pg/*.py
 	msgmerge --update gn2pg/locale/fr_FR/LC_MESSAGES/gn2pg.po gn2pg/locale/gn2pg.pot

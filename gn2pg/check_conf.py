@@ -36,6 +36,27 @@ class IncorrectParameter(Gn2PgConfException):
 
 _ConfType: TypeAlias = Dict[str, Any]
 
+_SENSITIVE_SOURCE_FIELDS = ("user_name", "user_password", "url")
+
+
+def _obfuscate_sensitive_source_values(error: SchemaError, config: _ConfType) -> str:
+    """Return a schema error message without source connection values."""
+    message = str(error)
+    sources = config.get("source", [])
+    if not isinstance(sources, list):
+        return message
+    sensitive_values = {
+        repr(source[field])
+        for source in sources
+        if isinstance(source, dict)
+        for field in _SENSITIVE_SOURCE_FIELDS
+        if field in source
+    }
+    for value in sorted(sensitive_values, key=len, reverse=True):
+        message = message.replace(value, repr("***"))
+    return message
+
+
 _CONF_SCHEMA = Schema(
     {
         "db": {
@@ -67,6 +88,8 @@ _CONF_SCHEMA = Schema(
             Optional("max_retry"): int,
             Optional("max_requests"): int,
             Optional("retry_delay"): int,
+            Optional("http_connect_timeout"): int,
+            Optional("http_read_timeout"): int,
             Optional("unavailable_delay"): int,
             Optional("lru_maxsize"): int,
             Optional("nb_threads"): int,
@@ -113,6 +136,8 @@ class Tuning:
     max_retry: int = 5
     max_requests: int = 0
     retry_delay: int = 5
+    http_connect_timeout: int = 10
+    http_read_timeout: int = 120
     unavailable_delay: int = 600
     lru_maxsize: int = 32
     nb_threads: int = 1
@@ -156,6 +181,7 @@ class Gn2PgSourceConf:
                 schema_import=config["db"]["db_schema_import"],
                 querystring=coalesce_in_dict(config["db"], "db_querystring", {}),
             )  # type: Db
+            self._tuning = Tuning()
             if "tuning" in config:
                 tuning = config["tuning"]
                 self._tuning = Tuning(
@@ -163,10 +189,16 @@ class Gn2PgSourceConf:
                     max_retry=coalesce_in_dict(tuning, "max_retry", 5),
                     max_requests=coalesce_in_dict(tuning, "max_requests", 0),
                     retry_delay=coalesce_in_dict(tuning, "retry_delay", 5),
+                    http_connect_timeout=coalesce_in_dict(tuning, "http_connect_timeout", 10),
+                    http_read_timeout=coalesce_in_dict(tuning, "http_read_timeout", 120),
                     unavailable_delay=coalesce_in_dict(tuning, "unavailable_delay", 600),
                     lru_maxsize=coalesce_in_dict(tuning, "lru_maxsize", 32),
                     nb_threads=coalesce_in_dict(tuning, "nb_threads", 1),
                 )
+            self.http_timeout = (
+                self._tuning.http_connect_timeout,
+                self._tuning.http_read_timeout,
+            )
 
         except Exception:  # pragma: no cover
             logger.exception(_("Error creating %s configuration"), source)
@@ -412,37 +444,34 @@ class Gn2PgConf:
                     )
             _CONF_SCHEMA.validate(self._config)
         except SchemaError as error:
+            secure_error = _obfuscate_sensitive_source_values(error, self._config)
             logger.error(
-                _("Incorrect content in YAML configuration %s : %s"),
-                file,
-                error,
+                _("Incorrect content in YAML configuration %(file)s: %(error)s"),
+                {"file": file, "error": secure_error},
             )
-            raise
+            raise SchemaError(secure_error) from None
 
         self._source_list = {}  # type: _ConfType
         i = 0
         for source in self._config["source"]:
             source_name = simplify(source["name"])
             logger.info(
-                _('Source "%s" identifier will be "%s"'),
-                source["name"],
-                source_name,
+                _('Source "%(source)s" identifier will be "%(identifier)s"'),
+                {"source": source["name"], "identifier": source_name},
             )
 
             if source_name in self._source_list:
                 logger.critical(
-                    (
-                        _('Source #%s named "%s" (->%s) already used by another source'),
-                        i + 1,
-                        source["name"],
-                        source_name,
-                    )
+                    _(
+                        'Source #%(index)s named "%(source)s" (->%(identifier)s) '
+                        "already used by another source"
+                    ),
+                    {"index": i + 1, "source": source["name"], "identifier": source_name},
                 )
             self._source_list[source_name] = Gn2PgSourceConf(i, self._config)
             logger.debug(
-                _("Settings for %s are : %s"),
-                source_name,
-                self.secure_dict(source_name),
+                _("Settings for %(source)s are: %(settings)s"),
+                {"source": source_name, "settings": self.secure_dict(source_name)},
             )
             i += 1
 

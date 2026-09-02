@@ -13,15 +13,24 @@ from toml import TomlDecodeError
 
 from gn2pg import _, __project__, __version__, pkg_metadata
 from gn2pg.check_conf import Gn2PgConf
+from gn2pg.database.migrations import ExistingSchemaError
 from gn2pg.env import CONFDIR
 from gn2pg.helpers import full_download, init, manage_configs, update
 from gn2pg.logger import setup_logging
 from gn2pg.store_postgresql import PostgresqlUtils
-from gn2pg.utils import BColors
+from gn2pg.utils import BColors, validate_datetime
 
 logger = logging.getLogger(__name__)
 
 sh_col = BColors()
+
+
+def since_datetime(value: str) -> str:
+    """Validate a CLI value used as an incremental download start date."""
+    try:
+        return validate_datetime(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
 
 
 def arguments(args):
@@ -34,7 +43,7 @@ def arguments(args):
         :obj:`argparse.Namespace`: command line parameters namespace
     """
     # Get options
-    parser = argparse.ArgumentParser(description="Gn2Pg Client app")
+    parser = argparse.ArgumentParser(description=__project__)
 
     subparser = parser.add_subparsers(help=_("Config management commands"), required=True)
 
@@ -48,7 +57,7 @@ def arguments(args):
         "--version",
         help=_("Print version number"),
         action="version",
-        version=f"%(prog)s v{__version__}",
+        version=f"{__project__} v{__version__}",
     )
     output_group = parser.add_mutually_exclusive_group()
     output_group.add_argument(
@@ -104,8 +113,20 @@ def arguments(args):
         ),
     )
     db_group.add_argument(
+        "--upgrade",
         "--json-tables-create",
-        help=_("Create or recreate json tables"),
+        dest="upgrade",
+        help=_("Upgrade the database schema to the latest Alembic revision"),
+        action="store_true",
+    )
+    db_group.add_argument(
+        "--stamp-existing",
+        help=_("Validate and stamp an existing pre-Alembic GN2PG schema"),
+        action="store_true",
+    )
+    db_group.add_argument(
+        "--status",
+        help=_("Show the current and target database migration revisions"),
         action="store_true",
     )
 
@@ -117,6 +138,12 @@ def arguments(args):
         "--update",
         help=_("Perform an incremental download"),
         action="store_true",
+    )
+    download_parser.add_argument(
+        "--since",
+        type=since_datetime,
+        default=None,
+        help=_("Override the incremental download start date"),
     )
 
     for p in (db_parser, download_parser):
@@ -142,9 +169,8 @@ def main(args) -> None:
 
 {newline_char.join(pkg_metadata.get_all('Project-URL'))}
 """
-    print(epilog)
-
     args = arguments(args)
+    print(epilog)
 
     # Setup logging
     loglevel = logging.INFO
@@ -160,7 +186,9 @@ def main(args) -> None:
         fmt="%(asctime)s - %(levelname)s - %(module)s:%(funcName)s - %(message)s",
     )
 
-    logger.info(_("%s, version %s"), sys.argv[0], __version__)
+    logger.info(
+        _("%(program)s, version %(version)s"), {"program": sys.argv[0], "version": __version__}
+    )
     logger.debug("Args: %s", args)
     logger.debug("Arguments: %s", sys.argv[1:])
 
@@ -174,7 +202,10 @@ def main(args) -> None:
         try:
             cfg_ctrl = Gn2PgConf(args.file)
         except TomlDecodeError as e:
-            logger.critical(_("Incorrect content in TOML configuration %s : %s"), args.file, e)
+            logger.critical(
+                _("Incorrect content in TOML configuration %(file)s: %(error)s"),
+                {"file": args.file, "error": e},
+            )
             sys.exit(0)
 
         if "db" in sys.argv:
@@ -198,7 +229,7 @@ def handle_download_commands(args, cfg_ctrl) -> bool:
 
     if args.update:
         logger.info(_("Perform update action"))
-        update(cfg_ctrl)
+        update(cfg_ctrl, since=args.since)
 
     return True
 
@@ -209,16 +240,28 @@ def handle_database_commands(args, cfg_ctrl) -> None:
     cfg_source_list = cfg_ctrl.source_list
     cfg = list(cfg_source_list.values())[0]
     logger.info(
-        _("config file have %s source(s) wich are : %s"),
-        len(cfg_source_list),
-        ", ".join(cfg_source_list.keys()),
+        _("config file have %(count)s source(s) wich are: %(sources)s"),
+        {"count": len(cfg_source_list), "sources": ", ".join(cfg_source_list.keys())},
     )
 
     manage_pg = PostgresqlUtils(cfg)
 
-    if args.json_tables_create:
-        logger.info(_("Create, if not exists, json tables"))
+    if args.upgrade:
+        logger.info(_("Upgrade database schema"))
         manage_pg.create_json_tables()
+    if args.stamp_existing:
+        logger.info(_("Validate and stamp existing database schema"))
+        try:
+            manage_pg.stamp_existing()
+        except ExistingSchemaError as error:
+            logger.critical(str(error))
+            raise SystemExit(1) from error
+    if args.status:
+        status = manage_pg.migration_status()
+        logger.info(_("Schema: %s"), cfg.database.schema_import)
+        logger.info(_("Current revision: %s"), (status.current or "not versioned"))
+        logger.info(_("Target revision: %s"), status.head)
+        logger.info(_("Pending migrations: %s"), ("yes" if status.pending else "no"))
     if args.custom_script:
         logger.info(_("Execute custom script %s on db"), args.custom_script)
         manage_pg.custom_script(args.custom_script)

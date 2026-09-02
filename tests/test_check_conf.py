@@ -53,6 +53,10 @@ class TestCheckConf:
             assert source.max_retry == expected_tuning.get("max_retry", 5)
             assert source.max_requests == expected_tuning.get("max_requests", 0)
             assert source.retry_delay == expected_tuning.get("retry_delay", 5)
+            assert source.http_timeout == (
+                expected_tuning.get("http_connect_timeout", 10),
+                expected_tuning.get("http_read_timeout", 120),
+            )
             assert source.unavailable_delay == expected_tuning.get("unavailable_delay", 600)
             assert source.lru_maxsize == expected_tuning.get("lru_maxsize", 32)
             assert source.nb_threads == expected_tuning.get("nb_threads", 1)
@@ -72,7 +76,10 @@ class TestCheckConf:
         source = next(iter(config.source_list.values()))
         expected_id = int(toml_conf.split("data_export_id =", maxsplit=1)[1].splitlines()[0])
         assert source.data_export_id == expected_id
-        assert "export_id configuration parameter is deprecated" in caplog.text
+        assert any(
+            "export_id" in record.getMessage() and "data_export_id" in record.getMessage()
+            for record in caplog.records
+        )
 
     def test_metadata_export_id_for_separated_metadata(self, tmp_path, monkeypatch, toml_conf):
         config_file = tmp_path / "metadata_export_id.toml"
@@ -105,8 +112,34 @@ class TestCheckConf:
         )
         monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
 
-        with pytest.raises(SchemaError, match="metadata_export_id is required"):
+        with pytest.raises(SchemaError, match="metadata_export_id"):
             check_conf.Gn2PgConf(file=config_file.name)
+
+    def test_schema_error_obfuscates_source_connection_values(
+        self, tmp_path, monkeypatch, toml_conf, caplog
+    ):
+        sensitive_values = {
+            "user_name": 918273,
+            "user_password": 827364,
+            "url": 736455,
+        }
+        lines = []
+        for line in toml_conf.splitlines():
+            field = next(
+                (field for field in sensitive_values if line.strip().startswith(f"{field} =")),
+                None,
+            )
+            lines.append(f"    {field} = {sensitive_values[field]}" if field is not None else line)
+        config_file = tmp_path / "invalid_sensitive_values.toml"
+        config_file.write_text("\n".join(lines))
+        monkeypatch.setattr(check_conf, "CONFDIR", tmp_path)
+
+        with caplog.at_level(logging.ERROR), pytest.raises(SchemaError) as exc_info:
+            check_conf.Gn2PgConf(file=config_file.name)
+
+        displayed_error = f"{caplog.text}\n{exc_info.value}"
+        assert "***" in displayed_error
+        assert all(str(value) not in displayed_error for value in sensitive_values.values())
 
     def test_metadata_only_does_not_require_data_export_id(self, tmp_path, monkeypatch, toml_conf):
         config_file = tmp_path / "metadata_only.toml"

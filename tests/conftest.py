@@ -1,5 +1,19 @@
 """Test conf options"""
 
+import os
+
+os.environ.update(
+    {
+        "DB_NAME": "testgn2pg_test",
+        "DB_USER": "db_user",
+        "DB_HOST": "db_host",
+        "DB_PORT": "db_pport",
+        "DB_PASSWORD": "db_password",
+        "URL_APPLICATION": "/gn2pg",
+        "ENV": "development",
+    }
+)
+
 
 def pytest_addoption(parser):
     """Set pytest options

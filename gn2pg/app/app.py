@@ -6,12 +6,12 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from gn2pg import _
 from gn2pg.app.admin_views import ErrorView, ImportView
-from gn2pg.app.config import FlaskConfig
+from gn2pg.app.config import FLASK_CONFIG
 from gn2pg.app.database import db
 from gn2pg.app.models import ErrorLog, ImportLog
 
 
-def create_app(config=FlaskConfig):
+def create_app(config=FLASK_CONFIG):
     """Create app"""
 
     app = Flask(__name__, static_url_path=config.application_root)

@@ -1,150 +1,29 @@
 /*
-
- Export basique mettant à dispo les données de synthèse avec le cd_nomenclature 
- ET les métadonnées détaillées dans une vue séparée
+ Export mettant à disposition les métadonnées détaillées seulement
  */
 BEGIN;
 
-DROP VIEW IF EXISTS gn_exports.v_synthese_sinp_without_metadata_for_gn2pg CASCADE;
+DROP VIEW IF EXISTS gn_exports.v_metadata_only_for_gn2pg;
 
-CREATE VIEW gn_exports.v_synthese_sinp_without_metadata_for_gn2pg AS
-SELECT
-    s.id_synthese
-    , s.entity_source_pk_value AS id_source
-    , s.unique_id_sinp AS id_perm_sinp
-    , s.unique_id_sinp_grp AS id_perm_grp_sinp
-    , s.date_min AS date_debut
-    , s.date_max AS date_fin
-    , s.cd_nom AS cd_nom
-    , s.meta_v_taxref AS version_taxref
-    , s.nom_cite AS nom_cite
-    , s.count_min AS nombre_min
-    , s.count_max AS nombre_max
-    , s.altitude_min AS altitude_min
-    , s.altitude_max AS altitude_max
-    , s.depth_min AS profondeur_min
-    , s.depth_max AS profondeur_max
-    , s.observers AS observateurs
-    , s.determiner AS determinateur
-    , s.validator AS validateur
-    , s.sample_number_proof AS numero_preuve
-    , s.digital_proof AS preuve_numerique
-    , s.non_digital_proof AS preuve_non_numerique
-    , s.comment_context AS comment_releve
-    , s.comment_description AS comment_occurrence
-    , ds.unique_dataset_id AS jdd_uuid
-    , s.reference_biblio AS reference_biblio
-    , s.cd_hab AS code_habitat
-    , h.lb_hab_fr AS habitat
-    , s.place_name AS nom_lieu
-    , s.precision AS precision
-    , s.additional_data AS donnees_additionnelles
-    , st_astext (s.the_geom_4326) AS wkt_4326
-    , n_geo_object_nature.cd_nomenclature AS nature_objet_geo
-    , n_grp_typ.cd_nomenclature AS type_regroupement
-    , s.grp_method AS methode_regroupement
-    , n_behaviour.cd_nomenclature AS comportement
-    , n_obs_technique.cd_nomenclature AS technique_obs
-    , n_bio_status.cd_nomenclature AS statut_biologique
-    , n_bio_condition.cd_nomenclature AS etat_biologique
-    , n_naturalness.cd_nomenclature AS naturalite
-    , n_exist_proof.cd_nomenclature AS preuve_existante
-    , n_diff_level.cd_nomenclature AS precision_diffusion
-    , n_life_stage.cd_nomenclature AS stade_vie
-    , n_sex.cd_nomenclature AS sexe
-    , n_obj_count.cd_nomenclature AS objet_denombrement
-    , n_type_count.cd_nomenclature AS type_denombrement
-    , n_sensitivity.cd_nomenclature AS niveau_sensibilite
-    , n_observation_status.cd_nomenclature AS statut_observation
-    , n_blurring.cd_nomenclature AS floutage_dee
-    , n_source_status.cd_nomenclature AS statut_source
-    , n_info_geo_type.cd_nomenclature AS type_info_geo
-    , CASE WHEN l_areas.area_code IS NOT NULL THEN
-	jsonb_build_object('area_code' , l_areas.area_code , 'type_code' ,
-	    bib_areas_types.type_code)
-    END area_attachment
-    , n_determ_method.cd_nomenclature AS methode_determination
-    , n_valid_status.cd_nomenclature AS statut_validation
-    , s.meta_validation_date AS validation_date
-    , coalesce(s.meta_update_date , s.meta_create_date) AS derniere_action
-FROM
-    gn_synthese.synthese s
-    -- For testing
-    JOIN taxonomie.taxref ON s.cd_nom = taxref.cd_nom
-    JOIN gn_meta.t_datasets ds ON s.id_dataset = ds.id_dataset
-    LEFT JOIN ref_habitats.habref h ON h.cd_hab = s.cd_hab
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_geo_object_nature ON
-	s.id_nomenclature_geo_object_nature =
-	n_geo_object_nature.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_grp_typ ON
-	s.id_nomenclature_grp_typ = n_grp_typ.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_behaviour ON
-	s.id_nomenclature_behaviour = n_behaviour.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_obs_technique ON
-	s.id_nomenclature_obs_technique = n_obs_technique.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_bio_status ON
-	s.id_nomenclature_bio_status = n_bio_status.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_bio_condition ON
-	s.id_nomenclature_bio_condition = n_bio_condition.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_naturalness ON
-	s.id_nomenclature_naturalness = n_naturalness.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_exist_proof ON
-	s.id_nomenclature_exist_proof = n_exist_proof.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_diff_level ON
-	s.id_nomenclature_diffusion_level = n_diff_level.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_life_stage ON
-	s.id_nomenclature_life_stage = n_life_stage.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_sex ON s.id_nomenclature_sex
-	= n_sex.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_obj_count ON
-	s.id_nomenclature_obj_count = n_obj_count.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_type_count ON
-	s.id_nomenclature_type_count = n_type_count.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_sensitivity ON
-	s.id_nomenclature_sensitivity = n_sensitivity.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_observation_status ON
-	s.id_nomenclature_observation_status =
-	n_observation_status.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_blurring ON
-	s.id_nomenclature_blurring = n_blurring.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_source_status ON
-	s.id_nomenclature_source_status = n_source_status.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_info_geo_type ON
-	s.id_nomenclature_info_geo_type = n_info_geo_type.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_determ_method ON
-	s.id_nomenclature_determination_method =
-	n_determ_method.id_nomenclature
-    LEFT JOIN ref_nomenclatures.t_nomenclatures n_valid_status ON
-	s.id_nomenclature_valid_status = n_valid_status.id_nomenclature
-    LEFT JOIN (ref_geo.l_areas
-	JOIN ref_geo.bib_areas_types ON l_areas.id_type =
-	    bib_areas_types.id_type) ON s.id_area_attachment = l_areas.id_area
-    -- For testing
-WHERE
-    lb_nom LIKE 'A%'
-    AND extract(YEAR FROM date_min) = 2026
-ORDER BY
-    s.id_synthese ASC;
-
-DROP VIEW IF EXISTS gn_exports.v_metadata_for_gn2pg;
-
-CREATE VIEW gn_exports.v_metadata_for_gn2pg AS
+CREATE VIEW gn_exports.v_metadata_only_for_gn2pg AS
 WITH af_ids AS (
     SELECT DISTINCT
         taf.id_acquisition_framework
     FROM
-        gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vsy
-        JOIN gn_meta.t_datasets tds ON tds.unique_dataset_id = vsy.jdd_uuid
-	JOIN gn_meta.t_acquisition_frameworks taf ON
-	    tds.id_acquisition_framework = taf.id_acquisition_framework
+        gn_meta.t_acquisition_frameworks taf
+        /* TODO: Adapt to your needs */
+        -- JOIN ...
+        -- WHERE ...
 )
 , ds_ids AS (
     SELECT DISTINCT
         tds.id_dataset
         , tds.unique_dataset_id AS jdd_uuid
     FROM
-        gn_exports.v_synthese_sinp_without_metadata_for_gn2pg vsy
-        JOIN gn_meta.t_datasets tds ON tds.unique_dataset_id = vsy.jdd_uuid
+        gn_meta.t_datasets tds
+        /* TODO: Adapt to your needs */
+        -- JOIN ...
+        -- WHERE ...
 )
 , af_actors AS (
     SELECT
@@ -467,5 +346,3 @@ FROM
     JOIN agg_ds ON agg_ds.id_acquisition_framework = af.id_acquisition_framework;
 
 COMMIT;
-
-EXPLAIN
