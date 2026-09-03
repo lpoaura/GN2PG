@@ -54,21 +54,6 @@ gn2pg_cli db --upgrade myconfig.toml
 gn2pg_cli db --custom-script to_gnsynthese myconfig.toml
 ```
 
-## 1.9.1 - 2025-06-10
-
-### :bug: Fixes
-
-- Avoid application crashes if the GeoNature user does not have sufficient permissions to access the export module or if GeoNature schema URL is wrong (fix #120).
-
-### :point_down: Release note
-
-1. Update the app
-
-```bash
-pip install --upgrade gn2pg-client
-```
-
-
 # 1.10.0 - 2026-09-02
 
 ### :rocket: Features
