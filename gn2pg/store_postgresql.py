@@ -427,11 +427,38 @@ class StorePostgresql:
                     update_ts=datetime.now(),
                     import_id=self.import_id,
                 )
-                do_update_stmt = insert_stmt.on_conflict_do_update(
-                    constraint=metadata.primary_key,
-                    set_={"item": elem, "update_ts": datetime.now(), "import_id": self.import_id},
-                )
-                data_upserts = conn.execute(do_update_stmt).rowcount
+                # Ignore every uniqueness conflict first. This lets an existing
+                # UUID win when the incoming record identifies another row.
+                data_upserts = conn.execute(insert_stmt.on_conflict_do_nothing()).rowcount
+                if not data_upserts:
+                    # Update only when both the business key and the UUID match.
+                    # A different UUID for the same business key must not replace
+                    # the record already stored in the database either.
+                    update_stmt = (
+                        metadata.update()
+                        .where(
+                            metadata.c.id_data == elem[id_key_name],
+                            metadata.c.controler == controler,
+                            metadata.c.source == self._config.std_name,
+                            metadata.c.uuid == elem[uuid_key_name],
+                        )
+                        .values(
+                            type=self._config.data_type,
+                            item=elem,
+                            update_ts=datetime.now(),
+                            import_id=self.import_id,
+                        )
+                    )
+                    data_upserts = conn.execute(update_stmt).rowcount
+                    if not data_upserts:
+                        logger.warning(
+                            _(
+                                "Data %(uuid)s was ignored because its UUID or its "
+                                "(id_data, controler, source) key is already assigned "
+                                "to another record in the database"
+                            ),
+                            {"uuid": elem[uuid_key_name]},
+                        )
             self.count_metadata_inserts += metadata_inserts
             self.count_data_upserts += data_upserts
         except (IntegrityError, StatementError) as error:
@@ -441,6 +468,21 @@ class StorePostgresql:
                 logger.warning(
                     _(
                         "A data with UUID %(uuid)s from a different source already"
+                        " exists in Database: %(error)s, incoming values where : "
+                        "(id_data, controler, source)=(%(id_data)s, %(controler)s, %(source)s)",
+                    ),
+                    {
+                        "uuid": elem[uuid_key_name],
+                        "error": format_pg_error(error),
+                        "id_data": elem[id_key_name],
+                        "controler": controler,
+                        "data_type": self._config.data_type,
+                        "source": self._config.std_name,
+                    },
+                )
+                logger.warning(
+                    _(
+                        "incoming values where  %(uuid)s from a different source already"
                         " exists in Database: %(error)s",
                     ),
                     {"uuid": elem[uuid_key_name], "error": format_pg_error(error)},

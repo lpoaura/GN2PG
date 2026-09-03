@@ -5,6 +5,9 @@ Revises: ${down_revision | comma,n}
 Create Date: ${create_date}
 """
 
+# Alembic requires lowercase revision attributes and exposes operations dynamically.
+# pylint: disable=invalid-name,no-member
+
 from typing import Optional, Sequence, Union
 
 from alembic import op
@@ -18,8 +21,10 @@ depends_on: Optional[Union[str, Sequence[str]]] = ${repr(depends_on)}
 
 
 def upgrade() -> None:
+    """Apply the schema upgrade."""
     ${upgrades if upgrades else "pass"}
 
 
 def downgrade() -> None:
+    """Revert the schema upgrade."""
     ${downgrades if downgrades else "pass"}

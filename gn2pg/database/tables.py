@@ -57,6 +57,7 @@ def build_metadata(schema: str = "gn2pg_import") -> MetaData:
             "import_id",
             Integer,
             ForeignKey(f"{schema}.import_log.id", ondelete="CASCADE", onupdate="CASCADE"),
+            nullable=False,
             index=True,
         ),
     )
@@ -75,8 +76,9 @@ def build_metadata(schema: str = "gn2pg_import") -> MetaData:
             "import_id",
             Integer,
             ForeignKey(f"{schema}.import_log.id", onupdate="CASCADE"),
+            nullable=False,
         ),
-        PrimaryKeyConstraint("id_data", "source", "type", name="pk_source_data"),
+        PrimaryKeyConstraint("id_data", "controler", "source", name="pk_source_data"),
         UniqueConstraint("uuid", name="unique_uuid"),
     )
 
@@ -94,6 +96,7 @@ def build_metadata(schema: str = "gn2pg_import") -> MetaData:
             "import_id",
             Integer,
             ForeignKey(f"{schema}.import_log.id", onupdate="CASCADE"),
+            nullable=False,
         ),
         PrimaryKeyConstraint("uuid", "source", name="pk_source_metadata"),
         UniqueConstraint("uuid", name="metadata_unique_uuid"),

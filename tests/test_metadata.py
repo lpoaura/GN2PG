@@ -2,7 +2,7 @@ from copy import deepcopy
 from types import MethodType, SimpleNamespace
 from unittest.mock import MagicMock
 
-from sqlalchemy import Column, Integer, MetaData, String, Table
+from sqlalchemy import Column, Integer, MetaData, PrimaryKeyConstraint, String, Table
 from sqlalchemy.exc import StatementError
 
 from gn2pg.download import DownloadGn
@@ -23,14 +23,15 @@ def _transactional_backend():
     data_table = Table(
         "data_json",
         metadata,
-        Column("id_data", Integer, primary_key=True),
-        Column("controler", String, primary_key=True),
+        Column("id_data", Integer),
+        Column("controler", String),
         Column("type", String),
         Column("uuid", String),
         Column("source", String),
         Column("item", String),
         Column("update_ts", String),
         Column("import_id", Integer),
+        PrimaryKeyConstraint("id_data", "controler", "source", name="pk_source_data"),
     )
     backend._table_defs = {"data": {"metadata": data_table}}
     backend._db = MagicMock()
@@ -47,6 +48,39 @@ def test_store_data_commits_with_transaction_context():
     backend._db.begin.assert_called_once_with()
     backend._db.begin.return_value.__exit__.assert_called_once_with(None, None, None)
     assert backend.count_data_upserts == 1
+
+
+def test_store_data_updates_only_when_identity_and_uuid_match():
+    backend = _transactional_backend()
+    conn = backend._db.begin.return_value.__enter__.return_value
+    insert_result = MagicMock(rowcount=0)
+    update_result = MagicMock(rowcount=1)
+    conn.execute.side_effect = [insert_result, update_result]
+
+    backend.store_1_data("data", {"id_synthese": 42, "id_perm_sinp": "uuid"})
+
+    assert conn.execute.call_count == 2
+    insert_stmt = conn.execute.call_args_list[0].args[0]
+    assert "ON CONFLICT DO NOTHING" in str(insert_stmt)
+    update_stmt = conn.execute.call_args_list[1].args[0]
+    compiled = str(update_stmt)
+    assert "data_json.id_data = :id_data_1" in compiled
+    assert "data_json.controler = :controler_1" in compiled
+    assert "data_json.source = :source_1" in compiled
+    assert "data_json.uuid = :uuid_1" in compiled
+    assert backend.count_data_upserts == 1
+
+
+def test_store_data_keeps_existing_row_on_uuid_or_identity_conflict(caplog):
+    backend = _transactional_backend()
+    conn = backend._db.begin.return_value.__enter__.return_value
+    conn.execute.side_effect = [MagicMock(rowcount=0), MagicMock(rowcount=0)]
+
+    backend.store_1_data("data", {"id_synthese": 42, "id_perm_sinp": "uuid"})
+
+    assert backend.count_data_upserts == 0
+    assert backend.count_data_errors == 0
+    assert "was ignored" in caplog.text
 
 
 def test_store_data_rolls_back_before_logging_error():
