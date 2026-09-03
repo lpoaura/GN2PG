@@ -467,5 +467,3 @@ FROM
     JOIN agg_ds ON agg_ds.id_acquisition_framework = af.id_acquisition_framework;
 
 COMMIT;
-
-EXPLAIN

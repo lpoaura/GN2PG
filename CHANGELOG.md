@@ -7,6 +7,68 @@ to [Semantic Versioning](https://semver.org/).
 
 <!-- ## Unreleased [{version_tag}](https://github.com/opengisch/qgis-plugin-ci/releases/tag/{version_tag}) - YYYY-MM-DD -->
 
+# 1.10.1 - 2026-09-03
+
+### :bug: Fixes
+
+- Fix upserts errors.
+
+### :point_down: Release note
+
+#### Client side
+
+1. Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+```
+
+> [!WARNING]
+> For users who have already installed `GN2PG_client` version 1.9.1 and below,
+> you have to stamp database to initial version using command:
+> ```
+> gn2pg_cli db --stamp-existing myconfig.toml
+> ```
+> You may need to apply those SQL scripts before validating current schema
+> ```sql
+> BEGIN;
+>  ALTER TABLE gn2pg_import.data_json
+>      DROP CONSTRAINT IF EXISTS data_json_import_id_not_null;
+>  ALTER TABLE gn2pg_import.error_log
+>      DROP CONSTRAINT IF EXISTS error_log_import_id_not_null;
+>  ALTER TABLE ONLY gn2pg_import.data_json
+>      ADD CONSTRAINT pk_source_data PRIMARY KEY (id_data, source, type);
+>  ALTER TABLE ONLY gn2pg_import.data_json
+>      ADD CONSTRAINT unique_uuid UNIQUE (uuid);
+>  CREATE INDEX IF NOT EXISTS ix_gn2pg_import_error_log_uuid ON gn2pg_import.error_log USING btree (uuid);
+>  CREATE INDEX IF NOT EXISTS ix_gn2pg_import_error_log_import_id ON gn2pg_import.error_log USING btree (import_id);
+> COMMIT;
+> ```
+
+
+
+2. Install or update db tables
+
+```bash
+gn2pg_cli db --upgrade myconfig.toml
+gn2pg_cli db --custom-script to_gnsynthese myconfig.toml
+```
+
+## 1.9.1 - 2025-06-10
+
+### :bug: Fixes
+
+- Avoid application crashes if the GeoNature user does not have sufficient permissions to access the export module or if GeoNature schema URL is wrong (fix #120).
+
+### :point_down: Release note
+
+1. Update the app
+
+```bash
+pip install --upgrade gn2pg-client
+```
+
+
 # 1.10.0 - 2026-09-02
 
 ### :rocket: Features
@@ -40,11 +102,27 @@ Export sample queries ara available in [geonature_export_sinp_with_metadata.sql]
 pip install --upgrade gn2pg-client
 ```
 
+
 > [!WARNING]
 > For users who have already installed `GN2PG_client` version 1.9.1 and below,
 > you have to stamp database to initial version using command:
 > ```
 > gn2pg_cli db --stamp-existing myconfig.toml
+> ```
+> You may need to apply those SQL scripts before validating current schema
+> ```sql
+> BEGIN;
+>  ALTER TABLE gn2pg_import.data_json
+>      DROP CONSTRAINT IF EXISTS data_json_import_id_not_null;
+>  ALTER TABLE gn2pg_import.error_log
+>      DROP CONSTRAINT IF EXISTS error_log_import_id_not_null;
+>  ALTER TABLE ONLY gn2pg_import.data_json
+>      ADD CONSTRAINT pk_source_data PRIMARY KEY (id_data, source, type);
+>  ALTER TABLE ONLY gn2pg_import.data_json
+>      ADD CONSTRAINT unique_uuid UNIQUE (uuid);
+>  CREATE INDEX IF NOT EXISTS ix_gn2pg_import_error_log_uuid ON gn2pg_import.error_log USING btree (uuid);
+>  CREATE INDEX IF NOT EXISTS ix_gn2pg_import_error_log_import_id ON gn2pg_import.error_log USING btree (import_id);
+> COMMIT;
 > ```
 
 2. Update your config

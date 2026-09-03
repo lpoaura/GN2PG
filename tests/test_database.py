@@ -30,7 +30,13 @@ def test_alembic_has_a_single_initial_head():
     config = Config()
     config.set_main_option("script_location", "gn2pg/alembic")
 
-    assert ScriptDirectory.from_config(config).get_heads() == ["20260818_01"]
+    assert ScriptDirectory.from_config(config).get_heads() == ["20260903_03"]
+
+
+def test_data_primary_key_uses_business_identity():
+    data_table = build_metadata("custom_import").tables["custom_import.data_json"]
+
+    assert list(data_table.primary_key.columns.keys()) == ["id_data", "controler", "source"]
 
 
 def test_alembic_version_table_uses_project_schema():
