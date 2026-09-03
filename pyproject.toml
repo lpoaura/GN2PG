@@ -2,7 +2,7 @@
 name = "gn2pg_client"
 packages = [{ include = "gn2pg" }]
 include = ["gn2pg/alembic/**/*.py", "gn2pg/alembic/script.py.mako"]
-version = "1.10.0"
+version = "1.10.1"
 description = "Import tool from GeoNature to a PostgreSQL database through Export module API (client side)"
 authors = [
   "Collectif",
