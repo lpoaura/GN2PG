@@ -25,6 +25,7 @@ class GnSession:
         self._root_url = config["url"]
         self._session = requests.Session()
         self._session.headers = self._header
+        self._login_url = config["api_url"] + "auth/login"
         # try:
         #     self._session.post(login_url, data=self._auth_payload)
         # except Exception as e:
@@ -32,9 +33,9 @@ class GnSession:
 
     def login(self) -> None:
         """init login function"""
-        login_url = self._root_url + "/api/auth/login"
+
         try:
-            r = self._session.post(login_url, json=self._auth_payload)
+            r = self._session.post(self._login_url, json=self._auth_payload)
             logging.info(f"login {r.url} {r.status_code} {r.content} {r.cookies.get_dict()}")
         except Exception as e:
             logging.error(f"<login error> {str(e)}")

@@ -74,6 +74,7 @@ _CONF_SCHEMA = Schema(
                 "user_name": str,
                 "user_password": str,
                 "url": str,
+                Optional("api_url"): str,
                 Optional("data_export_id"): int,
                 Optional("metadata_export_id"): int,
                 Optional("id_application"): int,
@@ -119,6 +120,7 @@ class Source:
     user_name: str
     user_password: str
     url: str
+    api_url: TypeOptional[str]
     data_export_id: TypeOptional[int]
     data_type: str
     metadata_export_id: TypeOptional[int] = None
@@ -155,6 +157,7 @@ class Gn2PgSourceConf:
                 user_name=config["source"][source]["user_name"],
                 user_password=config["source"][source]["user_password"],
                 url=config["source"][source]["url"],
+                api_url=config["source"][source].get("api_url"),
                 id_application=coalesce_in_dict(config["source"][source], "id_application", 3),
                 data_type=coalesce_in_dict(
                     config["source"][source],
@@ -198,6 +201,9 @@ class Gn2PgSourceConf:
             self.http_timeout = (
                 self._tuning.http_connect_timeout,
                 self._tuning.http_read_timeout,
+            )
+            self.api_url = (
+                self._source.api_url or self.url + "/" * (not self.url.endswith("/")) + "api/"
             )
 
         except Exception:  # pragma: no cover
