@@ -96,9 +96,7 @@ class BaseAPI:
                 {"source": self._config.name, "error": error},
             )
             raise error
-
-        #  Find exports api path
-        self._export_api_path = None  # Initialize the variable
+        self._export_api_path = "exports"
         try:
             modules_list = self._session.get(
                 self._api_url + "gn_commons/modules", timeout=self._timeout
@@ -110,12 +108,7 @@ class BaseAPI:
             modules_list.raise_for_status()
             if modules_list.status_code == 200 and "login?next=" not in modules_list.url:
                 modules = json.loads(modules_list.content)
-                for item in modules:
-                    if item["module_code"] == "EXPORTS":
-                        self._export_api_path = item["module_path"]
-                        logger.debug(_("Export api path is %s"), self._export_api_path)
-                        break
-                if self._export_api_path is None:
+                if "EXPORTS" not in [module["module_code"] for module in modules]:
                     logger.critical(
                         _(
                             "EXPORTS module not found in the modules list for export %(export)s. "
