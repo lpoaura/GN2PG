@@ -1,4 +1,4 @@
-FROM python:3.10-slim-buster as base
+FROM python:3.14-slim-trixie as base
 LABEL maintainer="@lpofredc"
 
 # Keeps Python from generating .pyc files in the container
@@ -14,7 +14,7 @@ FROM base as builder
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml poetry.lock README.md ./
 
 # Install Poetry
 RUN pip install poetry
